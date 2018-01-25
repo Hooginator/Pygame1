@@ -33,6 +33,11 @@ ballrect = ball.get_rect()
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
+        
+        if event.type == pygame.KEYDOWN:
+            key = pygame.key.get_pressed()
+            if key[pygame.K_a] or key[pygame.K_LEFT]:
+                speed = [50, 20]
 
     ballrect = ballrect.move(moveTowards(list(ballrect.center),pygame.mouse.get_pos(), speed))
 
