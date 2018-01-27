@@ -17,46 +17,53 @@ class ship:
         self.y = y
         self.vx = 0
         self.vy = 0
-        self.maxSpeed = 10
+        self.drag = 0.96
         self.angle = angle
+        self.crashed = False
+        self.score = 0
     def updateSpeed(self,accel,dangle):
         self.angle += dangle
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
-        if(self.vx > self.maxSpeed): self.vx = self.maxSpeed
-        if(self.vy > self.maxSpeed): self.vy = self.maxSpeed
+        self.vx = self.vx * self.drag
+        self.vy = self.vy * self.drag
     def updatePos(self):
         self.x += self.vx
         self.y += self.vy
-        self.x = max(self.x,0)
-        self.y = max(self.y,0)
-        self.x = min(self.x,width)
-        self.y = min(self.y,height)
-def moveTowards(tomove, target, speed):
-    toreturn = tomove
-    if(tomove[0] > target[0]):
-        toreturn[0] = - speed[0]
-    else: toreturn[0] = speed[0]
-    
-    if(tomove[1] > target[1]):
-        toreturn[1] = - speed[1]
-    else: toreturn[1] = speed[1]
-    return toreturn
+        self.score += np.sqrt(self.vx*self.vx + self.vy*self.vy)
+        if((self.x < 0) or (self.x > width) or (self.y < 0) or (self.y > height)): self.crash()
+    def drawShip(self):
+        pygame.draw.polygon(screen, (240,70,80), [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
+                                   [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
+                                   [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
+        pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
+    def crash(self):
+        self.crashed = True
+        self.vx = 0
+        self.vy = 0
+        print("You crashed, score: " + str(self.score))
+class wall:
+    def __init__(self,posx,posy,sizex,sizey):
+        self.posx = posx
+        self.posy = posy
+        self.sizex = sizex
+        self.sizey = sizey
+    def drawWall(self):
+        pygame.draw.rect(screen,(0,0,255),(self.posx, self.posy, self.sizex, self.sizey))
+    def checkCollision(self,x,y):
+        return ((self.posx <= x) and (self.posx + self.sizex >= x) and (self.posy <= y) and (self.posy + self.sizey >= y))
 
-
-
-accel = [2,2]
-maxangle = 0.04
-maxaccel = 0.5
+maxangle = 0.08
+maxaccel = 0.8
 black = 0, 0, 0
 time = pygame.time.Clock()
 
-ship1 = ship(200,200,2)
+ship1 = ship(50,50,0)
+wall1 = wall(200,190,100,50)
 
 screen = pygame.display.set_mode(size)
 
 x,y = 100,100
-speed = [0,0]
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
@@ -70,18 +77,17 @@ while 1:
     if key[pygame.K_w] or key[pygame.K_UP]:
        accel = maxaccel
     if key[pygame.K_s] or key[pygame.K_DOWN]:
-       accel = -maxaccel
+       accel = -0.5*maxaccel
     if key[pygame.K_SPACE]:
         accel = 0
     
     # Move
-    ship1.updateSpeed(accel,angle) 
-    ship1.updatePos()
+    if(ship1.crashed == False):
+        ship1.updateSpeed(accel,angle) 
+        ship1.updatePos()
+        if(wall1.checkCollision(ship1.x,ship1.y)): ship1.crash()
     screen.fill(black)
-    x,y,angle = int(ship1.x), int(ship1.y), ship1.angle
-    triangle = pygame.draw.polygon(screen, (240,70,80), [[int(x+ 10 *np.cos(angle)), int(y+ 10 *np.sin(angle))],
-                                   [int(x+ 10 *np.cos(angle + 2)), int(y+ 10 *np.sin(angle + 2))],
-                                   [int(x+ 10 *np.cos(angle + 4)), int(y+ 10 *np.sin(angle + 4))]])
-    triangle = pygame.draw.circle(screen, (140,160,240), [x, y], 5,2)
+    wall1.drawWall()
+    ship1.drawShip()
     time.tick(30)
     pygame.display.flip()
