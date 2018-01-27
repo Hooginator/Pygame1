@@ -6,6 +6,7 @@ Created on Wed Jan 24 15:08:54 2018
 """
 
 import sys, pygame
+import numpy as np
 pygame.init()
 
 
@@ -13,8 +14,20 @@ class ship:
     def __init__(self, x, y, angle):
         self.x = x
         self.y = y
+        self.vx = 0
+        self.vy = 0
+        self.maxSpeed = 10
         self.angle = angle
-
+    def updateSpeed(self,accel,dangle):
+        self.angle += dangle
+        self.vx += accel * np.cos(self.angle)
+        self.vy += accel * np.sin(self.angle)
+        if(self.vx*self.vx + self.vy*self.vy > self.maxSpeed):
+            self.vx = self.vx *0.9
+            self.vy = self.vy *0.9
+    def updatePos(self):
+        self.x += self.vx
+        self.y += self.vy
 def moveTowards(tomove, target, speed):
     toreturn = tomove
     if(tomove[0] > target[0]):
@@ -25,16 +38,12 @@ def moveTowards(tomove, target, speed):
         toreturn[1] = - speed[1]
     else: toreturn[1] = speed[1]
     return toreturn
-    
-def rotateCenter(image, rect, angle):
-    new_image = pygame.transform.rotate(image, angle)
-    # Get a new rect with the center of the old rect.
-    rect = new_image.get_rect(center=rect.center)
-    return new_image, rect
+
 
 
 size = width, height = 620, 440
-speed = [5, 2]
+accel = [2,2]
+maxspeed = [5, 5]
 black = 0, 0, 0
 time = pygame.time.Clock()
 
@@ -42,29 +51,30 @@ ship1 = ship(2,2,2)
 
 screen = pygame.display.set_mode(size)
 
-ball = pygame.image.load("ship.png")
-ballrect = ball.get_rect()
-
 x,y = 100,100
-
+speed = [0,0]
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
-            
+    angle = 0
+    accel = 0        
     key = pygame.key.get_pressed()
-    pos = ballrect
     if key[pygame.K_a] or key[pygame.K_LEFT]:
-        ball,ballrect = rotateCenter(ball,ballrect, 2)
+       angle += 1
     if key[pygame.K_d] or key[pygame.K_RIGHT]:
-        ball,ballrect = rotateCenter(ball,ballrect, -2)
-        #if event.type == pygame.KEYDOWN:
-        #    if key[pygame.K_a] or key[pygame.K_LEFT]:
-        #         ball = pygame.transform.rotate(ball, 2)
-
-    #ballrect = ballrect.move(moveTowards(list(ballrect.center),pygame.mouse.get_pos(), speed))
-
+       angle -= 1
+    if key[pygame.K_w] or key[pygame.K_UP]:
+       accel = 2
+    if key[pygame.K_s] or key[pygame.K_DOWN]:
+       accel = -2
+    if key[pygame.K_SPACE]:
+        accel = 0
+    
+    # Move
+    ship1.updateSpeed(accel,angle) 
+    ship1.updatePos()
     screen.fill(black)
-    screen.blit(ball, ballrect)
+    x,y = int(ship1.x), int(ship1.y)
     triangle = pygame.draw.polygon(screen, (240,70,80), [[x, y], [x -10, y -20], [x + 10, y - 20]], 2)
     triangle = pygame.draw.circle(screen, (140,160,240), [x, y-10], 5,2)
     time.tick(30)
