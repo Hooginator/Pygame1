@@ -9,6 +9,7 @@ import sys, pygame
 import numpy as np
 pygame.init()
 
+size = width, height = 620, 440
 
 class ship:
     def __init__(self, x, y, angle):
@@ -22,12 +23,15 @@ class ship:
         self.angle += dangle
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
-        if(self.vx*self.vx + self.vy*self.vy > self.maxSpeed):
-            self.vx = self.vx *0.9
-            self.vy = self.vy *0.9
+        if(self.vx > self.maxSpeed): self.vx = self.maxSpeed
+        if(self.vy > self.maxSpeed): self.vy = self.maxSpeed
     def updatePos(self):
         self.x += self.vx
         self.y += self.vy
+        self.x = max(self.x,0)
+        self.y = max(self.y,0)
+        self.x = min(self.x,width)
+        self.y = min(self.y,height)
 def moveTowards(tomove, target, speed):
     toreturn = tomove
     if(tomove[0] > target[0]):
@@ -41,13 +45,13 @@ def moveTowards(tomove, target, speed):
 
 
 
-size = width, height = 620, 440
 accel = [2,2]
-maxspeed = [5, 5]
+maxangle = 0.04
+maxaccel = 0.5
 black = 0, 0, 0
 time = pygame.time.Clock()
 
-ship1 = ship(2,2,2)
+ship1 = ship(200,200,2)
 
 screen = pygame.display.set_mode(size)
 
@@ -60,13 +64,13 @@ while 1:
     accel = 0        
     key = pygame.key.get_pressed()
     if key[pygame.K_a] or key[pygame.K_LEFT]:
-       angle += 1
+       angle -= maxangle
     if key[pygame.K_d] or key[pygame.K_RIGHT]:
-       angle -= 1
+       angle += maxangle
     if key[pygame.K_w] or key[pygame.K_UP]:
-       accel = 2
+       accel = maxaccel
     if key[pygame.K_s] or key[pygame.K_DOWN]:
-       accel = -2
+       accel = -maxaccel
     if key[pygame.K_SPACE]:
         accel = 0
     
@@ -74,8 +78,10 @@ while 1:
     ship1.updateSpeed(accel,angle) 
     ship1.updatePos()
     screen.fill(black)
-    x,y = int(ship1.x), int(ship1.y)
-    triangle = pygame.draw.polygon(screen, (240,70,80), [[x, y], [x -10, y -20], [x + 10, y - 20]], 2)
-    triangle = pygame.draw.circle(screen, (140,160,240), [x, y-10], 5,2)
+    x,y,angle = int(ship1.x), int(ship1.y), ship1.angle
+    triangle = pygame.draw.polygon(screen, (240,70,80), [[int(x+ 10 *np.cos(angle)), int(y+ 10 *np.sin(angle))],
+                                   [int(x+ 10 *np.cos(angle + 2)), int(y+ 10 *np.sin(angle + 2))],
+                                   [int(x+ 10 *np.cos(angle + 4)), int(y+ 10 *np.sin(angle + 4))]])
+    triangle = pygame.draw.circle(screen, (140,160,240), [x, y], 5,2)
     time.tick(30)
     pygame.display.flip()
