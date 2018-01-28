@@ -13,18 +13,28 @@ size = width, height = 600, 600
 
 colours = [(100,120,220),(240,120,120)]
 
+INPUTS = 16
+INTERMEDIATE = 8
+OUTPUTS = 4
+
 
 class ship:
-    def __init__(self, x, y, angle):
+    def __init__(self, x, y, angle,colour):
         self.x = x
         self.y = y
         self.vx = 0
         self.vy = 0
-        self.drag = 0.96
+        self.drag = 0.70
         self.angle = angle
         self.crashed = False
         self.score = 0
-        self.inputColour = [colours[0],colours[0],colours[0],colours[0],colours[0],colours[0],colours[0],colours[0]]
+        self.inputColour = [colours[0] for i in range(INPUTS)]
+        self.scan = np.array([0 for i in range(INPUTS)])
+        self.initWeights()
+        self.timeDriving = 0
+        self.colour = colour
+        self.checkpoint = 0
+        self.laps = 0
     def updateSpeed(self,accel,dangle):
         self.angle += dangle
         self.vx += accel * np.cos(self.angle)
@@ -32,23 +42,34 @@ class ship:
         self.vx = self.vx * self.drag
         self.vy = self.vy * self.drag
     def updatePos(self):
+        self.timeDriving +=1
         self.x += self.vx
         self.y += self.vy
-        self.score += np.sqrt(self.vx*self.vx + self.vy*self.vy)
     def getInputs(self):
-        self.inputPos = [[int(self.x + 40*np.cos(self.angle-0.5)), int(self.y  + 40*np.sin(self.angle-0.5))],
-                     [int(self.x + 40*np.cos(self.angle+0.5)), int(self.y  + 40*np.sin(self.angle+0.5))],
-                      [int(self.x + 40*np.cos(self.angle-1)), int(self.y  + 40*np.sin(self.angle-1))],
-                       [int(self.x + 40*np.cos(self.angle+1)), int(self.y  + 40*np.sin(self.angle+1))],
-                        [int(self.x + 80*np.cos(self.angle-0.5)), int(self.y  + 80*np.sin(self.angle-0.5))],
-                     [int(self.x + 80*np.cos(self.angle+0.5)), int(self.y  + 80*np.sin(self.angle+0.5))],
-                      [int(self.x + 80*np.cos(self.angle-1)), int(self.y  + 80*np.sin(self.angle-1))],
-                       [int(self.x + 80*np.cos(self.angle+1)), int(self.y  + 80*np.sin(self.angle+1))]]
+        self.inputPos = [[int(self.x + 50*np.cos(self.angle-0.5)), int(self.y  + 50*np.sin(self.angle-0.5))],
+                     [int(self.x + 50*np.cos(self.angle+0.5)), int(self.y  + 50*np.sin(self.angle+0.5))],
+                      [int(self.x + 50*np.cos(self.angle-1)), int(self.y  + 50*np.sin(self.angle-1))],
+                       [int(self.x + 50*np.cos(self.angle+1)), int(self.y  + 50*np.sin(self.angle+1))],
+                        [int(self.x + 100*np.cos(self.angle-0.5)), int(self.y  + 100*np.sin(self.angle-0.5))],
+                     [int(self.x + 100*np.cos(self.angle+0.5)), int(self.y  + 100*np.sin(self.angle+0.5))],
+                      [int(self.x + 100*np.cos(self.angle-1)), int(self.y  + 100*np.sin(self.angle-1))],
+                       [int(self.x + 100*np.cos(self.angle+1)), int(self.y  + 100*np.sin(self.angle+1))],
+                       [int(self.x + 100*np.cos(self.angle)), int(self.y  + 100*np.sin(self.angle))],
+                       [int(self.x + 50*np.cos(self.angle)), int(self.y  + 50*np.sin(self.angle))],
+                        [int(self.x + 150*np.cos(self.angle-0.5)), int(self.y  + 150*np.sin(self.angle-0.5))],
+                     [int(self.x + 150*np.cos(self.angle+0.5)), int(self.y  + 150*np.sin(self.angle+0.5))],
+                      [int(self.x + 150*np.cos(self.angle-1)), int(self.y  + 150*np.sin(self.angle-1))],
+                       [int(self.x + 150*np.cos(self.angle+1)), int(self.y  + 150*np.sin(self.angle+1))],
+                       [int(self.x + 150*np.cos(self.angle)), int(self.y  + 150*np.sin(self.angle))],
+                       [int(self.x + 50*np.cos(self.angle + 3.14)), int(self.y  + 50*np.sin(self.angle + 3.14))]]
         i = 0
         for pos in self.inputPos:
             if(checkCollisions(walls,pos[0],pos[1])): 
-                self.inputColour[i] = colours[1]
-            else: self.inputColour[i] = colours[0]
+                self.inputColour[i] = colours[1] 
+                self.scan[i] = 1
+            else: 
+                self.inputColour[i] = colours[0]
+                self.scan[i] = 0
             i += 1
     def reset(self):
         self.x = 50
@@ -57,10 +78,13 @@ class ship:
         self.vx = 0
         self.vy = 0
         self.crashed = False
+        self.timeDriving = 0
         self.score = 0
+        self.checkpoint = 0
+        self.laps = 0
                        
     def drawShip(self):
-        pygame.draw.polygon(screen, (240,70,80), [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
+        pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
                                    [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
                                    [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
         self.getInputs()
@@ -70,10 +94,34 @@ class ship:
             i += 1
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
     def crash(self):
+        self.score += 1000
+        self.score -= getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
+        self.score += self.checkpoint *1000
+        self.score += self.laps * 4000
         self.crashed = True
         self.vx = 0
         self.vy = 0
-        print("You crashed, score: " + str(self.score))
+    def checkCheckpoint(self,checkpoints):
+        if checkpoints[self.checkpoint].checkCollision(self.x,self.y):
+            self.checkpoint +=1
+            if(self.checkpoint >= len(checkpoints)):
+                self.checkpoint = 0
+                self.laps +=1
+    def initWeights(self):
+        self.weights1 = np.random.random((INPUTS,INTERMEDIATE))
+        self.weights2 = np.random.random((INTERMEDIATE,OUTPUTS))
+    def getDecision(self):
+        return self.scan.dot(self.weights1).dot(self.weights2)
+    def copyWeights(self, ship, stray, colour):
+        if(stray == 0):
+            self.weights1 = ship.weights1
+            self.weights2 = ship.weights2
+        else:
+            self.weights1 = ship.weights1 + np.random.random((INPUTS,INTERMEDIATE))*stray
+            self.weights2 = ship.weights2 + np.random.random((INTERMEDIATE,OUTPUTS))*stray
+        self.colour = colour
+        
+        
 class wall:
     def __init__(self,posx,posy,sizex,sizey):
         self.posx = posx
@@ -84,6 +132,8 @@ class wall:
         pygame.draw.rect(screen,(0,0,255),(self.posx, self.posy, self.sizex, self.sizey))
     def checkCollision(self,x,y):
         return ((self.posx <= x) and (self.posx + self.sizex >= x) and (self.posy <= y) and (self.posy + self.sizey >= y))
+    def getMid(self):
+        return [self.posx + self.sizex/2,self.posy + self.sizey/2]
 
 def checkCollisions(walls,x,y):
     for wall in walls:
@@ -92,41 +142,78 @@ def checkCollisions(walls,x,y):
     return False
 def drawWalls(walls):
     for wall in walls: wall.drawWall()
+def getDist(pos1,pos2):
+    return np.sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1]))
 maxangle = 0.08
-maxaccel = 0.6
+maxaccel = 0.2
 black = 0, 0, 0
 time = pygame.time.Clock()
 
-ships = [ship(50,50,0)]
-walls = [wall(100,100,50,350),wall(150,100,400,50),wall(150,400,300,50),wall(250,250,400,50)]
-for ship in ships: ship.getInputs()
+ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
+walls = [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,300,50),wall(300,250,400,50)]
+checkpoints = [wall(450,50,150,150),wall(150,200,150,150),wall(450,350,150,150),wall(0,400,150,150),wall(50,0,150,150)]
+for shp in ships: shp.getInputs()
 screen = pygame.display.set_mode(size)
 
-x,y = 100,100
+bestship = ship(50,50,0,(240,100,100))
+#manual = False
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
-    angle = 0
-    accel = 0        
-    key = pygame.key.get_pressed()
-    if key[pygame.K_a] or key[pygame.K_LEFT]:
-       angle -= maxangle
-    if key[pygame.K_d] or key[pygame.K_RIGHT]:
-       angle += maxangle
-    if key[pygame.K_w] or key[pygame.K_UP]:
-       accel = maxaccel
-    if key[pygame.K_s] or key[pygame.K_DOWN]:
-       accel = -0.5*maxaccel
-    if key[pygame.K_SPACE]:
-        ships[0].reset()
     
-    # Move
-    if(ships[0].crashed == False):
-        ships[0].updateSpeed(accel,angle) 
-        ships[0].updatePos()
-        if(checkCollisions(walls,ships[0].x,ships[0].y)): ships[0].crash()
+#    if(manual):
+#        key = pygame.key.get_pressed()
+#        if key[pygame.K_a] or key[pygame.K_LEFT]:
+#            angle -= maxangle
+#        if key[pygame.K_d] or key[pygame.K_RIGHT]:
+#            angle += maxangle
+#        if key[pygame.K_w] or key[pygame.K_UP]:
+#            accel = maxaccel
+#        if key[pygame.K_s] or key[pygame.K_DOWN]:
+#            accel = -0.5*maxaccel
+#        if key[pygame.K_SPACE]:
+#            ships[0].reset()
+
     screen.fill(black)
     drawWalls(walls)
-    ships[0].drawShip()
-    time.tick(30)
+    # Move
+    allcrashed = True
+    for shp in ships:
+        if(shp.crashed == False):
+            allcrashed = False
+            shp.checkCheckpoint(checkpoints)
+            angle = 0
+            accel = 0   
+            controlInputs = shp.getDecision()
+            angle -= controlInputs[0] * maxangle
+            angle += controlInputs[1] * maxangle
+            accel += controlInputs[2] * maxaccel
+            accel -= 0.25*controlInputs[3] * maxaccel
+            
+            shp.updateSpeed(accel,angle) 
+            shp.updatePos()
+            if(checkCollisions(walls,shp.x,shp.y) or shp.timeDriving > 300* (1+shp.checkpoint + 4*shp.laps) or shp.timeDriving > 3000): shp.crash()
+        shp.drawShip()
+    if(allcrashed):
+        for shp in ships:
+            if(shp.score > bestship.score):
+                print("New Best Ship Score: " + str(shp.score)+ "  at  " + str(shp.x) + "  " + str(shp.y))
+                
+                bestship.copyWeights(shp,0,(0,0,0))
+                bestship.score = shp.score
+        n = 0
+        print("All crashed for this generation.  Top Ship score: " + str(bestship.score) + "  at  " + str(bestship.weights1[0]))
+        for shp in ships:
+            shp.reset()
+            if(n == 0): shp.copyWeights(bestship,0, (240,240,240))
+            elif(n < 10): 
+                shp.copyWeights(bestship,0.005, (240,100,100))
+            elif(n < 80): 
+                shp.copyWeights(bestship,0.05, (100,240,100))
+            else: 
+                shp.copyWeights(bestship,0.5, (100,100,240))
+            
+            n+=1
+            
+    time.tick(60)
     pygame.display.flip()
