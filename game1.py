@@ -235,5 +235,5 @@ while 1:
             shp.drawShip()
             n+=1
             
-    time.tick(60)
+    time.tick(30)
     pygame.display.flip()
