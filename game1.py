@@ -3,11 +3,14 @@
 Created on Wed Jan 24 15:08:54 2018
 
 @author: hoog
+BUG: lategame I have noticed that the top player oscillates between 2 options 
 """
 
 import sys, pygame
 import numpy as np
 pygame.init()
+
+myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
 size = width, height = 600, 600
 
@@ -72,9 +75,9 @@ class ship:
                 self.scan[i] = 0
             i += 1
     def reset(self):
-        self.x = 50
-        self.y = 50
-        self.angle = 0
+        self.x = 550
+        self.y = 450
+        self.angle = -3.1415
         self.vx = 0
         self.vy = 0
         self.crashed = False
@@ -110,15 +113,21 @@ class ship:
     def initWeights(self):
         self.weights1 = np.random.random((INPUTS,INTERMEDIATE))
         self.weights2 = np.random.random((INTERMEDIATE,OUTPUTS))
+        self.bias1 = np.random.random((1,INTERMEDIATE))
+        self.bias2 = np.random.random((1,OUTPUTS))
     def getDecision(self):
-        return self.scan.dot(self.weights1).dot(self.weights2)
+        return np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).T
     def copyWeights(self, ship, stray, colour):
         if(stray == 0):
             self.weights1 = ship.weights1
             self.weights2 = ship.weights2
+            self.bias1 = ship.bias1
+            self.bias2 = ship.bias2
         else:
             self.weights1 = ship.weights1 + np.random.random((INPUTS,INTERMEDIATE))*stray
             self.weights2 = ship.weights2 + np.random.random((INTERMEDIATE,OUTPUTS))*stray
+            self.bias1 = ship.bias1 + np.random.random((1,INTERMEDIATE))*stray
+            self.bias2 = ship.bias2 + np.random.random((1,OUTPUTS))*stray
         self.colour = colour
         
         
@@ -144,18 +153,19 @@ def drawWalls(walls):
     for wall in walls: wall.drawWall()
 def getDist(pos1,pos2):
     return np.sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1]))
-maxangle = 0.08
-maxaccel = 0.2
+maxangle = 0.6
+maxaccel = 0.5
 black = 0, 0, 0
 time = pygame.time.Clock()
+generation = 0
 
-ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
-walls = [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,300,50),wall(300,250,400,50)]
-checkpoints = [wall(450,50,150,150),wall(150,200,150,150),wall(450,350,150,150),wall(0,400,150,150),wall(50,0,150,150)]
+ships = [ship(550,450,-3.1415,(240,100,100)) for i in range(100)]
+walls = [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,200,50),wall(300,250,300,50)]
+checkpoints = [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
 for shp in ships: shp.getInputs()
 screen = pygame.display.set_mode(size)
 
-bestship = ship(50,50,0,(240,100,100))
+bestship = ship(550,450,-3.1415,(240,100,100))
 #manual = False
 while 1:
     for event in pygame.event.get():
@@ -176,6 +186,9 @@ while 1:
 
     screen.fill(black)
     drawWalls(walls)
+    textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
+    screen.blit(textsurface,(0,0))
+    #drawWalls(checkpoints)
     # Move
     allcrashed = True
     for shp in ships:
@@ -192,7 +205,7 @@ while 1:
             
             shp.updateSpeed(accel,angle) 
             shp.updatePos()
-            if(checkCollisions(walls,shp.x,shp.y) or shp.timeDriving > 300* (1+shp.checkpoint + 4*shp.laps) or shp.timeDriving > 3000): shp.crash()
+            if(checkCollisions(walls,shp.x,shp.y) or shp.timeDriving > 150* (1+shp.checkpoint + 4*shp.laps) or shp.timeDriving > 3000): shp.crash()
         shp.drawShip()
     if(allcrashed):
         for shp in ships:
@@ -202,17 +215,24 @@ while 1:
                 bestship.copyWeights(shp,0,(0,0,0))
                 bestship.score = shp.score
         n = 0
-        print("All crashed for this generation.  Top Ship score: " + str(bestship.score) + "  at  " + str(bestship.weights1[0]))
+        print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship.score) + "  at  " + str(bestship.weights1[0][0]))
+        generation +=1
         for shp in ships:
             shp.reset()
             if(n == 0): shp.copyWeights(bestship,0, (240,240,240))
             elif(n < 10): 
-                shp.copyWeights(bestship,0.005, (240,100,100))
-            elif(n < 80): 
-                shp.copyWeights(bestship,0.05, (100,240,100))
+                shp.copyWeights(bestship,0.00001, (240,100,100))
+            elif(n < 30): 
+                shp.copyWeights(bestship,0.0001, (240,240,100))
+            elif(n < 50): 
+                shp.copyWeights(bestship,0.001, (100,240,100))
+            elif(n < 70): 
+                shp.copyWeights(bestship,0.01, (100,240,240))
+            elif(n < 90): 
+                shp.copyWeights(bestship,0.1, (100,100,240))
             else: 
-                shp.copyWeights(bestship,0.5, (100,100,240))
-            
+                shp.copyWeights(bestship,0.5, (240,100,240))
+            shp.drawShip()
             n+=1
             
     time.tick(60)
