@@ -12,22 +12,25 @@ pygame.init()
 
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
-size = width, height = 600, 600
+size = width, height = 1600, 850
 
 colours = [(100,120,220),(240,120,120)]
 
-INPUTS = 16
+INPUTS = 16+1
 INTERMEDIATE = 8
 OUTPUTS = 4
 
 
 class ship:
     def __init__(self, x, y, angle,colour):
+        self.startx = x
+        self.starty = y
+        self.startangle = angle
         self.x = x
         self.y = y
         self.vx = 0
         self.vy = 0
-        self.drag = 0.70
+        self.drag = 0.90
         self.angle = angle
         self.crashed = False
         self.score = 0
@@ -74,10 +77,11 @@ class ship:
                 self.inputColour[i] = colours[0]
                 self.scan[i] = 0
             i += 1
+        self.scan[i] = 0 #int(getDist([self.vx,self.vy],[0,0])) # adding velocity at the end of the inputs.
     def reset(self):
-        self.x = 550
-        self.y = 450
-        self.angle = -3.1415
+        self.x = self.startx
+        self.y = self.starty
+        self.angle = self.startangle
         self.vx = 0
         self.vy = 0
         self.crashed = False
@@ -97,7 +101,7 @@ class ship:
             i += 1
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
     def crash(self):
-        self.score += 1000
+        self.score += 10000
         self.score -= getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
         self.score += self.checkpoint *1000
         self.score += self.laps * 4000
@@ -139,10 +143,27 @@ class wall:
         self.sizey = sizey
     def drawWall(self):
         pygame.draw.rect(screen,(0,0,255),(self.posx, self.posy, self.sizex, self.sizey))
+    def drawCheckpoint(self):
+        pygame.draw.circle(screen,(255,255,255),self.getMidInt(), 20, 3)
     def checkCollision(self,x,y):
         return ((self.posx <= x) and (self.posx + self.sizex >= x) and (self.posy <= y) and (self.posy + self.sizey >= y))
     def getMid(self):
         return [self.posx + self.sizex/2,self.posy + self.sizey/2]
+    def getMidInt(self):
+        return [int(self.posx + self.sizex/2),int(self.posy + self.sizey/2)]
+    def maze(i):
+        if(i == 0):
+            return [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,200,50),wall(300,250,300,50)]
+        elif(i == 1):
+            return [wall(200,650,1000,50),wall(200,200,50,450),wall(400,0,50,400),wall(450,350,300,50),
+                    wall(850,100,50,550),wall(600,100,250,50),wall(1000,0,50,500),wall(1200,300,50,400),]
+    
+    def checkpoints(i):
+        if(i == 0):
+            return [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
+        elif(i == 1):
+            return [wall(1100,700,150,150),wall(0,700,250,250),wall(0,0,250,250)
+            ,wall(700,400,150,150),wall(550,0,100,100),wall(1050,400,150,150),wall(1200,0,300,300)]
 
 def checkCollisions(walls,x,y):
     for wall in walls:
@@ -151,17 +172,19 @@ def checkCollisions(walls,x,y):
     return False
 def drawWalls(walls):
     for wall in walls: wall.drawWall()
+def drawCheckpoints(walls):
+    for wall in walls: wall.drawCheckpoint()
 def getDist(pos1,pos2):
     return np.sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1]))
-maxangle = 0.6
-maxaccel = 0.5
+maxangle = 0.1
+maxaccel = 0.2
 black = 0, 0, 0
 time = pygame.time.Clock()
 generation = 0
 
-ships = [ship(550,450,-3.1415,(240,100,100)) for i in range(100)]
-walls = [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,200,50),wall(300,250,300,50)]
-checkpoints = [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
+ships = [ship(1400,200,3.1415/2,(240,100,100)) for i in range(100)]
+walls = wall.maze(1)
+checkpoints = wall.checkpoints(1)
 for shp in ships: shp.getInputs()
 screen = pygame.display.set_mode(size)
 
@@ -188,7 +211,7 @@ while 1:
     drawWalls(walls)
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
     screen.blit(textsurface,(0,0))
-    #drawWalls(checkpoints)
+    drawCheckpoints(checkpoints)
     # Move
     allcrashed = True
     for shp in ships:
@@ -205,8 +228,11 @@ while 1:
             
             shp.updateSpeed(accel,angle) 
             shp.updatePos()
-            if(checkCollisions(walls,shp.x,shp.y) or shp.timeDriving > 150* (1+shp.checkpoint + 4*shp.laps) or shp.timeDriving > 3000): shp.crash()
+            if(checkCollisions(walls,shp.x,shp.y) 
+                or shp.timeDriving > 150* (1+shp.checkpoint + 4*shp.laps) 
+                or shp.timeDriving > 3000): shp.crash()
         shp.drawShip()
+        
     if(allcrashed):
         for shp in ships:
             if(shp.score > bestship.score):
@@ -217,21 +243,22 @@ while 1:
         n = 0
         print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship.score) + "  at  " + str(bestship.weights1[0][0]))
         generation +=1
+        gencoef = 1/(generation +1) 
         for shp in ships:
             shp.reset()
             if(n == 0): shp.copyWeights(bestship,0, (240,240,240))
             elif(n < 10): 
-                shp.copyWeights(bestship,0.00001, (240,100,100))
+                shp.copyWeights(bestship,0.0001*gencoef, (240,100,100))
             elif(n < 30): 
-                shp.copyWeights(bestship,0.0001, (240,240,100))
+                shp.copyWeights(bestship,0.001*gencoef, (240,240,100))
             elif(n < 50): 
-                shp.copyWeights(bestship,0.001, (100,240,100))
+                shp.copyWeights(bestship,0.01*gencoef, (100,240,100))
             elif(n < 70): 
-                shp.copyWeights(bestship,0.01, (100,240,240))
+                shp.copyWeights(bestship,0.1*gencoef, (100,240,240))
             elif(n < 90): 
-                shp.copyWeights(bestship,0.1, (100,100,240))
+                shp.copyWeights(bestship,1*gencoef, (100,100,240))
             else: 
-                shp.copyWeights(bestship,0.5, (240,100,240))
+                shp.copyWeights(bestship,1, (240,100,240))
             shp.drawShip()
             n+=1
             
