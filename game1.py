@@ -102,7 +102,7 @@ class ship:
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
     def crash(self):
         self.score += 1000
-        self.score -= 0.001*self.timeDriving 
+        self.score -= 0.01*self.timeDriving 
         self.score -= 0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
         self.score += self.checkpoint *1000
         self.score += self.laps * 1000 * len(checkpoints)
@@ -124,45 +124,45 @@ class ship:
         self.bias3 = np.random.normal(0,1,(1,OUTPUTS))
     def getDecision(self):
         return np.add(np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).dot(self.weights3),self.bias3).T
-    def copyWeights(self, ship, stray, colour):
+    def copyWeights(self, shp, stray, colour):
         if(stray == 0):
-            self.weights1 = ship.weights1
-            self.weights2 = ship.weights2
-            self.weights3 = ship.weights3
-            self.bias1 = ship.bias1
-            self.bias2 = ship.bias2
-            self.bias3 = ship.bias3
+            self.weights1 = shp.weights1
+            self.weights2 = shp.weights2
+            self.weights3 = shp.weights3
+            self.bias1 = shp.bias1
+            self.bias2 = shp.bias2
+            self.bias3 = shp.bias3
         else:
-            self.weights1 = ship.weights1 + np.random.normal(0,stray,(INPUTS,INTERMEDIATE1))
-            self.weights2 = ship.weights2 + np.random.normal(0,stray,(INTERMEDIATE1,INTERMEDIATE2))
-            self.weights3 = ship.weights3 + np.random.normal(0,stray,(INTERMEDIATE2,OUTPUTS))
-            self.bias1 = ship.bias1 + np.random.normal(0,stray,(1,INTERMEDIATE1))
-            self.bias2 = ship.bias2 + np.random.normal(0,stray,(1,INTERMEDIATE2))
-            self.bias3 = ship.bias3 + np.random.normal(0,stray,(1,OUTPUTS))
+            self.weights1 = shp.weights1 + np.random.normal(0,stray,(INPUTS,INTERMEDIATE1))
+            self.weights2 = shp.weights2 + np.random.normal(0,stray,(INTERMEDIATE1,INTERMEDIATE2))
+            self.weights3 = shp.weights3 + np.random.normal(0,stray,(INTERMEDIATE2,OUTPUTS))
+            self.bias1 = shp.bias1 + np.random.normal(0,stray,(1,INTERMEDIATE1))
+            self.bias2 = shp.bias2 + np.random.normal(0,stray,(1,INTERMEDIATE2))
+            self.bias3 = shp.bias3 + np.random.normal(0,stray,(1,OUTPUTS))
         self.colour = colour
-    def copyWeightsExper(self, ship, stray, colour):
-        self.weights1 = ship.weights1
-        self.weights2 = ship.weights2
-        self.weights3 = ship.weights3
-        self.bias1 = ship.bias1
-        self.bias2 = ship.bias2
-        self.bias3 = ship.bias3
+    def copyWeightsExper(self, shp, stray, colour):
+        self.weights1 = shp.weights1
+        self.weights2 = shp.weights2
+        self.weights3 = shp.weights3
+        self.bias1 = shp.bias1
+        self.bias2 = shp.bias2
+        self.bias3 = shp.bias3
         self.colour = colour
-        i = np.random.randint(ship.weights1.shape[0])
-        j = np.random.randint(ship.weights1.shape[1])
+        i = np.random.randint(shp.weights1.shape[0])
+        j = np.random.randint(shp.weights1.shape[1])
         self.weights1[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(ship.weights2.shape[0])
-        j = np.random.randint(ship.weights2.shape[1])
+        i = np.random.randint(shp.weights2.shape[0])
+        j = np.random.randint(shp.weights2.shape[1])
         self.weights2[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(ship.weights3.shape[0])
-        j = np.random.randint(ship.weights3.shape[1])
+        i = np.random.randint(shp.weights3.shape[0])
+        j = np.random.randint(shp.weights3.shape[1])
         self.weights3[i,j] = np.random.normal(0,1,1)
         
-        i = np.random.randint(ship.bias1.shape[0])
+        i = np.random.randint(shp.bias1.shape[0])
         self.bias1[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(ship.bias2.shape[0])
+        i = np.random.randint(shp.bias2.shape[0])
         self.bias2[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(ship.bias3.shape[0])
+        i = np.random.randint(shp.bias3.shape[0])
         self.bias3[i,j] = np.random.normal(0,1,1)
         
 class wall:
@@ -211,10 +211,12 @@ def logis(a): # "Logistic function"
     b = 1/(1+np.exp(a))
     return b
 maxangle = 0.1
-maxaccel = 0.5
+maxaccel = 0.8
 black = 0, 0, 0
 time = pygame.time.Clock()
 generation = 0
+
+savefile = "BestShips.txt"
 
 ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
 walls = wall.maze(1)
@@ -246,7 +248,7 @@ while 1:
     drawWalls(walls)
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
     screen.blit(textsurface,(0,0))
-    drawWalls(checkpoints)
+    #drawWalls(checkpoints)
     # Move
     allcrashed = True
     for shp in ships:
@@ -264,7 +266,7 @@ while 1:
             shp.updateSpeed(accel,angle,brake) 
             shp.updatePos()
             if(checkCollisions(walls,shp.x,shp.y) 
-                or shp.timeDriving > 200* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
+                or shp.timeDriving > 180* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
                 or shp.timeDriving > 3000): shp.crash()
         shp.drawShip()
         
@@ -284,6 +286,7 @@ while 1:
                 bestship[2] = copy.deepcopy(shp)
                 
         for i in range(3):
+            np.save(savefile,bestship[0].weights1)
             newbestsurface[i] = myfont.render("High Score: "+str(int(bestship[i].score)),  False, bestship[i].colour)
            
             
