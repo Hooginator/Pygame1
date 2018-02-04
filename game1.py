@@ -18,8 +18,8 @@ size = width, height = 1600, 900
 colours = [(100,120,220),(240,120,120)]
 MAX_SPEED = 20
 
-INPUTS = 16+1
-INTERMEDIATE1 = 9
+INPUTS = 11+1
+INTERMEDIATE1 = 8
 INTERMEDIATE2 = 6
 OUTPUTS = 4
 
@@ -70,11 +70,6 @@ class ship:
                        [int(self.x + 100*np.cos(self.angle+1)), int(self.y  + 100*np.sin(self.angle+1))],
                        [int(self.x + 100*np.cos(self.angle)), int(self.y  + 100*np.sin(self.angle))],
                        [int(self.x + 50*np.cos(self.angle)), int(self.y  + 50*np.sin(self.angle))],
-                        [int(self.x + 150*np.cos(self.angle-0.5)), int(self.y  + 150*np.sin(self.angle-0.5))],
-                     [int(self.x + 150*np.cos(self.angle+0.5)), int(self.y  + 150*np.sin(self.angle+0.5))],
-                      [int(self.x + 150*np.cos(self.angle-1)), int(self.y  + 150*np.sin(self.angle-1))],
-                       [int(self.x + 150*np.cos(self.angle+1)), int(self.y  + 150*np.sin(self.angle+1))],
-                       [int(self.x + 150*np.cos(self.angle)), int(self.y  + 150*np.sin(self.angle))],
                        [int(self.x + 50*np.cos(self.angle + 3.14)), int(self.y  + 50*np.sin(self.angle + 3.14))]]
         i = 0
         for pos in self.inputPos:
@@ -184,8 +179,8 @@ class wall:
         if(i == 0):
             return [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
         elif(i == 1):
-            return [wall(1100,700,200,200),wall(200,700,250,250),wall(0,0,250,250)
-            ,wall(700,400,150,150),wall(550,0,100,100),wall(1050,400,150,150),wall(1200,0,300,300)]
+            return [wall(400,400,250,250),wall(750,300,100,100),wall(600,0,100,100),wall(1050,350,150,150),
+            wall(1200,0,200,200),wall(1050,700,200,200),wall(0,500,200,200),wall(200,0,200,200)]
 
 def checkCollisions(walls,x,y):
     for wall in walls:
@@ -207,7 +202,7 @@ black = 0, 0, 0
 time = pygame.time.Clock()
 generation = 0
 
-ships = [ship(1400,200,3.1415/2,(240,100,100)) for i in range(100)]
+ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
 walls = wall.maze(1)
 checkpoints = wall.checkpoints(1)
 for shp in ships: shp.getInputs()
@@ -255,7 +250,7 @@ while 1:
             shp.updateSpeed(accel,angle,brake) 
             shp.updatePos()
             if(checkCollisions(walls,shp.x,shp.y) 
-                or shp.timeDriving > 150* (1+shp.checkpoint + 4*shp.laps) 
+                or shp.timeDriving > 150* (1.5+shp.checkpoint + 4*shp.laps) 
                 or shp.timeDriving > 3000): shp.crash()
         shp.drawShip()
         
@@ -286,17 +281,25 @@ while 1:
             shp.reset()
             if(n == 0): shp.copyWeights(bestship[0],0, (240,240,240))
             elif(n < 10): 
-                shp.copyWeights(bestship[n%3],0.001*gencoef, (240,100,100))
+                shp.copyWeights(bestship[n%3],0.000001*gencoef, (240,200,200))
+            elif(n < 20): 
+                shp.copyWeights(bestship[n%3],0.00001*gencoef, (240,100,100))
             elif(n < 30): 
-                shp.copyWeights(bestship[n%3],0.01*gencoef, (240,240,100))
+                shp.copyWeights(bestship[n%3],0.0001*gencoef, (240,0,0))
+            elif(n < 40): 
+                shp.copyWeights(bestship[n%3],0.001*gencoef, (200,240,200))
             elif(n < 50): 
-                shp.copyWeights(bestship[n%3],0.1*gencoef, (100,240,100))
+                shp.copyWeights(bestship[n%3],0.01*gencoef, (100,240,100))
+            elif(n < 60): 
+                shp.copyWeights(bestship[n%3],0.1*gencoef, (0,240,0))
             elif(n < 70): 
-                shp.copyWeights(bestship[n%3],0.5*gencoef, (100,240,240))
+                shp.copyWeights(bestship[n%3],100*gencoef, (100,100,100))
+            elif(n < 80): 
+                shp.copyWeightsExper(bestship[n%3],0.001*gencoef, (200,200,240))
             elif(n < 90): 
-                shp.copyWeights(bestship[n%3],1*gencoef, (100,100,240))
+                shp.copyWeightsExper(bestship[n%3],0.1*gencoef, (100,100,240))
             else: 
-                shp.copyWeightsExper(bestship[n%3],1, (240,100,240))
+                shp.copyWeightsExper(bestship[n%3],10*gencoef, (0,0,240))
             shp.drawShip()
             n+=1
     if(newBest):
