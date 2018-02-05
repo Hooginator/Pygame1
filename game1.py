@@ -45,7 +45,6 @@ class ship:
         self.checkpoint = 0
         self.laps = 0
     def updateSpeed(self,accel,dangle,brake):
-        if np.abs(dangle > 0.1): print("sdfghjkl")
         self.angle += dangle
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
@@ -61,7 +60,7 @@ class ship:
         self.y += self.vy
     def getInputs(self):
         self.inputPos = []
-        distances = [40,80,140]
+        distances = [40,80,120]
         angles = [-1.2,0.8,-0.8,0.4,0,-0.4,1.2]
         
         for dis in distances:
@@ -124,6 +123,13 @@ class ship:
         self.bias3 = np.random.normal(0,1,(1,OUTPUTS))
     def getDecision(self):
         return np.add(np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).dot(self.weights3),self.bias3).T
+    def copyAll(self,shp):
+        self.copyWeights(shp, 0, shp.colour)
+        self.score = shp.score
+        self.x = shp.x
+        self.y = shp.y
+        self.checkpoint = shp.checkpoint
+        self.laps = shp.laps
     def copyWeights(self, shp, stray, colour):
         if(stray == 0):
             self.weights1 = shp.weights1
@@ -216,15 +222,15 @@ black = 0, 0, 0
 time = pygame.time.Clock()
 generation = 0
 
-savefile = "BestShips.txt"
+filename = "BestShips"
+fileext = ".txt"
 
 ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
 walls = wall.maze(1)
 checkpoints = wall.checkpoints(1)
-for shp in ships: shp.getInputs()
 screen = pygame.display.set_mode(size)
 newbestsurface = [None]*3
-bestship = [ship(550,450,-3.1415,(240,100,100)),ship(550,450,-3.1415,(240,100,100)),ship(550,450,-3.1415,(240,100,100))]
+bestship = [ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0))]
 newBest = False
 #manual = False
 while 1:
@@ -246,8 +252,6 @@ while 1:
 
     screen.fill(black)
     drawWalls(walls)
-    textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
-    screen.blit(textsurface,(0,0))
     #drawWalls(checkpoints)
     # Move
     allcrashed = True
@@ -266,27 +270,27 @@ while 1:
             shp.updateSpeed(accel,angle,brake) 
             shp.updatePos()
             if(checkCollisions(walls,shp.x,shp.y) 
-                or shp.timeDriving > 180* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
+                or shp.timeDriving > 120* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
                 or shp.timeDriving > 3000): shp.crash()
         shp.drawShip()
         
     if(allcrashed):
-        bestship = [ship(550,450,-3.1415,(240,100,100)),ship(550,450,-3.1415,(240,100,100)),ship(550,450,-3.1415,(240,100,100))]
+        bestship = [ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0))]
         newBestCount = 0
         for shp in ships:
             if(shp.score > bestship[0].score):
-                bestship[2] = copy.deepcopy(bestship[1])
-                bestship[1] = copy.deepcopy(bestship[0])
-                bestship[0] = copy.deepcopy(shp)
+                bestship[2].copyAll(bestship[1])
+                bestship[1].copyAll(bestship[0])
+                bestship[0].copyAll(shp)
                 newBest = True
             elif(shp.score > bestship[1].score):
-                bestship[2] = copy.deepcopy(bestship[1])
-                bestship[1] = copy.deepcopy(shp)
+                bestship[2].copyAll(bestship[1])
+                bestship[1].copyAll(shp)
             elif(shp.score > bestship[2].score):
-                bestship[2] = copy.deepcopy(shp)
+                bestship[2].copyAll(shp)
                 
         for i in range(3):
-            np.save(savefile,bestship[0].weights1)
+            np.save(filename + str(generation) + fileext,bestship[0].weights1)
             newbestsurface[i] = myfont.render("High Score: "+str(int(bestship[i].score)),  False, bestship[i].colour)
            
             
@@ -296,17 +300,17 @@ while 1:
         gencoef = 1/(generation +1) 
         for shp in ships:
             shp.reset()
-            if(n == 0): shp.copyWeights(bestship[0],0, (240,240,240))
-            elif(n < 20): 
-                shp.copyWeights(bestship[n%3],0.1*gencoef*gencoef, (240,100,100))
+            if(n < 20): 
+                shp.copyWeights(bestship[n%3],0.5*gencoef*gencoef, (240,100,100))
             elif(n < 40): 
-                shp.copyWeights(bestship[n%3],0.1*gencoef, (240,240,100))
+                shp.copyWeights(bestship[n%3],0.5*gencoef, (240,240,100))
             elif(n < 60): 
-                shp.copyWeights(bestship[n%3],0.5*gencoef, (100,240,100))
+                shp.copyWeights(bestship[n%3],1*gencoef, (100,240,100))
             elif(n < 80): 
-                shp.copyWeights(bestship[n%3],1*gencoef, (100,240,240))
+                shp.copyWeights(bestship[n%3],5*gencoef, (100,240,240))
             elif(n < 90): 
-                shp.copyWeights(bestship[n%3],5*gencoef, (100,100,240))
+                shp.initWeights()
+                shp.colour = (100,100,240)
             else: 
                 shp.copyWeightsExper(bestship[n%3],5*gencoef, (240,100,240))
             shp.drawShip()
@@ -316,6 +320,8 @@ while 1:
             screen.blit(newbestsurface[i],(0,50*(i+1)))
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
-                
+    
+    textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
+    screen.blit(textsurface,(0,0))                
     time.tick(30)
     pygame.display.flip()
