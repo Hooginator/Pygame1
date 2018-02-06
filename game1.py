@@ -151,28 +151,22 @@ class ship:
             self.bias3 = shp.bias3 + np.random.normal(0,stray,(1,OUTPUTS))
         self.colour = colour
     def copyWeightsExper(self, shp, stray, colour):
-        self.weights1 = shp.weights1
-        self.weights2 = shp.weights2
-        self.weights3 = shp.weights3
-        self.bias1 = shp.bias1
-        self.bias2 = shp.bias2
-        self.bias3 = shp.bias3
-        self.colour = colour
-        i = np.random.randint(shp.weights1.shape[0])
-        j = np.random.randint(shp.weights1.shape[1])
+        self.copyWeights(shp, stray, colour)
+        i = np.random.randint(self.weights1.shape[0])
+        j = np.random.randint(self.weights1.shape[1])
         self.weights1[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(shp.weights2.shape[0])
-        j = np.random.randint(shp.weights2.shape[1])
+        i = np.random.randint(self.weights2.shape[0])
+        j = np.random.randint(self.weights2.shape[1])
         self.weights2[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(shp.weights3.shape[0])
-        j = np.random.randint(shp.weights3.shape[1])
+        i = np.random.randint(self.weights3.shape[0])
+        j = np.random.randint(self.weights3.shape[1])
         self.weights3[i,j] = np.random.normal(0,1,1)
         
-        i = np.random.randint(shp.bias1.shape[0])
+        i = np.random.randint(self.bias1.shape[0])
         self.bias1[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(shp.bias2.shape[0])
+        i = np.random.randint(self.bias2.shape[0])
         self.bias2[i,j] = np.random.normal(0,1,1)
-        i = np.random.randint(shp.bias3.shape[0])
+        i = np.random.randint(self.bias3.shape[0])
         self.bias3[i,j] = np.random.normal(0,1,1)
         
 class wall:
@@ -229,7 +223,7 @@ generation = 0
 filename = "./data/BestShips"
 fileext = ".txt"
 
-ships = [ship(50,50,0,(240,100,100)) for i in range(20)]
+ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
 walls = wall.maze(1)
 checkpoints = wall.checkpoints(1)
 screen = pygame.display.set_mode(size)
@@ -237,6 +231,7 @@ newbestsurface = [None]*3
 bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
 newBest = False
 #manual = False
+allcrashed = False
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
@@ -257,26 +252,7 @@ while 1:
     screen.fill(black)
     drawWalls(walls)
     #drawWalls(checkpoints)
-    # Move
-    allcrashed = True
-    for shp in ships:
-        if(shp.crashed == False):
-            allcrashed = False
-            shp.checkCheckpoint(checkpoints)
-            angle = 0
-            accel = 0   
-            controlInputs = shp.getDecision()
-            angle -= logis(controlInputs[0]) * maxangle
-            angle += logis(controlInputs[1]) * maxangle
-            accel += logis(controlInputs[2]) * maxaccel
-            brake =  logis(controlInputs[3])
-            
-            shp.updateSpeed(accel,angle,brake) 
-            shp.updatePos()
-            if(checkCollisions(walls,shp.x,shp.y) 
-                or shp.timeDriving > 120* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
-                or shp.timeDriving > 3000): shp.crash()
-        shp.drawShip()
+    
         
     if(allcrashed):
         bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
@@ -308,9 +284,8 @@ while 1:
         generation +=1
         gencoef = 1/(generation +1) 
         for shp in ships:
-            shp.reset()
-            if (n < 30):
-                shp.copyWeights(bestship[0],0, (240-2*n,240-2*n,240-2*n))
+            if (n < 3):
+                shp.copyWeights(bestship[n],0, (240-20*n,240-20*n,240-20*n))
             elif(n < 20): 
                 shp.copyWeights(bestship[n%3],0.5*gencoef*gencoef, (240,100,100))
             elif(n < 40): 
@@ -322,9 +297,30 @@ while 1:
             elif(n < 90): 
                 shp.initWeights()
                 shp.colour = (100,100,240)
-            else: 
+            elif(n < 1000): 
                 shp.copyWeightsExper(bestship[n%3],5*gencoef, (240,100,240))
             n+=1
+            shp.reset()
+    # Move
+    allcrashed = True
+    for shp in ships:
+        if(shp.crashed == False):
+            allcrashed = False
+            shp.checkCheckpoint(checkpoints)
+            angle = 0
+            accel = 0   
+            controlInputs = shp.getDecision()
+            angle -= logis(controlInputs[0]) * maxangle
+            angle += logis(controlInputs[1]) * maxangle
+            accel += logis(controlInputs[2]) * maxaccel
+            brake =  logis(controlInputs[3])
+            
+            shp.updateSpeed(accel,angle,brake) 
+            shp.updatePos()
+            if(checkCollisions(walls,shp.x,shp.y) 
+                or shp.timeDriving > 120* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
+                or shp.timeDriving > 3000): shp.crash()
+        shp.drawShip()
     if(newBest):
         for i in range(3):   
             screen.blit(newbestsurface[i],(0,50*(i+1)))
@@ -336,5 +332,5 @@ while 1:
     # TESTING FOR OBS VIDEO 2
     #if(generation > 1):
     #    os.system("shutdown now")            
-    time.tick(30)
+    time.tick(10)
     pygame.display.flip()

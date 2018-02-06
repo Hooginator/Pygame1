@@ -11,7 +11,7 @@ def loadShip(filename):
     
 abc = loadShip("./data/BestShips_W1_G0.npy")
 print(str(abc))
-defg = loadShip("./data/BestShips_W1_G6.npy")
+defg = loadShip("./data/BestShips_W1_G1.npy")
 print(str(defg))
 
 print (str(abc - defg))
