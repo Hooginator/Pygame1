@@ -9,6 +9,7 @@ BUG: lategame I have noticed that the top player oscillates between 2 options
 import sys, pygame
 import numpy as np
 import copy
+import os
 pygame.init()
 
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
@@ -18,7 +19,7 @@ size = width, height = 1600, 900
 colours = [(100,120,220),(240,120,120)]
 MAX_SPEED = 20
 
-INPUTS = 22+1
+INPUTS = 16+1
 INTERMEDIATE1 = 8
 INTERMEDIATE2 = 6
 OUTPUTS = 4
@@ -61,7 +62,7 @@ class ship:
     def getInputs(self):
         self.inputPos = []
         distances = [40,80,120]
-        angles = [-1.2,0.8,-0.8,0.4,0,-0.4,1.2]
+        angles = [-1.2,0.6,0,-0.6,1.2]
         
         for dis in distances:
             for ang in angles:
@@ -88,6 +89,9 @@ class ship:
         self.score = 0
         self.checkpoint = 0
         self.laps = 0
+        self.inputColour = [colours[0] for i in range(INPUTS)]
+        self.scan = np.array([0 for i in range(INPUTS)])
+        self.drag = 0.96
                        
     def drawShip(self):
         pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
@@ -222,15 +226,15 @@ black = 0, 0, 0
 time = pygame.time.Clock()
 generation = 0
 
-filename = "BestShips"
+filename = "./data/BestShips"
 fileext = ".txt"
 
-ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
+ships = [ship(50,50,0,(240,100,100)) for i in range(20)]
 walls = wall.maze(1)
 checkpoints = wall.checkpoints(1)
 screen = pygame.display.set_mode(size)
 newbestsurface = [None]*3
-bestship = [ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0))]
+bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
 newBest = False
 #manual = False
 while 1:
@@ -275,7 +279,7 @@ while 1:
         shp.drawShip()
         
     if(allcrashed):
-        bestship = [ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0)),ship(550,450,-3.1415,(0,0,0))]
+        bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
         newBestCount = 0
         for shp in ships:
             if(shp.score > bestship[0].score):
@@ -290,8 +294,13 @@ while 1:
                 bestship[2].copyAll(shp)
                 
         for i in range(3):
-            np.save(filename + str(generation) + fileext,bestship[0].weights1)
-            newbestsurface[i] = myfont.render("High Score: "+str(int(bestship[i].score)),  False, bestship[i].colour)
+            np.save(filename + "_W1_G" + str(generation),bestship[0].weights1)
+            np.save(filename +"_W2_G" +  str(generation),bestship[0].weights2)
+            np.save(filename +"_W3_G" +  str(generation),bestship[0].weights3)
+            np.save(filename + "_B1_G" + str(generation),bestship[0].bias1)
+            np.save(filename +"_B2_G" +  str(generation),bestship[0].bias2)
+            np.save(filename +"_B3_G" +  str(generation),bestship[0].bias3)
+            newbestsurface[i] = myfont.render("High Score: "+str(int(bestship[i].score)) + "  (" + str(bestship[i].x) + ","+ str(bestship[i].y) +")",  False, bestship[i].colour)
            
             
         n = 0
@@ -300,7 +309,9 @@ while 1:
         gencoef = 1/(generation +1) 
         for shp in ships:
             shp.reset()
-            if(n < 20): 
+            if (n < 30):
+                shp.copyWeights(bestship[0],0, (240-2*n,240-2*n,240-2*n))
+            elif(n < 20): 
                 shp.copyWeights(bestship[n%3],0.5*gencoef*gencoef, (240,100,100))
             elif(n < 40): 
                 shp.copyWeights(bestship[n%3],0.5*gencoef, (240,240,100))
@@ -313,7 +324,6 @@ while 1:
                 shp.colour = (100,100,240)
             else: 
                 shp.copyWeightsExper(bestship[n%3],5*gencoef, (240,100,240))
-            shp.drawShip()
             n+=1
     if(newBest):
         for i in range(3):   
@@ -322,6 +332,9 @@ while 1:
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
     
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
-    screen.blit(textsurface,(0,0))                
+    screen.blit(textsurface,(0,0))   
+    # TESTING FOR OBS VIDEO 2
+    #if(generation > 1):
+    #    os.system("shutdown now")            
     time.tick(30)
     pygame.display.flip()
