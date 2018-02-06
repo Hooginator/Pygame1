@@ -45,6 +45,7 @@ class ship:
         self.colour = colour
         self.checkpoint = 0
         self.laps = 0
+        self.cost = [0 for i in range(6)]
     def updateSpeed(self,accel,dangle,brake):
         self.angle += dangle
         self.vx += accel * np.cos(self.angle)
@@ -92,6 +93,7 @@ class ship:
         self.inputColour = [colours[0] for i in range(INPUTS)]
         self.scan = np.array([0 for i in range(INPUTS)])
         self.drag = 0.96
+        self.cost = [0 for i in range(6)]
                        
     def drawShip(self):
         pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
@@ -104,6 +106,17 @@ class ship:
             i += 1
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
     def crash(self):
+        self.cost[0] = np.abs(self.weights1).sum()
+        self.cost[1] = np.abs(self.weights2).sum()
+        self.cost[2] = np.abs(self.weights3).sum()
+        self.cost[3] = np.abs(self.bias1).sum()
+        self.cost[4] = np.abs(self.bias2).sum()
+        self.cost[5] = np.abs(self.bias3).sum()
+        self.totalcost = 0
+        for c in self.cost:
+            self.totalcost += c
+        #print(str(self.totalcost))
+            self.score -= 0.01*self.totalcost
         self.score += 1000
         self.score -= 0.01*self.timeDriving 
         self.score -= 0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
@@ -215,7 +228,7 @@ def logis(a): # "Logistic function"
     b = 1/(1+np.exp(a))
     return b
 maxangle = 0.1
-maxaccel = 0.8
+maxaccel = 1
 black = 0, 0, 0
 time = pygame.time.Clock()
 generation = 0
