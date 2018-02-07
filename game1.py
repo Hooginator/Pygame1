@@ -281,7 +281,8 @@ while 1:
                 bestship[1].copyAll(shp)
             elif(shp.score > bestship[2].score):
                 bestship[2].copyAll(shp)
-                
+        
+        options = ["First      ", "Second  ", "Third     "]
         for i in range(3):
             np.save(filename + "_W1_G" + str(generation),bestship[0].weights1)
             np.save(filename +"_W2_G" +  str(generation),bestship[0].weights2)
@@ -289,7 +290,7 @@ while 1:
             np.save(filename + "_B1_G" + str(generation),bestship[0].bias1)
             np.save(filename +"_B2_G" +  str(generation),bestship[0].bias2)
             np.save(filename +"_B3_G" +  str(generation),bestship[0].bias3)
-            newbestsurface[i] = myfont.render("High Score: "+str(int(bestship[i].score)) + "  (" + str(bestship[i].x) + ","+ str(bestship[i].y) +")",  False, bestship[i].colour)
+            newbestsurface[i] = myfont.render(options[i] +str(int(bestship[i].score)),  False, bestship[i].colour)
            
             
         n = 0
@@ -336,7 +337,7 @@ while 1:
         shp.drawShip()
     if(newBest):
         for i in range(3):   
-            screen.blit(newbestsurface[i],(0,50*(i+1)))
+            screen.blit(newbestsurface[i],(0,50*(i+4)))
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
     
