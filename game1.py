@@ -24,6 +24,9 @@ INTERMEDIATE1 = 8
 INTERMEDIATE2 = 6
 OUTPUTS = 4
 
+############################################################
+############## SHIP CLASS ##################################
+############################################################
 
 class ship:
     def __init__(self, x, y, angle,colour):
@@ -64,25 +67,25 @@ class ship:
         self.inputPos = []
         distances = [40,80,120]
         angles = [-1.2,0.6,0,-0.6,1.2]
+        i = 0
         
         # array of front views
-        for dis in distances:
-            for ang in angles:
+        for ang in angles:
+            blocked = False
+            for dis in distances:
                 self.inputPos.append([int(self.x + dis*np.cos(self.angle+ang)), int(self.y  + dis*np.sin(self.angle+ang))])
+                if(checkCollisions(walls,self.inputPos[i]) or blocked):
+                    blocked = True
+                    self.inputColour[i] = colours[1] 
+                    self.scan[i] = 1
+                else: 
+                    self.inputColour[i] = colours[0]
+                    self.scan[i] = 0
+                i += 1
         # Rear view
-        self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))])
+        #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))])
         # Check inputs for collisions, set colour of input circle accordingly        
-        i = 0
-        for pos in self.inputPos:
-            if(checkCollisions(walls,pos[0],pos[1])): 
-                self.inputColour[i] = colours[1] 
-                self.scan[i] = 1
-            else: 
-                self.inputColour[i] = colours[0]
-                self.scan[i] = 0
-            i += 1
-        # Feed velocity into inputs
-        self.scan[i] =  0 #int(getDist([self.vx,self.vy],[0,0]))
+
                        
     def drawShip(self):
         # Draw triangular ship
@@ -108,7 +111,7 @@ class ship:
         self.totalcost = 0
         for c in self.cost:
             self.totalcost += c
-            self.score -= 0.01*self.totalcost
+        #self.score -= 0.001*self.totalcost
         # Score improves with distance and time driving
         self.score += 1000
         self.score -= 0.01*self.timeDriving 
@@ -181,7 +184,14 @@ class ship:
         self.bias2[i,j] = np.random.normal(0,1,1)
         i = np.random.randint(self.bias3.shape[0])
         self.bias3[i,j] = np.random.normal(0,1,1)
-        
+   
+
+
+############################################################
+########### WALL CLASS #####################################
+############################################################
+
+     
 class wall:
     # for impassable walls and checkpoints
     def __init__(self,posx,posy,sizex,sizey):
@@ -194,6 +204,8 @@ class wall:
     def drawCheckpoint(self):
         # Less intrusive draw for checkpoints
         pygame.draw.circle(screen,(255,255,255),self.getMidInt(), 20, 3)
+    def checkCollision(self,pos):
+        return self.checkCollision(self,pos[0],pos[1])
     def checkCollision(self,x,y):
         # determine if position (x,y) is crashed
         return ((self.posx <= x) and (self.posx + self.sizex >= x) and (self.posy <= y) and (self.posy + self.sizey >= y))
@@ -217,14 +229,21 @@ class wall:
         if(i == 0):
             return [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
         elif(i == 1):
-            return [wall(200,0,200,200),wall(400,400,250,250),wall(750,300,100,100),wall(500,0,200,100),wall(1050,400,150,150),
+            return [wall(200,0,200,200),wall(400,400,250,250),wall(750,300,100,100),wall(450,0,150,150),wall(900,100,100,100),wall(1050,400,150,150),
             wall(1200,0,200,200),wall(1200,400,200,200),wall(1050,700,200,200),wall(0,500,200,200)]
 
-def checkCollisions(walls,x,y):
+
+############################################################
+########### FUNCTIONS ######################################
+############################################################
+
+
+
+def checkCollisions(walls,pos):
     # Checks pos (x,y) against all walls for collision
     for wall in walls:
-        if(wall.checkCollision(x,y)): return True
-    if((x < 0) or (x > width) or (y < 0) or (y > height)): return True
+        if(wall.checkCollision(pos[0],pos[1])): return True
+    if((pos[0] < 0) or (pos[0] > width) or (pos[1] < 0) or (pos[1] > height)): return True
     return False
 def drawWalls(walls):
     for wall in walls: wall.drawWall()
@@ -236,6 +255,14 @@ def getDist(pos1,pos2):
 def logis(a): # "Logistic function"
     b = 1/(1+np.exp(a))
     return b
+    
+    
+
+############################################################
+########## MAIN PROGRAM ####################################
+############################################################
+    
+
 maxangle = 0.1
 maxaccel = 1
 black = 0, 0, 0
@@ -295,18 +322,18 @@ while 1:
             if (n < 3):
                 shp.copyWeights(bestship[n],0, (240-20*n,240-20*n,240-20*n))
             elif(n < 20): 
-                shp.copyWeights(bestship[n%3],0.5*gencoef*gencoef, (240,100,100))
+                shp.copyWeights(bestship[n%3],0.1*gencoef*gencoef, (240,100,100))
             elif(n < 40): 
-                shp.copyWeights(bestship[n%3],0.5*gencoef, (240,240,100))
+                shp.copyWeights(bestship[n%3],0.1*gencoef, (240,240,100))
             elif(n < 60): 
-                shp.copyWeights(bestship[n%3],1*gencoef, (100,240,100))
+                shp.copyWeights(bestship[n%3],0.5*gencoef, (100,240,100))
             elif(n < 80): 
-                shp.copyWeights(bestship[n%3],5*gencoef, (100,240,240))
+                shp.copyWeights(bestship[n%3],1*gencoef, (100,240,240))
             elif(n < 90): 
                 shp.initWeights()
                 shp.colour = (100,100,240)
             elif(n < 1000): 
-                shp.copyWeightsExper(bestship[n%3],5*gencoef, (240,100,240))
+                shp.copyWeightsExper(bestship[n%3],1*gencoef, (240,100,240))
             n+=1
             shp.reset()
     # Move
@@ -325,8 +352,8 @@ while 1:
             
             shp.updateSpeed(accel,angle,brake) 
             shp.updatePos()
-            if(checkCollisions(walls,shp.x,shp.y) 
-                or shp.timeDriving > 120* (1+shp.checkpoint + (len(checkpoints))*shp.laps) 
+            if(checkCollisions(walls,[shp.x,shp.y]) 
+                or shp.timeDriving > 140* (0.5+shp.checkpoint + (len(checkpoints))*shp.laps) 
                 or shp.timeDriving > 3000): shp.crash()
         shp.drawShip()
     if(newBest):
@@ -340,5 +367,5 @@ while 1:
     # TESTING FOR OBS VIDEO 2
     #if(generation > 1):
     #    os.system("shutdown now")            
-    time.tick(10)
+    time.tick(30)
     pygame.display.flip()
