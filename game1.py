@@ -100,7 +100,7 @@ class ship:
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
     def getName(self):
         l = [0 for i in range(6)]        
-        l[0] = chr( int( 97 + (self.weights1.sum() * 100) % 26 ) )
+        l[0] = chr( int( 97 - 32 + (self.weights1.sum() * 100) % 26 ) )
         l[1] = chr( int( 97 + (self.weights2.sum() * 100) % 26 ) )
         l[2] = chr( int( 97 + (self.weights3.sum() * 100) % 26 ) )
         l[3] = chr( int( 97 + (self.bias1.sum() * 100) % 26 ) )
@@ -321,7 +321,7 @@ while 1:
             np.save(filename + "_B1_G" + str(generation),bestship[0].bias1)
             np.save(filename +"_B2_G" +  str(generation),bestship[0].bias2)
             np.save(filename +"_B3_G" +  str(generation),bestship[0].bias3)
-            newbestsurface[i] = myfont.render(options[i]+ str(int(bestship[i].getName())) +str(int(bestship[i].score)),  False, bestship[i].colour)
+            newbestsurface[i] = myfont.render(options[i]+ bestship[i].getName() +"   "+str(int(bestship[i].score)),  False, bestship[i].colour)
            
             
         n = 0
