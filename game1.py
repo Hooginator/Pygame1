@@ -98,6 +98,29 @@ class ship:
             pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
             i += 1
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
+        
+    def drawMatrix(self):
+        basepos = [50,400]
+        size = 10
+        separationx = 12
+        separationy = 20
+        for i in range(INPUTS):
+            temp_colour = (int((1-self.scan[i])*255),int(self.scan[i]*255),0)
+            pygame.draw.rect(screen,temp_colour ,(basepos[0],basepos[1] + separationx*i,size,size))
+        temp_vector = np.add(self.scan.dot(self.weights1), self.bias1)
+        for i in range(temp_vector.shape[1]):
+            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+            pygame.draw.rect(screen,temp_colour ,(basepos[0] + separationy,basepos[1] + separationx*i,size,size))
+        temp_vector = np.add(temp_vector.dot(self.weights2), self.bias2)
+        for i in range(temp_vector.shape[1]):
+            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+            pygame.draw.rect(screen,temp_colour ,(basepos[0] + 2*separationy,basepos[1] + separationx*i,size,size))
+        temp_vector = np.add(temp_vector.dot(self.weights3), self.bias3)
+        for i in range(temp_vector.shape[1]):
+            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+            pygame.draw.rect(screen,temp_colour ,(basepos[0] + 3*separationy,basepos[1] + separationx*i,size,size))
+            
+    
     def getName(self):
         l = [0 for i in range(6)]        
         l[0] = chr( int( 97 - 32 + (self.weights1.sum() * 100) % 26 ) )
@@ -174,26 +197,41 @@ class ship:
             self.bias1 = shp.bias1 + np.random.normal(0,stray,(1,INTERMEDIATE1))
             self.bias2 = shp.bias2 + np.random.normal(0,stray,(1,INTERMEDIATE2))
             self.bias3 = shp.bias3 + np.random.normal(0,stray,(1,OUTPUTS))
+            self.normalizeWeights()
         self.colour = colour
+    def normalizeWeights(self):
+        self.weights1[self.weights1>1] = 1
+        self.weights1[self.weights1<-1] = -1
+        self.weights2[self.weights2>1] = 1
+        self.weights2[self.weights2<-1] = -1
+        self.weights3[self.weights3>1] = 1
+        self.weights3[self.weights3<-1] = -1
+        self.bias1[self.bias1>1] = 1
+        self.bias1[self.bias1<-1] = -1
+        self.bias2[self.bias2>1] = 1
+        self.bias2[self.bias2<-1] = -1
+        self.bias3[self.bias3>1] = 1
+        self.bias3[self.bias3<-1] = -1
     def copyWeightsExper(self, shp, stray, colour):
         # version of copyWeights() that only take 1 element of each weighgt matrix to change.  Might be useful.
         self.copyWeights(shp, stray, colour)
         i = np.random.randint(self.weights1.shape[0])
         j = np.random.randint(self.weights1.shape[1])
-        self.weights1[i,j] = np.random.normal(0,1,1)
+        self.weights1[i,j] = np.random.uniform(-1,1,1)
         i = np.random.randint(self.weights2.shape[0])
         j = np.random.randint(self.weights2.shape[1])
-        self.weights2[i,j] = np.random.normal(0,1,1)
+        self.weights2[i,j] = np.random.uniform(-1,1,1)
         i = np.random.randint(self.weights3.shape[0])
         j = np.random.randint(self.weights3.shape[1])
-        self.weights3[i,j] = np.random.normal(0,1,1)
+        self.weights3[i,j] = np.random.uniform(-1,1,1)
         
         i = np.random.randint(self.bias1.shape[0])
-        self.bias1[i,j] = np.random.normal(0,1,1)
+        self.bias1[i,j] = np.random.uniform(-1,1,1)
         i = np.random.randint(self.bias2.shape[0])
-        self.bias2[i,j] = np.random.normal(0,1,1)
+        self.bias2[i,j] = np.random.uniform(-1,1,1)
         i = np.random.randint(self.bias3.shape[0])
-        self.bias3[i,j] = np.random.normal(0,1,1)
+        self.bias3[i,j] = np.random.uniform(-1,1,1)
+        
    
 
 
@@ -297,6 +335,8 @@ while 1:
     screen.fill(black)
     drawWalls(walls)
     #drawWalls(checkpoints)
+    ships[0].drawMatrix()
+    
         
     if(allcrashed):
         bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
@@ -321,7 +361,7 @@ while 1:
             np.save(filename + "_B1_G" + str(generation),bestship[0].bias1)
             np.save(filename +"_B2_G" +  str(generation),bestship[0].bias2)
             np.save(filename +"_B3_G" +  str(generation),bestship[0].bias3)
-            newbestsurface[i] = myfont.render(options[i]+ bestship[i].getName() +"   "+str(int(bestship[i].score)),  False, bestship[i].colour)
+            newbestsurface[i] = myfont.render(options[i]+ str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
            
             
         n = 0
