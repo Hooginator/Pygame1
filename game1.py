@@ -11,14 +11,16 @@ import numpy as np
 import copy
 import os
 pygame.init()
+pygame.display.init()
 
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
 size = width, height = 1600, 900
 
 colours = [(100,120,220),(240,120,120)]
-MAX_SPEED = 20
+MAX_SPEED = 100
 
+# Ship neural net dimensions
 INPUTS = 16+1
 INTERMEDIATE1 = 8
 INTERMEDIATE2 = 6
@@ -65,7 +67,7 @@ class ship:
     def getInputs(self):
         # Determine which of the input locations are in walls / out of bounds for the input vector
         self.inputPos = []
-        distances = [40,80,120]
+        distances = [50,100,150]
         angles = [-1.2,0.6,0,-0.6,1.2]
         i = 0
         
@@ -83,12 +85,9 @@ class ship:
                     self.scan[i] = 0
                 i += 1
         # Rear view
-        #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))])
-        # Check inputs for collisions, set colour of input circle accordingly        
-
-                       
+        #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))])     
     def drawShip(self):
-        # Draw triangular ship
+        # Draw triangular ship, get the input values and draw a red or blue circle at their location
         pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
                                    [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
                                    [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
@@ -99,6 +98,16 @@ class ship:
             pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
             i += 1
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
+    def getName(self):
+        l = [0 for i in range(6)]        
+        l[0] = chr( int( 97 + (self.weights1.sum() * 100) % 26 ) )
+        l[1] = chr( int( 97 + (self.weights2.sum() * 100) % 26 ) )
+        l[2] = chr( int( 97 + (self.weights3.sum() * 100) % 26 ) )
+        l[3] = chr( int( 97 + (self.bias1.sum() * 100) % 26 ) )
+        l[4] = chr( int( 97 + (self.bias2.sum() * 100) % 26 ) )
+        l[5] = chr( int( 97 + (self.bias3.sum() * 100) % 26 ) )
+        return ''.join(l)
+        
     def crash(self):
         # Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
         # The cost increases as weights tend away from 0, resulting in fewer extreme weights
@@ -111,7 +120,7 @@ class ship:
         self.totalcost = 0
         for c in self.cost:
             self.totalcost += c
-        #self.score -= 0.001*self.totalcost
+        self.score -= 0.00001*self.totalcost
         # Score improves with distance and time driving
         self.score += 1000
         self.score -= 0.01*self.timeDriving 
@@ -122,6 +131,7 @@ class ship:
         self.crashed = True
         self.vx = 0
         self.vy = 0
+        print(self.getName() + "  has crashed")
     def checkCheckpoint(self,checkpoints):
         # Determines if we have passed a checkpoint this timestep
         if checkpoints[self.checkpoint].checkCollision(self.x,self.y):
@@ -131,12 +141,12 @@ class ship:
                 self.laps +=1
     def initWeights(self):
         # Initialize weights to random ones.
-        self.weights1 = np.random.normal(0,1,(INPUTS,INTERMEDIATE1))
-        self.weights2 = np.random.normal(0,1,(INTERMEDIATE1,INTERMEDIATE2))
-        self.weights3 = np.random.normal(0,1,(INTERMEDIATE2,OUTPUTS))
-        self.bias1 = np.random.normal(0,1,(1,INTERMEDIATE1))
-        self.bias2 = np.random.normal(0,1,(1,INTERMEDIATE2))
-        self.bias3 = np.random.normal(0,1,(1,OUTPUTS))
+        self.weights1 = np.random.uniform(-1,1,(INPUTS,INTERMEDIATE1))
+        self.weights2 = np.random.uniform(-1,1,(INTERMEDIATE1,INTERMEDIATE2))
+        self.weights3 = np.random.uniform(-1,1,(INTERMEDIATE2,OUTPUTS))
+        self.bias1 = np.random.uniform(-1,1,(1,INTERMEDIATE1))
+        self.bias2 = np.random.uniform(-1,1,(1,INTERMEDIATE2))
+        self.bias3 = np.random.uniform(-1,1,(1,OUTPUTS))
     def getDecision(self):
         # Use the input vector and all the weights to decide how to control the ship this timestep.
         return np.add(np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).dot(self.weights3),self.bias3).T
@@ -229,8 +239,8 @@ class wall:
         if(i == 0):
             return [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
         elif(i == 1):
-            return [wall(200,0,200,200),wall(400,400,250,250),wall(750,300,100,100),wall(450,0,150,150),wall(900,100,100,100),wall(1050,400,150,150),
-            wall(1200,0,200,200),wall(1200,400,200,200),wall(1050,700,200,200),wall(0,500,200,200)]
+            return [wall(200,0,200,200),wall(400,400,250,250),wall(750,300,100,100),wall(450,0,200,100),wall(900,0,100,150),wall(1050,400,150,150),
+            wall(1450,100,150,150),wall(1250,400,150,150),wall(1400,650,200,200),wall(0,500,200,200)]
 
 
 ############################################################
@@ -263,7 +273,7 @@ def logis(a): # "Logistic function"
 ############################################################
     
 
-maxangle = 0.1
+maxangle = 0.2
 maxaccel = 1
 black = 0, 0, 0
 time = pygame.time.Clock()
@@ -303,7 +313,7 @@ while 1:
             elif(shp.score > bestship[2].score):
                 bestship[2].copyAll(shp)
         
-        options = ["First      ", "Second  ", "Third     "]
+        options = ["1:  ", "2:  ", "3:  "]
         for i in range(3):
             np.save(filename + "_W1_G" + str(generation),bestship[0].weights1)
             np.save(filename +"_W2_G" +  str(generation),bestship[0].weights2)
@@ -311,7 +321,7 @@ while 1:
             np.save(filename + "_B1_G" + str(generation),bestship[0].bias1)
             np.save(filename +"_B2_G" +  str(generation),bestship[0].bias2)
             np.save(filename +"_B3_G" +  str(generation),bestship[0].bias3)
-            newbestsurface[i] = myfont.render(options[i] +str(int(bestship[i].score)),  False, bestship[i].colour)
+            newbestsurface[i] = myfont.render(options[i]+ str(int(bestship[i].getName())) +str(int(bestship[i].score)),  False, bestship[i].colour)
            
             
         n = 0
@@ -353,8 +363,8 @@ while 1:
             shp.updateSpeed(accel,angle,brake) 
             shp.updatePos()
             if(checkCollisions(walls,[shp.x,shp.y]) 
-                or shp.timeDriving > 140* (0.5+shp.checkpoint + (len(checkpoints))*shp.laps) 
-                or shp.timeDriving > 3000): shp.crash()
+                or shp.timeDriving > 120* (0.5+shp.checkpoint + (len(checkpoints))*shp.laps) 
+                or shp.timeDriving > 1200): shp.crash()
         shp.drawShip()
     if(newBest):
         for i in range(3):   
