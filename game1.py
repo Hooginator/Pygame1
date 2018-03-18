@@ -3,7 +3,7 @@
 Created on Wed Jan 24 15:08:54 2018
 
 @author: hoog
-BUG: lategame I have noticed that the top player oscillates between 2 options 
+
 """
 
 import sys, pygame
@@ -15,13 +15,17 @@ pygame.display.init()
 
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 
+# Screen constants
 size = width, height = 1600, 900
 
+# Ship constants
 colours = [(100,120,220),(240,120,120)]
-MAX_SPEED = 100
+MAX_SPEED = 30
+maxangle = 0.2
+maxaccel = 4
 
 # Ship neural net dimensions
-INPUTS = 16+1
+INPUTS = 15
 INTERMEDIATE1 = 8
 INTERMEDIATE2 = 6
 OUTPUTS = 4
@@ -31,6 +35,10 @@ OUTPUTS = 4
 ############################################################
 
 class ship:
+    ############### INITIALIZATION #########################
+    # Stuff that is run once at the start of each generation
+    ########################################################
+
     def __init__(self, x, y, angle,colour):
         # Create ship with random weights
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
@@ -46,122 +54,6 @@ class ship:
         self.inputColour = [colours[0] for i in range(INPUTS)]
         self.scan = np.array([0 for i in range(INPUTS)])
         self.cost = [0 for i in range(6)]
-    def updateSpeed(self,accel,dangle,brake):
-        # Get new vx and vy to update position
-        self.angle += dangle
-        self.vx += accel * np.cos(self.angle)
-        self.vy += accel * np.sin(self.angle)
-        # flat cap on speed
-        if(self.vx > MAX_SPEED): self.vx = MAX_SPEED
-        if(self.vy > MAX_SPEED): self.vy = MAX_SPEED
-        if(self.vx < -1*MAX_SPEED): self.vx = -1*MAX_SPEED
-        if(self.vy < -1*MAX_SPEED): self.vy = -1*MAX_SPEED
-        # apply drag and braking to slow down
-        self.vx = self.vx * self.drag*(1-brake/10)
-        self.vy = self.vy * self.drag*(1-brake/10)
-    def updatePos(self):
-        # Update where the ship is each timestep based on calculated velocity.
-        self.timeDriving +=1
-        self.x += self.vx
-        self.y += self.vy
-    def getInputs(self):
-        # Determine which of the input locations are in walls / out of bounds for the input vector
-        self.inputPos = []
-        distances = [50,100,150]
-        angles = [-1.2,0.6,0,-0.6,1.2]
-        i = 0
-        
-        # array of front views
-        for ang in angles:
-            blocked = False
-            for dis in distances:
-                self.inputPos.append([int(self.x + dis*np.cos(self.angle+ang)), int(self.y  + dis*np.sin(self.angle+ang))])
-                if(checkCollisions(walls,self.inputPos[i]) or blocked):
-                    blocked = True
-                    self.inputColour[i] = colours[1] 
-                    self.scan[i] = 1
-                else: 
-                    self.inputColour[i] = colours[0]
-                    self.scan[i] = 0
-                i += 1
-        # Rear view
-        #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))])     
-    def drawShip(self):
-        # Draw triangular ship, get the input values and draw a red or blue circle at their location
-        pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
-                                   [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
-                                   [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
-        self.getInputs()
-        i = 0
-        # Draw where the inputs are for decision making.
-        for pos in self.inputPos:
-            pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
-            i += 1
-        pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
-        
-    def drawMatrix(self):
-        basepos = [50,400]
-        size = 10
-        separationx = 12
-        separationy = 20
-        for i in range(INPUTS):
-            temp_colour = (int((1-self.scan[i])*255),int(self.scan[i]*255),0)
-            pygame.draw.rect(screen,temp_colour ,(basepos[0],basepos[1] + separationx*i,size,size))
-        temp_vector = np.add(self.scan.dot(self.weights1), self.bias1)
-        for i in range(temp_vector.shape[1]):
-            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
-            pygame.draw.rect(screen,temp_colour ,(basepos[0] + separationy,basepos[1] + separationx*i,size,size))
-        temp_vector = np.add(temp_vector.dot(self.weights2), self.bias2)
-        for i in range(temp_vector.shape[1]):
-            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
-            pygame.draw.rect(screen,temp_colour ,(basepos[0] + 2*separationy,basepos[1] + separationx*i,size,size))
-        temp_vector = np.add(temp_vector.dot(self.weights3), self.bias3)
-        for i in range(temp_vector.shape[1]):
-            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
-            pygame.draw.rect(screen,temp_colour ,(basepos[0] + 3*separationy,basepos[1] + separationx*i,size,size))
-            
-    
-    def getName(self):
-        l = [0 for i in range(6)]        
-        l[0] = chr( int( 97 - 32 + (self.weights1.sum() * 100) % 26 ) )
-        l[1] = chr( int( 97 + (self.weights2.sum() * 100) % 26 ) )
-        l[2] = chr( int( 97 + (self.weights3.sum() * 100) % 26 ) )
-        l[3] = chr( int( 97 + (self.bias1.sum() * 100) % 26 ) )
-        l[4] = chr( int( 97 + (self.bias2.sum() * 100) % 26 ) )
-        l[5] = chr( int( 97 + (self.bias3.sum() * 100) % 26 ) )
-        return ''.join(l)
-        
-    def crash(self):
-        # Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
-        # The cost increases as weights tend away from 0, resulting in fewer extreme weights
-        self.cost[0] = np.abs(self.weights1).sum()
-        self.cost[1] = np.abs(self.weights2).sum()
-        self.cost[2] = np.abs(self.weights3).sum()
-        self.cost[3] = np.abs(self.bias1).sum()
-        self.cost[4] = np.abs(self.bias2).sum()
-        self.cost[5] = np.abs(self.bias3).sum()
-        self.totalcost = 0
-        for c in self.cost:
-            self.totalcost += c
-        self.score -= 0.00001*self.totalcost
-        # Score improves with distance and time driving
-        self.score += 1000
-        self.score -= 0.01*self.timeDriving 
-        self.score -= 0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
-        self.score += self.checkpoint *1000
-        self.score += self.laps * 1000 * len(checkpoints)
-        # Stop the ship from going further
-        self.crashed = True
-        self.vx = 0
-        self.vy = 0
-        print(self.getName() + "  has crashed")
-    def checkCheckpoint(self,checkpoints):
-        # Determines if we have passed a checkpoint this timestep
-        if checkpoints[self.checkpoint].checkCollision(self.x,self.y):
-            self.checkpoint +=1
-            if(self.checkpoint >= len(checkpoints)):
-                self.checkpoint = 0
-                self.laps +=1
     def initWeights(self):
         # Initialize weights to random ones.
         self.weights1 = np.random.uniform(-1,1,(INPUTS,INTERMEDIATE1))
@@ -170,9 +62,6 @@ class ship:
         self.bias1 = np.random.uniform(-1,1,(1,INTERMEDIATE1))
         self.bias2 = np.random.uniform(-1,1,(1,INTERMEDIATE2))
         self.bias3 = np.random.uniform(-1,1,(1,OUTPUTS))
-    def getDecision(self):
-        # Use the input vector and all the weights to decide how to control the ship this timestep.
-        return np.add(np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).dot(self.weights3),self.bias3).T
     def copyAll(self,shp):
         # Take all properties from shp and apply them to self.  Used in determining the best ship each generation
         self.copyWeights(shp, 0, shp.colour)
@@ -184,22 +73,32 @@ class ship:
     def copyWeights(self, shp, stray, colour):
         # Changes weights to be around the ones of shp.  This is used to generate offspring from the shp provided.
         if(stray == 0):
-            self.weights1 = shp.weights1
-            self.weights2 = shp.weights2
-            self.weights3 = shp.weights3
-            self.bias1 = shp.bias1
-            self.bias2 = shp.bias2
-            self.bias3 = shp.bias3
+            self.weights1 = shp.weights1[:]
+            self.weights2 = shp.weights2[:]
+            self.weights3 = shp.weights3[:]
+            self.bias1 = shp.bias1[:]
+            self.bias2 = shp.bias2[:]
+            self.bias3 = shp.bias3[:]
         else:
-            self.weights1 = shp.weights1 + np.random.normal(0,stray,(INPUTS,INTERMEDIATE1))
-            self.weights2 = shp.weights2 + np.random.normal(0,stray,(INTERMEDIATE1,INTERMEDIATE2))
-            self.weights3 = shp.weights3 + np.random.normal(0,stray,(INTERMEDIATE2,OUTPUTS))
-            self.bias1 = shp.bias1 + np.random.normal(0,stray,(1,INTERMEDIATE1))
-            self.bias2 = shp.bias2 + np.random.normal(0,stray,(1,INTERMEDIATE2))
-            self.bias3 = shp.bias3 + np.random.normal(0,stray,(1,OUTPUTS))
+            self.weights1 = shp.weights1[:] + np.random.normal(0,stray,(INPUTS,INTERMEDIATE1))
+            self.weights2 = shp.weights2[:] + np.random.normal(0,stray,(INTERMEDIATE1,INTERMEDIATE2))
+            self.weights3 = shp.weights3[:] + np.random.normal(0,stray,(INTERMEDIATE2,OUTPUTS))
+            self.bias1 = shp.bias1[:] + np.random.normal(0,stray,(1,INTERMEDIATE1))
+            self.bias2 = shp.bias2[:] + np.random.normal(0,stray,(1,INTERMEDIATE2))
+            self.bias3 = shp.bias3[:] + np.random.normal(0,stray,(1,OUTPUTS))
             self.normalizeWeights()
         self.colour = colour
+    def saveWeights(self, filename, generation):
+        # saves the np array of weights for easy loading later
+            np.save(filename + "_W1_G" + str(generation),self.weights1)
+            np.save(filename +"_W2_G" +  str(generation),self.weights2)
+            np.save(filename +"_W3_G" +  str(generation),self.weights3)
+            np.save(filename + "_B1_G" + str(generation),self.bias1)
+            np.save(filename +"_B2_G" +  str(generation),self.bias2)
+            np.save(filename +"_B3_G" +  str(generation),self.bias3)
+        
     def normalizeWeights(self):
+        # Make sure the weights and biases stay inside (-1,1)
         self.weights1[self.weights1>1] = 1
         self.weights1[self.weights1<-1] = -1
         self.weights2[self.weights2>1] = 1
@@ -231,6 +130,150 @@ class ship:
         self.bias2[i,j] = np.random.uniform(-1,1,1)
         i = np.random.randint(self.bias3.shape[0])
         self.bias3[i,j] = np.random.uniform(-1,1,1)
+        
+    ############### UPDATE #################################
+    # Stuff that may be used at each timestep of the race
+    ########################################################    
+        
+    def checkCheckpoint(self,checkpoints):
+        # Determines if we have passed a checkpoint this timestep
+        if checkpoints[self.checkpoint].checkCollision(self.x,self.y):
+            self.checkpoint +=1
+            if(self.checkpoint >= len(checkpoints)):
+                self.checkpoint = 0
+                self.laps +=1
+    def checkFuel(self):
+        # Returns the score received based on checkpoint progress minus the time driving.  
+        # If this is below 0 the sihp is said to be out of fuel and crashes
+        return  checkFuelCost(self.checkpoint, self.laps)  -  self.timeDriving
+    def updateSpeed(self,accel,dangle,brake):
+        # Get new vx and vy to update position
+        self.angle += dangle
+        self.vx += accel * np.cos(self.angle)
+        self.vy += accel * np.sin(self.angle)
+        # flat cap on speed
+        if(self.vx > MAX_SPEED): self.vx = MAX_SPEED
+        if(self.vy > MAX_SPEED): self.vy = MAX_SPEED
+        if(self.vx < -1*MAX_SPEED): self.vx = -1*MAX_SPEED
+        if(self.vy < -1*MAX_SPEED): self.vy = -1*MAX_SPEED
+        # apply drag and braking to slow down
+        self.vx = self.vx * self.drag*(1-brake/4)
+        self.vy = self.vy * self.drag*(1-brake/4)
+    def updatePos(self):
+        # Update where the ship is each timestep based on calculated velocity.
+        self.timeDriving +=1
+        self.x += self.vx
+        self.y += self.vy
+    def getInputs(self):
+        # Determine which of the input locations are in walls / out of bounds for the input vector
+        self.inputPos = []
+        distances = [50,100,150]
+        angles = [-1.2,-0.6,0,0.6,1.2]
+        i = 0
+        
+        # array of front views
+        for ang in angles:
+            blocked = False
+            for dis in distances:
+                self.inputPos.append([int(self.x + dis*np.cos(self.angle+ang)), int(self.y  + dis*np.sin(self.angle+ang))])
+                if(checkCollisions(walls,self.inputPos[i]) or blocked):
+                    blocked = True
+                    self.inputColour[i] = colours[1] 
+                    self.scan[i] = 0
+                else: 
+                    self.inputColour[i] = colours[0]
+                    self.scan[i] = 1
+                i += 1
+        # Rear view
+        #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))]) 
+                
+    def getDecision(self):
+        # Use the input vector and all the weights to decide how to control the ship this timestep.
+        return np.add(np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).dot(self.weights3),self.bias3).T
+    
+    def crash(self):
+        # Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
+        # The cost increases as weights tend away from 0, resulting in fewer extreme weights
+        self.cost[0] = np.abs(self.weights1).sum()
+        self.cost[1] = np.abs(self.weights2).sum()
+        self.cost[2] = np.abs(self.weights3).sum()
+        self.cost[3] = np.abs(self.bias1).sum()
+        self.cost[4] = np.abs(self.bias2).sum()
+        self.cost[5] = np.abs(self.bias3).sum()
+        self.totalcost = 0
+        for c in self.cost:
+            self.totalcost += c
+        self.score -= 0.00001*self.totalcost
+        # Score improves with distance and time driving
+        self.score += 1000
+        self.score -= 0.01*self.timeDriving 
+        self.score -= 0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
+        self.score += self.checkpoint *1000
+        self.score += self.laps * 1000 * len(checkpoints)
+        # Stop the ship from going further
+        self.crashed = True
+        self.vx = 0
+        self.vy = 0
+        print(self.getName() + "  has crashed")
+    
+    ############### VISUAL #################################
+    # Stuff related to creating various visual effects on screen
+    ########################################################
+        
+    def drawShip(self):
+        # Draw triangular ship, get the input values and draw a red or blue circle at their location
+        pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
+                                   [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
+                                   [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
+        self.getInputs()
+        i = 0
+        # Draw where the inputs are for decision making.
+        for pos in self.inputPos:
+            pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
+            i += 1
+        pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
+        
+    def drawMatrix(self):
+        # Draw a bunch of squares that light up red of green based on different points in the decision process 
+        bp = [50,600] # base position bp
+        namesurface = myfont.render(self.getName(), False, self.colour)
+        screen.blit(namesurface,(bp[0],bp[1] -40),)  
+        size = 10
+        separationx = 12
+        separationy = 20
+        # Cycle through array of inputs
+        for i in range(INPUTS):
+            # Create red - green colour based on array
+            temp_colour = (int((1-self.scan[i])*255),int(self.scan[i]*255),0)
+            # Draw square that is slightly offset of previous square
+            pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / 3),bp[1] + separationx*(i%3),size,size))
+        # Calculate intermediate decision array
+        temp_vector = np.add(self.scan.dot(self.weights1), self.bias1)
+        # Repeat
+        for i in range(temp_vector.shape[1]):
+            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+            pygame.draw.rect(screen,temp_colour ,(bp[0] + separationy,bp[1] + separationx*i,size,size))
+        temp_vector = np.add(temp_vector.dot(self.weights2), self.bias2)
+        for i in range(temp_vector.shape[1]):
+            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+            pygame.draw.rect(screen,temp_colour ,(bp[0] + 2*separationy,bp[1] + separationx*i,size,size))
+        temp_vector = np.add(temp_vector.dot(self.weights3), self.bias3)
+        for i in range(temp_vector.shape[1]):
+            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+            pygame.draw.rect(screen,temp_colour ,(bp[0] + 3*separationy,bp[1] + separationx*i,size,size))
+    def getName(self):
+        # Get 6 letter "name" based on weight and bias totals
+        l = [0 for i in range(6)]        
+        l[0] = chr( int( 97 - 32 + (self.weights1.sum() * 100) % 26 ) )
+        l[1] = chr( int( 97 + (self.weights2.sum() * 100) % 26 ) )
+        l[2] = chr( int( 97 + (self.weights3.sum() * 100) % 26 ) )
+        l[3] = chr( int( 97 + (self.bias1.sum() * 100) % 26 ) )
+        l[4] = chr( int( 97 + (self.bias2.sum() * 100) % 26 ) )
+        l[5] = chr( int( 97 + (self.bias3.sum() * 100) % 26 ) )
+        return ''.join(l)
+        
+
+    
         
    
 
@@ -294,15 +337,20 @@ def checkCollisions(walls,pos):
     if((pos[0] < 0) or (pos[0] > width) or (pos[1] < 0) or (pos[1] > height)): return True
     return False
 def drawWalls(walls):
+    # Create blocking visual for the list of walls given
     for wall in walls: wall.drawWall()
 def drawCheckpoints(walls):
+    # Create small checkpointvisual for the list of walls given
     for wall in walls: wall.drawCheckpoint()
 def getDist(pos1,pos2):
     # returns the pythagorean distance between 2 vectors
     return np.sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1]))
-def logis(a): # "Logistic function"
+def logis(a): 
+    # "Logistic function"
     b = 1/(1+np.exp(a))
     return b
+def checkFuelCost(CHPTS, LAPS):
+        return  50 + 200*(LAPS * checkpointPerLap + CHPTS )** 0.8
     
     
 
@@ -310,12 +358,10 @@ def logis(a): # "Logistic function"
 ########## MAIN PROGRAM ####################################
 ############################################################
     
-
-maxangle = 0.2
-maxaccel = 1
-black = 0, 0, 0
+# Initialization     
 time = pygame.time.Clock()
 generation = 0
+nseeds = 10
 
 filename = "./data/BestShips"
 fileext = ".txt"
@@ -323,45 +369,31 @@ fileext = ".txt"
 ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
 walls = wall.maze(1)
 checkpoints = wall.checkpoints(1)
+checkpointPerLap = len(checkpoints)
 screen = pygame.display.set_mode(size)
-newbestsurface = [None]*3
-bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
+newbestsurface = [None]*nseeds
+#bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
 newBest = False
 #manual = False
 allcrashed = False
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
-    screen.fill(black)
+    screen.fill((0,0,0))
     drawWalls(walls)
     #drawWalls(checkpoints)
-    ships[0].drawMatrix()
     
         
     if(allcrashed):
-        bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
-        newBestCount = 0
-        for shp in ships:
-            if(shp.score > bestship[0].score):
-                bestship[2].copyAll(bestship[1])
-                bestship[1].copyAll(bestship[0])
-                bestship[0].copyAll(shp)
-                newBest = True
-            elif(shp.score > bestship[1].score):
-                bestship[2].copyAll(bestship[1])
-                bestship[1].copyAll(shp)
-            elif(shp.score > bestship[2].score):
-                bestship[2].copyAll(shp)
+        #bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
         
-        options = ["1:  ", "2:  ", "3:  "]
-        for i in range(3):
-            np.save(filename + "_W1_G" + str(generation),bestship[0].weights1)
-            np.save(filename +"_W2_G" +  str(generation),bestship[0].weights2)
-            np.save(filename +"_W3_G" +  str(generation),bestship[0].weights3)
-            np.save(filename + "_B1_G" + str(generation),bestship[0].bias1)
-            np.save(filename +"_B2_G" +  str(generation),bestship[0].bias2)
-            np.save(filename +"_B3_G" +  str(generation),bestship[0].bias3)
-            newbestsurface[i] = myfont.render(options[i]+ str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
+        ships.sort(key = lambda x: x.score, reverse = True)
+        bestship = copy.deepcopy(ships[0:nseeds])
+        newBest = True
+        
+        bestship[0].saveWeights(filename, generation)
+        for i in range(nseeds):
+            newbestsurface[i] = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
            
             
         n = 0
@@ -369,28 +401,30 @@ while 1:
         generation +=1
         gencoef = 1/(generation +1) 
         for shp in ships:
-            if (n < 3):
+            if (n < 10):
                 shp.copyWeights(bestship[n],0, (240-20*n,240-20*n,240-20*n))
             elif(n < 20): 
-                shp.copyWeights(bestship[n%3],0.1*gencoef*gencoef, (240,100,100))
+                shp.copyWeights(bestship[n%nseeds],0.1*gencoef*gencoef, (240,100,100))
             elif(n < 40): 
-                shp.copyWeights(bestship[n%3],0.1*gencoef, (240,240,100))
+                shp.copyWeights(bestship[n%nseeds],0.1*gencoef, (240,240,100))
             elif(n < 60): 
-                shp.copyWeights(bestship[n%3],0.5*gencoef, (100,240,100))
+                shp.copyWeights(bestship[n%nseeds],0.5*gencoef, (100,240,100))
             elif(n < 80): 
-                shp.copyWeights(bestship[n%3],1*gencoef, (100,240,240))
+                shp.copyWeights(bestship[n%nseeds],1*gencoef, (100,240,240))
             elif(n < 90): 
                 shp.initWeights()
                 shp.colour = (100,100,240)
             elif(n < 1000): 
-                shp.copyWeightsExper(bestship[n%3],1*gencoef, (240,100,240))
+                shp.copyWeightsExper(bestship[n%nseeds],1*gencoef, (240,100,240))
             n+=1
             shp.reset()
     # Move
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
-            allcrashed = False
+            if(allcrashed): 
+                shp.drawMatrix()
+                allcrashed = False
             shp.checkCheckpoint(checkpoints)
             angle = 0
             accel = 0   
@@ -403,11 +437,10 @@ while 1:
             shp.updateSpeed(accel,angle,brake) 
             shp.updatePos()
             if(checkCollisions(walls,[shp.x,shp.y]) 
-                or shp.timeDriving > 120* (0.5+shp.checkpoint + (len(checkpoints))*shp.laps) 
-                or shp.timeDriving > 1200): shp.crash()
+                or shp.checkFuel() < 0): shp.crash()
         shp.drawShip()
     if(newBest):
-        for i in range(3):   
+        for i in range(nseeds):   
             screen.blit(newbestsurface[i],(0,50*(i+4)))
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
