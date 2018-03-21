@@ -20,15 +20,18 @@ size = width, height = 1600, 900
 
 # Ship constants
 colours = [(100,120,220),(240,120,120)]
-MAX_SPEED = 30
+MAX_SPEED = 20
 maxangle = 0.2
-maxaccel = 4
+maxaccel = 3
 
 # Ship neural net dimensions
 INPUTS = 15
-INTERMEDIATE1 = 8
-INTERMEDIATE2 = 6
+INTERMEDIATES = (8,6)
 OUTPUTS = 4
+DIMENSIONS = [INPUTS]
+DIMENSIONS.extend(INTERMEDIATES)
+DIMENSIONS.append(OUTPUTS)
+
 
 ############################################################
 ############## SHIP CLASS ##################################
@@ -56,12 +59,11 @@ class ship:
         self.cost = [0 for i in range(6)]
     def initWeights(self):
         # Initialize weights to random ones.
-        self.weights1 = np.random.uniform(-1,1,(INPUTS,INTERMEDIATE1))
-        self.weights2 = np.random.uniform(-1,1,(INTERMEDIATE1,INTERMEDIATE2))
-        self.weights3 = np.random.uniform(-1,1,(INTERMEDIATE2,OUTPUTS))
-        self.bias1 = np.random.uniform(-1,1,(1,INTERMEDIATE1))
-        self.bias2 = np.random.uniform(-1,1,(1,INTERMEDIATE2))
-        self.bias3 = np.random.uniform(-1,1,(1,OUTPUTS))
+        self.weights = []
+        self.bias = []
+        for i, dim in enumerate(DIMENSIONS[1:]):
+            self.weights.append(np.random.uniform(-1,1,(DIMENSIONS[i],dim)))
+            self.bias.append(np.random.uniform(-1,1,(1,dim)))
     def copyAll(self,shp):
         # Take all properties from shp and apply them to self.  Used in determining the best ship each generation
         self.copyWeights(shp, 0, shp.colour)
@@ -72,64 +74,43 @@ class ship:
         self.laps = shp.laps
     def copyWeights(self, shp, stray, colour):
         # Changes weights to be around the ones of shp.  This is used to generate offspring from the shp provided.
-        if(stray == 0):
-            self.weights1 = shp.weights1[:]
-            self.weights2 = shp.weights2[:]
-            self.weights3 = shp.weights3[:]
-            self.bias1 = shp.bias1[:]
-            self.bias2 = shp.bias2[:]
-            self.bias3 = shp.bias3[:]
-        else:
-            self.weights1 = shp.weights1[:] + np.random.normal(0,stray,(INPUTS,INTERMEDIATE1))
-            self.weights2 = shp.weights2[:] + np.random.normal(0,stray,(INTERMEDIATE1,INTERMEDIATE2))
-            self.weights3 = shp.weights3[:] + np.random.normal(0,stray,(INTERMEDIATE2,OUTPUTS))
-            self.bias1 = shp.bias1[:] + np.random.normal(0,stray,(1,INTERMEDIATE1))
-            self.bias2 = shp.bias2[:] + np.random.normal(0,stray,(1,INTERMEDIATE2))
-            self.bias3 = shp.bias3[:] + np.random.normal(0,stray,(1,OUTPUTS))
+        if(stray == 0): # straight copy
+            for i, wt in enumerate(self.weights):
+                wt[:] = shp.weights[i]
+            for i,bs in enumerate(self.bias):
+                bs[:] = shp.bias[i]
+        else: # Copy with some random added in
+            for i,wt in enumerate(self.weights):
+                wt[:] = shp.weights[i] + np.random.normal(0,stray,(DIMENSIONS[i],DIMENSIONS[i+1]))
+            for i,bs in enumerate(self.bias):
+                bs[:] = shp.bias[i] + np.random.normal(0,stray,(1,DIMENSIONS[i+1]))
             self.normalizeWeights()
         self.colour = colour
     def saveWeights(self, filename, generation):
         # saves the np array of weights for easy loading later
-            np.save(filename + "_W1_G" + str(generation),self.weights1)
-            np.save(filename +"_W2_G" +  str(generation),self.weights2)
-            np.save(filename +"_W3_G" +  str(generation),self.weights3)
-            np.save(filename + "_B1_G" + str(generation),self.bias1)
-            np.save(filename +"_B2_G" +  str(generation),self.bias2)
-            np.save(filename +"_B3_G" +  str(generation),self.bias3)
+        for i,wt in enumerate(self.weights):
+            np.save(filename + "_W"+str(i)+"_G" + str(generation),wt)
+        for i,bs in enumerate(self.bias):
+            np.save(filename + "_B"+str(i)+"_G" + str(generation),bs)
         
     def normalizeWeights(self):
         # Make sure the weights and biases stay inside (-1,1)
-        self.weights1[self.weights1>1] = 1
-        self.weights1[self.weights1<-1] = -1
-        self.weights2[self.weights2>1] = 1
-        self.weights2[self.weights2<-1] = -1
-        self.weights3[self.weights3>1] = 1
-        self.weights3[self.weights3<-1] = -1
-        self.bias1[self.bias1>1] = 1
-        self.bias1[self.bias1<-1] = -1
-        self.bias2[self.bias2>1] = 1
-        self.bias2[self.bias2<-1] = -1
-        self.bias3[self.bias3>1] = 1
-        self.bias3[self.bias3<-1] = -1
+        for wt in self.weights:
+            wt[wt>1] = 1
+            wt[wt<-1] = -1
+        for bs in self.bias:
+            bs[bs>1] = 1
+            bs[bs<-1] = -1
     def copyWeightsExper(self, shp, stray, colour):
         # version of copyWeights() that only take 1 element of each weighgt matrix to change.  Might be useful.
         self.copyWeights(shp, stray, colour)
-        i = np.random.randint(self.weights1.shape[0])
-        j = np.random.randint(self.weights1.shape[1])
-        self.weights1[i,j] = np.random.uniform(-1,1,1)
-        i = np.random.randint(self.weights2.shape[0])
-        j = np.random.randint(self.weights2.shape[1])
-        self.weights2[i,j] = np.random.uniform(-1,1,1)
-        i = np.random.randint(self.weights3.shape[0])
-        j = np.random.randint(self.weights3.shape[1])
-        self.weights3[i,j] = np.random.uniform(-1,1,1)
-        
-        i = np.random.randint(self.bias1.shape[0])
-        self.bias1[i,j] = np.random.uniform(-1,1,1)
-        i = np.random.randint(self.bias2.shape[0])
-        self.bias2[i,j] = np.random.uniform(-1,1,1)
-        i = np.random.randint(self.bias3.shape[0])
-        self.bias3[i,j] = np.random.uniform(-1,1,1)
+        for wt in self.weights:
+            i = np.random.randint(wt.shape[0])
+            j = np.random.randint(wt.shape[1])
+            wt[i,j] = np.random.uniform(-1,1,1)
+        for bs in self.bias:
+            i = np.random.randint(bs.shape[0])
+            bs[i] = np.random.uniform(-1,1,1)
         
     ############### UPDATE #################################
     # Stuff that may be used at each timestep of the race
@@ -157,8 +138,8 @@ class ship:
         if(self.vx < -1*MAX_SPEED): self.vx = -1*MAX_SPEED
         if(self.vy < -1*MAX_SPEED): self.vy = -1*MAX_SPEED
         # apply drag and braking to slow down
-        self.vx = self.vx * self.drag*(1-brake/4)
-        self.vy = self.vy * self.drag*(1-brake/4)
+        self.vx = self.vx * self.drag*(1-brake/6)
+        self.vy = self.vy * self.drag*(1-brake/6)
     def updatePos(self):
         # Update where the ship is each timestep based on calculated velocity.
         self.timeDriving +=1
@@ -168,7 +149,7 @@ class ship:
         # Determine which of the input locations are in walls / out of bounds for the input vector
         self.inputPos = []
         distances = [50,100,150]
-        angles = [-1.2,-0.6,0,0.6,1.2]
+        angles = [1.2,0.6,0,-0.6,-1.2]
         i = 0
         
         # array of front views
@@ -189,21 +170,21 @@ class ship:
                 
     def getDecision(self):
         # Use the input vector and all the weights to decide how to control the ship this timestep.
-        return np.add(np.add(np.add(self.scan.dot(self.weights1), self.bias1).dot(self.weights2),self.bias2).dot(self.weights3),self.bias3).T
+        temp = []
+        temp.append( np.array(self.scan) )
+        for i,wt in enumerate(self.weights):
+            temp.append(np.add(temp[i].dot(wt),self.bias[i]))
+        return temp[len(self.weights)].tolist()[0] # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
     def crash(self):
         # Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
         # The cost increases as weights tend away from 0, resulting in fewer extreme weights
-        self.cost[0] = np.abs(self.weights1).sum()
-        self.cost[1] = np.abs(self.weights2).sum()
-        self.cost[2] = np.abs(self.weights3).sum()
-        self.cost[3] = np.abs(self.bias1).sum()
-        self.cost[4] = np.abs(self.bias2).sum()
-        self.cost[5] = np.abs(self.bias3).sum()
-        self.totalcost = 0
-        for c in self.cost:
-            self.totalcost += c
-        self.score -= 0.00001*self.totalcost
+        self.cost = 0
+        for wt in self.weights:
+            self.cost += np.abs(wt).sum()
+        for bs in self.bias:
+            self.cost += np.abs(bs).sum()
+        self.score -= 0.00001*self.cost
         # Score improves with distance and time driving
         self.score += 1000
         self.score -= 0.01*self.timeDriving 
@@ -235,7 +216,7 @@ class ship:
         
     def drawMatrix(self):
         # Draw a bunch of squares that light up red of green based on different points in the decision process 
-        bp = [50,600] # base position bp
+        bp = [50,750] # base position bp
         namesurface = myfont.render(self.getName(), False, self.colour)
         screen.blit(namesurface,(bp[0],bp[1] -40),)  
         size = 10
@@ -246,30 +227,34 @@ class ship:
             # Create red - green colour based on array
             temp_colour = (int((1-self.scan[i])*255),int(self.scan[i]*255),0)
             # Draw square that is slightly offset of previous square
-            pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / 3),bp[1] + separationx*(i%3),size,size))
+            pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / 3),bp[1] - separationx*(i%3) + 3*separationx,size,size))
         # Calculate intermediate decision array
-        temp_vector = np.add(self.scan.dot(self.weights1), self.bias1)
+        temp_vector = np.add(self.scan.dot(self.weights[0]), self.bias[0])
         # Repeat
         for i in range(temp_vector.shape[1]):
             temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
             pygame.draw.rect(screen,temp_colour ,(bp[0] + separationy,bp[1] + separationx*i,size,size))
-        temp_vector = np.add(temp_vector.dot(self.weights2), self.bias2)
+        temp_vector = np.add(temp_vector.dot(self.weights[1]), self.bias[1])
         for i in range(temp_vector.shape[1]):
             temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
             pygame.draw.rect(screen,temp_colour ,(bp[0] + 2*separationy,bp[1] + separationx*i,size,size))
-        temp_vector = np.add(temp_vector.dot(self.weights3), self.bias3)
+        temp_vector = np.add(temp_vector.dot(self.weights[2]), self.bias[2])
         for i in range(temp_vector.shape[1]):
             temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
             pygame.draw.rect(screen,temp_colour ,(bp[0] + 3*separationy,bp[1] + separationx*i,size,size))
+    def highlight(self):
+            pygame.draw.circle(screen, [min(255,tmp + (self.timeDriving%10-5)*0) for tmp in self.colour], [int(self.x),int(self.y)], int(10+ (self.timeDriving%10 )),2)
+            pygame.draw.circle(screen, [min(255,tmp + (self.timeDriving%10-5)*0) for tmp in self.colour], [int(self.x),int(self.y)], int(20+ (self.timeDriving%10 )),2)
+            pygame.draw.circle(screen, [min(255,tmp + (self.timeDriving%10-5)*0) for tmp in self.colour], [int(self.x),int(self.y)], int(30+ (self.timeDriving%10 )),2)
     def getName(self):
         # Get 6 letter "name" based on weight and bias totals
         l = [0 for i in range(6)]        
-        l[0] = chr( int( 97 - 32 + (self.weights1.sum() * 100) % 26 ) )
-        l[1] = chr( int( 97 + (self.weights2.sum() * 100) % 26 ) )
-        l[2] = chr( int( 97 + (self.weights3.sum() * 100) % 26 ) )
-        l[3] = chr( int( 97 + (self.bias1.sum() * 100) % 26 ) )
-        l[4] = chr( int( 97 + (self.bias2.sum() * 100) % 26 ) )
-        l[5] = chr( int( 97 + (self.bias3.sum() * 100) % 26 ) )
+        l[0] = chr( int( 97 - 32 + (self.weights[0].sum() * 100) % 26 ) )
+        l[1] = chr( int( 97 + (self.weights[1].sum() * 100) % 26 ) )
+        l[2] = chr( int( 97 + (self.weights[2].sum() * 100) % 26 ) )
+        l[3] = chr( int( 97 + (self.bias[0].sum() * 100) % 26 ) )
+        l[4] = chr( int( 97 + (self.bias[1].sum() * 100) % 26 ) )
+        l[5] = chr( int( 97 + (self.bias[2].sum() * 100) % 26 ) )
         return ''.join(l)
         
 
@@ -372,7 +357,6 @@ checkpoints = wall.checkpoints(1)
 checkpointPerLap = len(checkpoints)
 screen = pygame.display.set_mode(size)
 newbestsurface = [None]*nseeds
-#bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
 newBest = False
 #manual = False
 allcrashed = False
@@ -383,27 +367,25 @@ while 1:
     drawWalls(walls)
     #drawWalls(checkpoints)
     
-        
+    # Once everyone has crashed / run out of fuel we restart at the next generation
     if(allcrashed):
-        #bestship = [ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0)),ship(50,50,0,(0,0,0))]
-        
+        # Determine best ships
         ships.sort(key = lambda x: x.score, reverse = True)
         bestship = copy.deepcopy(ships[0:nseeds])
         newBest = True
-        
+        # Save top of each generation
         bestship[0].saveWeights(filename, generation)
-        for i in range(nseeds):
+        # Create surface for a high score table
+        for i in range(min(nseeds,10)):
             newbestsurface[i] = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
            
             
         n = 0
-        print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights1[0][0]))
+        print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
         generation +=1
         gencoef = 1/(generation +1) 
         for shp in ships:
-            if (n < 10):
-                shp.copyWeights(bestship[n],0, (240-20*n,240-20*n,240-20*n))
-            elif(n < 20): 
+            if(n < 20): 
                 shp.copyWeights(bestship[n%nseeds],0.1*gencoef*gencoef, (240,100,100))
             elif(n < 40): 
                 shp.copyWeights(bestship[n%nseeds],0.1*gencoef, (240,240,100))
@@ -422,9 +404,6 @@ while 1:
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
-            if(allcrashed): 
-                shp.drawMatrix()
-                allcrashed = False
             shp.checkCheckpoint(checkpoints)
             angle = 0
             accel = 0   
@@ -438,9 +417,13 @@ while 1:
             shp.updatePos()
             if(checkCollisions(walls,[shp.x,shp.y]) 
                 or shp.checkFuel() < 0): shp.crash()
+            if(allcrashed): 
+                shp.drawMatrix()
+                shp.highlight()
+                allcrashed = False
         shp.drawShip()
     if(newBest):
-        for i in range(nseeds):   
+        for i in range(min(nseeds,10)):   
             screen.blit(newbestsurface[i],(0,50*(i+4)))
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
             pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
