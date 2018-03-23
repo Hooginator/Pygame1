@@ -26,7 +26,7 @@ maxaccel = 3
 
 # Ship neural net dimensions
 INPUTS = 15
-INTERMEDIATES = (8,6)
+INTERMEDIATES = (10,7,6,5)
 OUTPUTS = 4
 DIMENSIONS = [INPUTS]
 DIMENSIONS.extend(INTERMEDIATES)
@@ -43,13 +43,13 @@ class ship:
     ########################################################
 
     def __init__(self, x, y, angle,colour):
-        # Create ship with random weights
+        """ Create ship with random weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
         self.drag = 0.96
         self.initWeights()
         self.reset()
     def reset(self):
-        # Return the ship to starting location and reinitialize 
+        """ Return the ship to starting location and reinitialize """
         self.x, self.y, self.angle = self.startx, self.starty, self.startangle
         self.vx, self.vy  = 0, 0
         self.crashed = False
@@ -58,14 +58,14 @@ class ship:
         self.scan = np.array([0 for i in range(INPUTS)])
         self.cost = [0 for i in range(6)]
     def initWeights(self):
-        # Initialize weights to random ones.
+        """ Initialize weights to random ones."""
         self.weights = []
         self.bias = []
         for i, dim in enumerate(DIMENSIONS[1:]):
             self.weights.append(np.random.uniform(-1,1,(DIMENSIONS[i],dim)))
             self.bias.append(np.random.uniform(-1,1,(1,dim)))
     def copyAll(self,shp):
-        # Take all properties from shp and apply them to self.  Used in determining the best ship each generation
+        """ Take all properties from shp and apply them to self.  Used in determining the best ship each generation"""
         self.copyWeights(shp, 0, shp.colour)
         self.score = shp.score
         self.x = shp.x
@@ -73,7 +73,7 @@ class ship:
         self.checkpoint = shp.checkpoint
         self.laps = shp.laps
     def copyWeights(self, shp, stray, colour):
-        # Changes weights to be around the ones of shp.  This is used to generate offspring from the shp provided.
+        """ Changes weights to be around the ones of shp.  This is used to generate offspring from the shp provided."""
         if(stray == 0): # straight copy
             for i, wt in enumerate(self.weights):
                 wt[:] = shp.weights[i]
@@ -87,14 +87,14 @@ class ship:
             self.normalizeWeights()
         self.colour = colour
     def saveWeights(self, filename, generation):
-        # saves the np array of weights for easy loading later
+        """ saves the np array of weights for easy loading later"""
         for i,wt in enumerate(self.weights):
             np.save(filename + "_W"+str(i)+"_G" + str(generation),wt)
         for i,bs in enumerate(self.bias):
             np.save(filename + "_B"+str(i)+"_G" + str(generation),bs)
         
     def normalizeWeights(self):
-        # Make sure the weights and biases stay inside (-1,1)
+        """ Make sure the weights and biases stay inside (-1,1) """
         for wt in self.weights:
             wt[wt>1] = 1
             wt[wt<-1] = -1
@@ -102,7 +102,7 @@ class ship:
             bs[bs>1] = 1
             bs[bs<-1] = -1
     def copyWeightsExper(self, shp, stray, colour):
-        # version of copyWeights() that only take 1 element of each weighgt matrix to change.  Might be useful.
+        """ version of copyWeights() that only take 1 element of each weighgt matrix to change.  Might be useful. """
         self.copyWeights(shp, stray, colour)
         for wt in self.weights:
             i = np.random.randint(wt.shape[0])
@@ -115,20 +115,32 @@ class ship:
     ############### UPDATE #################################
     # Stuff that may be used at each timestep of the race
     ########################################################    
-        
+    def moveShip(self,checkpoints, maxangle, maxaccel):
+        """ Master function that is called from the main loop and goes through all the othe functions"""
+        self.checkCheckpoint(checkpoints)
+        angle = 0
+        accel = 0   
+        controlInputs = self.getDecision()
+        angle -= logis(controlInputs[0]) * maxangle
+        angle += logis(controlInputs[1]) * maxangle
+        accel += logis(controlInputs[2]) * maxaccel
+        brake =  logis(controlInputs[3])
+            
+        self.updateSpeed(accel,angle,brake) 
+        self.updatePos()
     def checkCheckpoint(self,checkpoints):
-        # Determines if we have passed a checkpoint this timestep
+        """Determines if we have passed a checkpoint this timestep"""
         if checkpoints[self.checkpoint].checkCollision(self.x,self.y):
             self.checkpoint +=1
             if(self.checkpoint >= len(checkpoints)):
                 self.checkpoint = 0
                 self.laps +=1
     def checkFuel(self):
-        # Returns the score received based on checkpoint progress minus the time driving.  
-        # If this is below 0 the sihp is said to be out of fuel and crashes
+        """ Returns the score received based on checkpoint progress minus the time driving.  
+         If this is below 0 the sihp is said to be out of fuel and crashes"""
         return  checkFuelCost(self.checkpoint, self.laps)  -  self.timeDriving
     def updateSpeed(self,accel,dangle,brake):
-        # Get new vx and vy to update position
+        """ Get new vx and vy to update position"""
         self.angle += dangle
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
@@ -141,12 +153,12 @@ class ship:
         self.vx = self.vx * self.drag*(1-brake/6)
         self.vy = self.vy * self.drag*(1-brake/6)
     def updatePos(self):
-        # Update where the ship is each timestep based on calculated velocity.
+        """ Update where the ship is each timestep based on calculated velocity."""
         self.timeDriving +=1
         self.x += self.vx
         self.y += self.vy
     def getInputs(self):
-        # Determine which of the input locations are in walls / out of bounds for the input vector
+        """ Determine which of the input locations are in walls / out of bounds for the input vector"""
         self.inputPos = []
         distances = [50,100,150]
         angles = [1.2,0.6,0,-0.6,-1.2]
@@ -169,7 +181,7 @@ class ship:
         #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))]) 
                 
     def getDecision(self):
-        # Use the input vector and all the weights to decide how to control the ship this timestep.
+        """ Use the input vector and all the weights to decide how to control the ship this timestep."""
         temp = []
         temp.append( np.array(self.scan) )
         for i,wt in enumerate(self.weights):
@@ -177,8 +189,8 @@ class ship:
         return temp[len(self.weights)].tolist()[0] # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
     def crash(self):
-        # Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
-        # The cost increases as weights tend away from 0, resulting in fewer extreme weights
+        """ Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
+         The cost increases as weights tend away from 0, resulting in fewer extreme weights"""
         self.cost = 0
         for wt in self.weights:
             self.cost += np.abs(wt).sum()
@@ -202,7 +214,7 @@ class ship:
     ########################################################
         
     def drawShip(self):
-        # Draw triangular ship, get the input values and draw a red or blue circle at their location
+        """ Draw triangular ship, get the input values and draw a red or blue circle at their location"""
         pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
                                    [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
                                    [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
@@ -215,7 +227,7 @@ class ship:
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
         
     def drawMatrix(self):
-        # Draw a bunch of squares that light up red of green based on different points in the decision process 
+        """ Draw a bunch of squares that light up red of green based on different points in the decision process """
         bp = [50,750] # base position bp
         namesurface = myfont.render(self.getName(), False, self.colour)
         screen.blit(namesurface,(bp[0],bp[1] -40),)  
@@ -229,32 +241,27 @@ class ship:
             # Draw square that is slightly offset of previous square
             pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / 3),bp[1] - separationx*(i%3) + 3*separationx,size,size))
         # Calculate intermediate decision array
-        temp_vector = np.add(self.scan.dot(self.weights[0]), self.bias[0])
+        temp_vector = self.scan 
         # Repeat
-        for i in range(temp_vector.shape[1]):
-            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
-            pygame.draw.rect(screen,temp_colour ,(bp[0] + separationy,bp[1] + separationx*i,size,size))
-        temp_vector = np.add(temp_vector.dot(self.weights[1]), self.bias[1])
-        for i in range(temp_vector.shape[1]):
-            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
-            pygame.draw.rect(screen,temp_colour ,(bp[0] + 2*separationy,bp[1] + separationx*i,size,size))
-        temp_vector = np.add(temp_vector.dot(self.weights[2]), self.bias[2])
-        for i in range(temp_vector.shape[1]):
-            temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
-            pygame.draw.rect(screen,temp_colour ,(bp[0] + 3*separationy,bp[1] + separationx*i,size,size))
+        for j, bs in enumerate(self.bias):
+            temp_vector = np.add(temp_vector.dot(self.weights[j]), bs)
+            for i in range(temp_vector.shape[1]):
+                temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+                pygame.draw.rect(screen,temp_colour ,(bp[0] + (j+1)*separationy,bp[1] + separationx*i,size,size))
+
     def highlight(self):
-            pygame.draw.circle(screen, [min(255,tmp + (self.timeDriving%10-5)*0) for tmp in self.colour], [int(self.x),int(self.y)], int(10+ (self.timeDriving%10 )),2)
-            pygame.draw.circle(screen, [min(255,tmp + (self.timeDriving%10-5)*0) for tmp in self.colour], [int(self.x),int(self.y)], int(20+ (self.timeDriving%10 )),2)
-            pygame.draw.circle(screen, [min(255,tmp + (self.timeDriving%10-5)*0) for tmp in self.colour], [int(self.x),int(self.y)], int(30+ (self.timeDriving%10 )),2)
+        """ Draw some expanding circles around the ship """
+        pygame.draw.circle(screen, [max(0,tmp - (10 - self.timeDriving%10)*10) for tmp in self.colour], [int(self.x),int(self.y)], int(10+ (self.timeDriving%10 )),2)
+        pygame.draw.circle(screen, self.colour, [int(self.x),int(self.y)], int(20+ (self.timeDriving%10 )),2)
+        pygame.draw.circle(screen, [max(0,tmp - (self.timeDriving%10)*10) for tmp in self.colour], [int(self.x),int(self.y)], int(30+ (self.timeDriving%10 )),2)
     def getName(self):
-        # Get 6 letter "name" based on weight and bias totals
-        l = [0 for i in range(6)]        
-        l[0] = chr( int( 97 - 32 + (self.weights[0].sum() * 100) % 26 ) )
-        l[1] = chr( int( 97 + (self.weights[1].sum() * 100) % 26 ) )
-        l[2] = chr( int( 97 + (self.weights[2].sum() * 100) % 26 ) )
-        l[3] = chr( int( 97 + (self.bias[0].sum() * 100) % 26 ) )
-        l[4] = chr( int( 97 + (self.bias[1].sum() * 100) % 26 ) )
-        l[5] = chr( int( 97 + (self.bias[2].sum() * 100) % 26 ) )
+        """ Get 6 letter "name" based on weight and bias totals """
+        l = []
+        for wt in self.weights:
+            l.append(chr( int( 97 + (wt.sum() * 100) % 26 ) ))
+        for bs in self.bias:
+            l.append(chr( int( 97 + (bs.sum() * 100) % 26 ) ))
+        l[0] = chr(ord(l[0]) - 32)
         return ''.join(l)
         
 
@@ -269,30 +276,31 @@ class ship:
 
      
 class wall:
-    # for impassable walls and checkpoints
+    """ for impassable walls and checkpoints"""
     def __init__(self,posx,posy,sizex,sizey):
         self.posx = posx
         self.posy = posy
         self.sizex = sizex
         self.sizey = sizey
     def drawWall(self):
+        """ Draw rectangle in the way"""
         pygame.draw.rect(screen,(0,0,255),(self.posx, self.posy, self.sizex, self.sizey))
     def drawCheckpoint(self):
-        # Less intrusive draw for checkpoints
+        """ Less intrusive draw for checkpoints"""
         pygame.draw.circle(screen,(255,255,255),self.getMidInt(), 20, 3)
     def checkCollision(self,pos):
         return self.checkCollision(self,pos[0],pos[1])
     def checkCollision(self,x,y):
-        # determine if position (x,y) is crashed
+        """ determine if position (x,y) is crashed """
         return ((self.posx <= x) and (self.posx + self.sizex >= x) and (self.posy <= y) and (self.posy + self.sizey >= y))
     def getMid(self):
-        # returns the center of the wall
+        """ returns the center of the wall"""
         return [self.posx + self.sizex/2,self.posy + self.sizey/2]
     def getMidInt(self):
-        # returns the center of the wall AS AN INTEGER!!
+        """ returns the center of the wall AS AN INTEGER!!"""
         return [int(self.posx + self.sizex/2),int(self.posy + self.sizey/2)]
     def maze(i):
-        # Here is the "savefile" of my mazes or maps.  
+        """ Here is the "savefile" of my mazes or maps.  """
         if(i == 0):
             return [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,200,50),wall(300,250,300,50)]
         elif(i == 1):
@@ -301,7 +309,7 @@ class wall:
                     wall(1250,200,200,50),wall(1400,400,200,50),wall(1250,650,200,50)]
     
     def checkpoints(i):
-        # Here is the "savefile" of my checkpoints corresponding to the above maps.  
+        """ Here is the "savefile" of my checkpoints corresponding to the above maps.  """
         if(i == 0):
             return [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
         elif(i == 1):
@@ -316,26 +324,26 @@ class wall:
 
 
 def checkCollisions(walls,pos):
-    # Checks pos (x,y) against all walls for collision
+    """ Checks pos (x,y) against all walls for collision"""
     for wall in walls:
         if(wall.checkCollision(pos[0],pos[1])): return True
     if((pos[0] < 0) or (pos[0] > width) or (pos[1] < 0) or (pos[1] > height)): return True
     return False
 def drawWalls(walls):
-    # Create blocking visual for the list of walls given
+    """ Create blocking visual for the list of walls given"""
     for wall in walls: wall.drawWall()
 def drawCheckpoints(walls):
-    # Create small checkpointvisual for the list of walls given
+    """ Create small checkpointvisual for the list of walls given"""
     for wall in walls: wall.drawCheckpoint()
 def getDist(pos1,pos2):
-    # returns the pythagorean distance between 2 vectors
+    """ returns the pythagorean distance between 2 vectors"""
     return np.sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1]))
 def logis(a): 
-    # "Logistic function"
+    """ "Logistic function" """
     b = 1/(1+np.exp(a))
     return b
 def checkFuelCost(CHPTS, LAPS):
-        return  50 + 200*(LAPS * checkpointPerLap + CHPTS )** 0.8
+        return  50 + 200*(LAPS * checkpointPerLap + CHPTS )** 0.7
     
     
 
@@ -404,20 +412,10 @@ while 1:
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
-            shp.checkCheckpoint(checkpoints)
-            angle = 0
-            accel = 0   
-            controlInputs = shp.getDecision()
-            angle -= logis(controlInputs[0]) * maxangle
-            angle += logis(controlInputs[1]) * maxangle
-            accel += logis(controlInputs[2]) * maxaccel
-            brake =  logis(controlInputs[3])
-            
-            shp.updateSpeed(accel,angle,brake) 
-            shp.updatePos()
-            if(checkCollisions(walls,[shp.x,shp.y]) 
-                or shp.checkFuel() < 0): shp.crash()
-            if(allcrashed): 
+            shp.moveShip(checkpoints,maxangle,maxaccel)
+            if(checkCollisions(walls,[shp.x,shp.y]) or shp.checkFuel() < 0):
+                shp.crash()
+            if(allcrashed): # The first one we find not crashed
                 shp.drawMatrix()
                 shp.highlight()
                 allcrashed = False
