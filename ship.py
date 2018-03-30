@@ -11,7 +11,7 @@ from functions import *
 colours = [(100,120,220),(240,120,120)]
 MAX_SPEED = 20
 maxangle = 0.2
-maxaccel = 3
+maxaccel = 1
 
 # Ship neural net dimensions
 INPUTS = 15
@@ -177,6 +177,13 @@ class ship:
             temp.append(np.add(temp[i].dot(wt),self.bias[i]))
         return temp[len(self.weights)].tolist()[0] # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
+    def getScore(self,checkpoints):
+        tempscore = 1000  -  0.01*self.timeDriving 
+        tempscore -=  0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
+        tempscore += self.checkpoint *1000
+        tempscore += self.laps * 1000 * len(checkpoints)
+        return tempscore
+        
     def crash(self,checkpoints):
         """ Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
          The cost increases as weights tend away from 0, resulting in fewer extreme weights"""
@@ -187,11 +194,7 @@ class ship:
             self.cost += np.abs(bs).sum()
         self.score -= 0.00001*self.cost
         # Score improves with distance and time driving
-        self.score += 1000
-        self.score -= 0.01*self.timeDriving 
-        self.score -= 0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
-        self.score += self.checkpoint *1000
-        self.score += self.laps * 1000 * len(checkpoints)
+        self.score += self.getScore(checkpoints)
         # Stop the ship from going further
         self.crashed = True
         self.vx = 0
