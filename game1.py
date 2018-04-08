@@ -16,34 +16,40 @@ from wall import *
 
     
 def drawMap(screen, walls, checkpoints):
+    """ Draw the background, walls and checkpoints."""
     screen.fill((0,0,0))
     drawWalls(walls,screen)
     #drawWalls(checkpoints,screen)
 
 def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints):
-    # General function that will call all the smaller HUD pieces
-    if(newBest):
-        drawLeaderboard(screen,bestship,nseeds)
+    """ General function that will call all the smaller HUD pieces """
+    if(newBest): drawLeaderboard(screen,bestship,nseeds,[0,150])
+    #drawCurrentLeaders(screen,ships,nseeds,[0,150])
     leadship = max(ships, key = lambda x : x.getScore(checkpoints)*(1-int(x.crashed)))
-    leadship.drawMatrix(screen)
+    leadship.drawMatrix(screen,[50,750])
     leadship.highlight(screen)
         
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
     screen.blit(textsurface,(0,0))  
-    
-def drawLeaderboard(screen,bestship,nseeds):
+def drawCurrentLeaders(screen,ships,nseeds,pos):
+    """ Creates a list of who currently hjas the best score and displays that list. """
+    currentLeaders = getBestShip(ships,10)
+    drawLeaderboard(screen,currentLeaders,10,pos)
+def drawLeaderboard(screen,bestship,nseeds,pos):
+    """ Displays a list of the top scoring ships in bestship """
     for i in range(min(nseeds,10)):
         newbestsurface = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
-        screen.blit(newbestsurface,(0,50*(i+4)))
+        screen.blit(newbestsurface,(pos[0],pos[1] + 50*i))
         pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
         pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
 
 def getBestShip(ships,nseeds):
-    # Determine best ships
+    """ Determine and return best ships """
     ships.sort(key = lambda x: x.score, reverse = True)
     return  copy.deepcopy(ships[0:nseeds])
     
 def copyShips(ships,bestship,nseeds,generation):
+    """ Do the inter-generation copying of the best ships from the previous gen """
     gencoef = 1/(generation +1) 
     n = 0
     for shp in ships:
@@ -64,6 +70,7 @@ def copyShips(ships,bestship,nseeds,generation):
         shp.reset()
 
 def moveAndDrawShips(ships,screen,walls,width,height):
+    """ Calculate the new position that the ships will be at and draw them there. """
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):

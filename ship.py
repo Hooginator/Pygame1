@@ -27,18 +27,19 @@ DIMENSIONS.append(OUTPUTS)
 ############################################################
 
 class ship:
+    """Class for holding an indivudual racer and all the variables it needs. """
     ############### INITIALIZATION #########################
     # Stuff that is run once at the start of each generation
     ########################################################
 
     def __init__(self, x, y, angle,colour):
-        """ Create ship with random weights """
+        """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
         self.drag = 0.96
         self.initWeights()
         self.reset()
     def reset(self):
-        """ Return the ship to starting location and reinitialize """
+        """ Returns the ship to its starting location and reinitializes """
         self.x, self.y, self.angle = self.startx, self.starty, self.startangle
         self.vx, self.vy  = 0, 0
         self.crashed = False
@@ -47,14 +48,15 @@ class ship:
         self.scan = np.array([0 for i in range(INPUTS)])
         self.cost = [0 for i in range(6)]
     def initWeights(self):
-        """ Initialize weights to random ones."""
+        """ Initializes weights to randomly selected ones."""
         self.weights = []
         self.bias = []
         for i, dim in enumerate(DIMENSIONS[1:]):
             self.weights.append(np.random.uniform(-1,1,(DIMENSIONS[i],dim)))
             self.bias.append(np.random.uniform(-1,1,(1,dim)))
     def copyAll(self,shp):
-        """ Take all properties from shp and apply them to self.  Used in determining the best ship each generation"""
+        """ Takes all properties from supplied shp and applies them to self.  
+        Used in determining the best ship each generation"""
         self.copyWeights(shp, 0, shp.colour)
         self.score = shp.score
         self.x = shp.x
@@ -62,7 +64,8 @@ class ship:
         self.checkpoint = shp.checkpoint
         self.laps = shp.laps
     def copyWeights(self, shp, stray, colour):
-        """ Changes weights to be around the ones of shp.  This is used to generate offspring from the shp provided."""
+        """ Changes weights to be around the ones provided by shp.  
+        This is used to generate offspring from the shp provided."""
         if(stray == 0): # straight copy
             for i, wt in enumerate(self.weights):
                 wt[:] = shp.weights[i]
@@ -76,7 +79,7 @@ class ship:
             self.normalizeWeights()
         self.colour = colour
     def saveWeights(self, filename, generation):
-        """ saves the np array of weights for easy loading later"""
+        """ Saves the np array of weights for easy loading later"""
         for i,wt in enumerate(self.weights):
             np.save(filename + "_W"+str(i)+"_G" + str(generation),wt)
         for i,bs in enumerate(self.bias):
@@ -91,7 +94,8 @@ class ship:
             bs[bs>1] = 1
             bs[bs<-1] = -1
     def copyWeightsExper(self, shp, stray, colour):
-        """ version of copyWeights() that only take 1 element of each weighgt matrix to change.  Might be useful. """
+        """ version of copyWeights() that only take 1 element of each weight matrix 
+        and changes it absolutely to a new value, regardless of the input value. """
         self.copyWeights(shp, stray, colour)
         for wt in self.weights:
             i = np.random.randint(wt.shape[0])
@@ -105,7 +109,8 @@ class ship:
     # Stuff that may be used at each timestep of the race
     ########################################################    
     def moveShip(self,checkpoints):
-        """ Master function that is called from the main loop and goes through all the othe functions"""
+        """ Based on the ship's brain and inputs, get a decision for this
+        timestep and apply it to the acceleration, braking and turning"""
         self.checkCheckpoint(checkpoints)
         angle = 0
         accel = 0   
@@ -218,9 +223,9 @@ class ship:
             i += 1
         pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
         
-    def drawMatrix(self,screen):
+    def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on different points in the decision process """
-        bp = [50,750] # base position bp
+        bp = pos # base position bp
         namesurface = myfont.render(self.getName(), False, self.colour)
         screen.blit(namesurface,(bp[0],bp[1] -40),)  
         size = 10
