@@ -38,17 +38,21 @@ class ship:
         self.walls, self.checkpoints = walls, checkpoints
         self.width, self.height = width, height
         self.drag = 0.96
+        self.mazeType = "circular"
         self.initWeights()
         self.reset()
     def reset(self):
         """ Returns the ship to its starting location and reinitializes """
-        self.x, self.y, self.angle = self.startx, self.starty, self.startangle
+        self.resetPos()
         self.vx, self.vy  = 0, 0
         self.crashed = False
         self.timeDriving, self.score, self.checkpoint, self.laps = 0, 0, 0, 0
         self.inputColour = [colours[0] for i in range(INPUTS)]
         self.scan = np.array([0 for i in range(INPUTS)])
         self.cost = [0 for i in range(6)]
+    def resetPos(self):
+        """ Go back to start location """
+        self.x, self.y, self.angle = self.startx, self.starty, self.startangle
     def initWeights(self):
         """ Initializes weights to randomly selected ones."""
         self.weights = []
@@ -129,8 +133,14 @@ class ship:
         if self.checkpoints[self.checkpoint].checkCollision([self.x,self.y]):
             self.checkpoint +=1
             if(self.checkpoint >= len(self.checkpoints)):
-                self.checkpoint = 0
-                self.laps +=1
+                if(self.mazeType == "circular"):
+                    self.checkpoint = 0
+                    self.laps +=1
+                elif(self.mazeType == "linear"):
+                    self.checkpoint = 0
+                    self.laps +=1
+                    self.resetPos()
+                    
     def checkFuel(self):
         """ Returns the score received based on checkpoint progress minus the time driving.  
          If this is below 0 the sihp is said to be out of fuel and crashes"""
