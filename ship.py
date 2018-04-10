@@ -8,14 +8,14 @@ Created on Wed Mar 21 10:37:25 2018
 from functions import *
 
 # Ship constants
-colours = [(100,120,220),(240,120,120)]
+colours = [(100,100,240),(240,100,100)]
 MAX_SPEED = 20
 maxangle = 0.2
 maxaccel = 1
 
 # Ship neural net dimensions
 INPUTS = 15
-INTERMEDIATES = (10,7,6,5)
+INTERMEDIATES = (8,)
 OUTPUTS = 4
 DIMENSIONS = [INPUTS]
 DIMENSIONS.extend(INTERMEDIATES)
@@ -32,9 +32,11 @@ class ship:
     # Stuff that is run once at the start of each generation
     ########################################################
 
-    def __init__(self, x, y, angle,colour):
+    def __init__(self, x, y, angle,colour,walls,checkpoints,width,height):
         """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
+        self.walls, self.checkpoints = walls, checkpoints
+        self.width, self.height = width, height
         self.drag = 0.96
         self.initWeights()
         self.reset()
@@ -108,10 +110,10 @@ class ship:
     ############### UPDATE #################################
     # Stuff that may be used at each timestep of the race
     ########################################################    
-    def moveShip(self,checkpoints):
+    def moveShip(self,screen):
         """ Based on the ship's brain and inputs, get a decision for this
         timestep and apply it to the acceleration, braking and turning"""
-        self.checkCheckpoint(checkpoints)
+        self.checkCheckpoint()
         angle = 0
         accel = 0   
         controlInputs = self.getDecision()
@@ -122,17 +124,17 @@ class ship:
             
         self.updateSpeed(accel,angle,brake) 
         self.updatePos()
-    def checkCheckpoint(self,checkpoints):
+    def checkCheckpoint(self):
         """Determines if we have passed a checkpoint this timestep"""
-        if checkpoints[self.checkpoint].checkCollision(self.x,self.y):
+        if self.checkpoints[self.checkpoint].checkCollision([self.x,self.y]):
             self.checkpoint +=1
-            if(self.checkpoint >= len(checkpoints)):
+            if(self.checkpoint >= len(self.checkpoints)):
                 self.checkpoint = 0
                 self.laps +=1
-    def checkFuel(self,checkpointsPerLap):
+    def checkFuel(self):
         """ Returns the score received based on checkpoint progress minus the time driving.  
          If this is below 0 the sihp is said to be out of fuel and crashes"""
-        return  checkFuelCost(self.checkpoint, self.laps,checkpointsPerLap)  -  self.timeDriving
+        return  checkFuelCost(self.checkpoint, self.laps,len(self.checkpoints))  -  self.timeDriving
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
         self.angle += dangle
@@ -151,7 +153,7 @@ class ship:
         self.timeDriving +=1
         self.x += self.vx
         self.y += self.vy
-    def getInputs(self,walls,width,height):
+    def getInputs(self):
         """ Determine which of the input locations are in walls / out of bounds for the input vector"""
         self.inputPos = []
         distances = [50,100,150]
@@ -163,7 +165,7 @@ class ship:
             blocked = False
             for dis in distances:
                 self.inputPos.append([int(self.x + dis*np.cos(self.angle+ang)), int(self.y  + dis*np.sin(self.angle+ang))])
-                if(checkCollisions(walls,self.inputPos[i],width,height) or blocked):
+                if(checkCollisions(self.walls,self.inputPos[i],self.width,self.height) or blocked):
                     blocked = True
                     self.inputColour[i] = colours[1] 
                     self.scan[i] = 0
@@ -182,14 +184,14 @@ class ship:
             temp.append(np.add(temp[i].dot(wt),self.bias[i]))
         return temp[len(self.weights)].tolist()[0] # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
-    def getScore(self,checkpoints):
+    def getScore(self):
         tempscore = 1000  -  0.01*self.timeDriving 
-        tempscore -=  0.1*getDist(checkpoints[self.checkpoint].getMid(),[self.x,self.y])
+        tempscore -=  0.1*getDist(self.checkpoints[self.checkpoint].getMid(),[self.x,self.y])
         tempscore += self.checkpoint *1000
-        tempscore += self.laps * 1000 * len(checkpoints)
+        tempscore += self.laps * 1000 * len(self.checkpoints)
         return tempscore
         
-    def crash(self,checkpoints):
+    def crash(self):
         """ Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
          The cost increases as weights tend away from 0, resulting in fewer extreme weights"""
         self.cost = 0
@@ -199,7 +201,7 @@ class ship:
             self.cost += np.abs(bs).sum()
         self.score -= 0.00001*self.cost
         # Score improves with distance and time driving
-        self.score += self.getScore(checkpoints)
+        self.score += self.getScore()
         # Stop the ship from going further
         self.crashed = True
         self.vx = 0
@@ -210,12 +212,12 @@ class ship:
     # Stuff related to creating various visual effects on screen
     ########################################################
         
-    def drawShip(self,screen,walls,width,height):
+    def drawShip(self,screen):
         """ Draw triangular ship, get the input values and draw a red or blue circle at their location"""
         pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
                                    [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
                                    [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
-        self.getInputs(walls,width,height)
+        self.getInputs()
         i = 0
         # Draw where the inputs are for decision making.
         for pos in self.inputPos:

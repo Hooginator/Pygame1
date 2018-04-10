@@ -13,7 +13,7 @@ import os
 pygame.init()
 pygame.display.init()
 
-myfont = pygame.font.SysFont('arial', 30)
+myfont = pygame.font.SysFont('arial', 24)
 
 ############################################################
 ########### FUNCTIONS ######################################
@@ -24,7 +24,7 @@ myfont = pygame.font.SysFont('arial', 30)
 def checkCollisions(walls,pos,width,height):
     """ Checks pos (x,y) against all walls for collision"""
     for wall in walls:
-        if(wall.checkCollision(pos[0],pos[1])): return True
+        if(wall.checkCollision(pos)): return True
     if((pos[0] < 0) or (pos[0] > width) or (pos[1] < 0) or (pos[1] > height)): return True
     return False
 def getDist(pos1,pos2):

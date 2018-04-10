@@ -15,18 +15,13 @@ from wall import *
 ############################################################
 
     
-def drawMap(screen, walls, checkpoints):
-    """ Draw the background, walls and checkpoints."""
-    screen.fill((0,0,0))
-    drawWalls(walls,screen)
-    #drawWalls(checkpoints,screen)
-
 def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints):
     """ General function that will call all the smaller HUD pieces """
-    if(newBest): drawLeaderboard(screen,bestship,nseeds,[0,150])
+    bp = [0,200]
+    if(newBest): drawLeaderboard(screen,bestship,nseeds,bp)
     #drawCurrentLeaders(screen,ships,nseeds,[0,150])
-    leadship = max(ships, key = lambda x : x.getScore(checkpoints)*(1-int(x.crashed)))
-    leadship.drawMatrix(screen,[50,750])
+    leadship = max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))
+    leadship.drawMatrix(screen,[bp[0] + 70,bp[1] + 400])
     leadship.highlight(screen)
         
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
@@ -37,9 +32,12 @@ def drawCurrentLeaders(screen,ships,nseeds,pos):
     drawLeaderboard(screen,currentLeaders,10,pos)
 def drawLeaderboard(screen,bestship,nseeds,pos):
     """ Displays a list of the top scoring ships in bestship """
+    pygame.draw.rect(screen,(0,0,0),(pos[0],pos[1],200,500))
+    newbestsurface = myfont.render(" LEADERBOARD",False, (250,250,250))
+    screen.blit(newbestsurface,(pos[0]+10,pos[1]))
     for i in range(min(nseeds,10)):
         newbestsurface = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
-        screen.blit(newbestsurface,(pos[0],pos[1] + 50*i))
+        screen.blit(newbestsurface,(pos[0]+4,pos[1] + 30*i + 50))
         pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
         pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
 
@@ -69,19 +67,19 @@ def copyShips(ships,bestship,nseeds,generation):
         n+=1
         shp.reset()
 
-def moveAndDrawShips(ships,screen,walls,width,height):
+def moveAndDrawShips(ships,width,height):
     """ Calculate the new position that the ships will be at and draw them there. """
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
-            shp.moveShip(checkpoints)
-            if(checkCollisions(walls,[shp.x,shp.y],width,height) or shp.checkFuel(len(checkpoints)) < 0):
-                shp.crash(checkpoints)
+            shp.moveShip(screen)
+            if(checkCollisions(walls,[shp.x,shp.y],width,height) or shp.checkFuel() < 0):
+                shp.crash()
             if(allcrashed): # The first one we find not crashed
                 #shp.drawMatrix(screen)
                 #shp.highlight(screen)
                 allcrashed = False
-        shp.drawShip(screen,walls,width,height)
+        shp.drawShip(screen)
     return allcrashed
 
 
@@ -103,17 +101,17 @@ nseeds = 10
 
 filename = "./data/BestShips"
 fileext = ".txt"
-
-ships = [ship(50,50,0,(240,100,100)) for i in range(100)]
-bestship = []
-leadship = []
-walls = wall.maze(1)
-checkpoints = wall.checkpoints(1)
+maze = maze(1)
+walls = maze.obstacles
+checkpoints = maze.checkpoints
 checkpointPerLap = len(checkpoints)
 screen = pygame.display.set_mode(size)
 newbestsurface = [None]*nseeds
 newBest = False
 allcrashed = False
+ships = [ship(50,50,0,(240,100,100),walls,checkpoints,width,height) for i in range(100)]
+bestship = []
+leadship = []
 
 
 
@@ -127,7 +125,7 @@ while 1:
     # Check for quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
-    drawMap(screen, walls, checkpoints)
+    maze.drawMap(screen)
     
     # Once everyone has crashed / run out of fuel we restart at the next generation
     if(allcrashed):
@@ -142,7 +140,7 @@ while 1:
         # Create next generation
         copyShips(ships,bestship,nseeds,generation)
     # Move
-    allcrashed = moveAndDrawShips(ships,screen,walls,width,height)
+    allcrashed = moveAndDrawShips(ships,width,height)
     
     # Draw all the overlay stuff
     drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints)
