@@ -29,6 +29,8 @@ def checkpoints(i):
         return [wall(200,0,200,200),wall(400,400,250,250),wall(750,300,100,100),wall(450,0,200,100),wall(900,0,100,150),wall(1050,400,150,150),
         wall(1450,100,150,150),wall(1250,400,150,150),wall(1400,650,200,200),wall(0,500,200,200)]
 
+
+
     
 ############################################################
 ########### MAZE CLASS #####################################
@@ -36,9 +38,10 @@ def checkpoints(i):
 
 class maze:
     """ Master class for all the objects on the map that get in your way or help """
-    def __init__(self,i):
+    def __init__(self,i = 1,height = 900,width = 1600):
         self.obstacles = obstacles(i)
         self.checkpoints = checkpoints(i)
+        self.screenWidth, self.screenHeight = width, height
     def drawWalls(self,screen):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen)
@@ -50,7 +53,12 @@ class maze:
         screen.fill((0,0,0))
         self.drawWalls(screen)
     #drawWalls(checkpoints,screen)    
-    
+    def checkCollisions(self,pos):
+        """ Checks pos (x,y) against all walls for collision"""
+        for obs in self.obstacles:
+            if(obs.checkCollision(pos)): return True
+        if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) or (pos[1] > self.screenHeight)): return True
+        return False
 ############################################################
 ########### WALL CLASS #####################################
 ############################################################

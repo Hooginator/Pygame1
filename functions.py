@@ -21,12 +21,6 @@ myfont = pygame.font.SysFont('arial', 24)
 
 
 
-def checkCollisions(walls,pos,width,height):
-    """ Checks pos (x,y) against all walls for collision"""
-    for wall in walls:
-        if(wall.checkCollision(pos)): return True
-    if((pos[0] < 0) or (pos[0] > width) or (pos[1] < 0) or (pos[1] > height)): return True
-    return False
 def getDist(pos1,pos2):
     """ returns the pythagorean distance between 2 vectors"""
     return np.sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0])+(pos1[1]-pos2[1])*(pos1[1]-pos2[1]))

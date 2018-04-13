@@ -52,34 +52,34 @@ def copyShips(ships,bestship,nseeds,generation):
     n = 0
     for shp in ships:
         if(n < 20): 
-            shp.copyWeights(bestship[n%nseeds],0.1*gencoef*gencoef, (240,100,100))
+            shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef*gencoef, colour = (240,100,100))
         elif(n < 40): 
-            shp.copyWeights(bestship[n%nseeds],0.1*gencoef, (240,240,100))
+            shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef, colour = (240,240,100))
         elif(n < 60): 
-            shp.copyWeights(bestship[n%nseeds],0.5*gencoef, (100,240,100))
+            shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
         elif(n < 80): 
-            shp.copyWeights(bestship[n%nseeds],1*gencoef, (100,240,240))
+            shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,240,240))
         elif(n < 90): 
             shp.initWeights()
             shp.colour = (100,100,240)
         elif(n < 1000): 
-            shp.copyWeightsExper(bestship[n%nseeds],1*gencoef, (240,100,240))
+            shp.copyWeightsExper(bestship[n%nseeds],stray = 1*gencoef, colour = (240,100,240))
         n+=1
         shp.reset()
 
-def moveAndDrawShips(ships,width,height):
+def moveAndDrawShips(ships,maze):
     """ Calculate the new position that the ships will be at and draw them there. """
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
             shp.moveShip(screen)
-            if(checkCollisions(walls,[shp.x,shp.y],width,height) or shp.checkFuel() < 0):
+            if(maze.checkCollisions([shp.x,shp.y]) or shp.checkFuel() < 0):
                 shp.crash()
             if(allcrashed): # The first one we find not crashed
                 #shp.drawMatrix(screen)
                 #shp.highlight(screen)
                 allcrashed = False
-        shp.drawShip(screen)
+        shp.drawShip(screen,maze)
     return allcrashed
 
 
@@ -101,7 +101,7 @@ nseeds = 10
 
 filename = "./data/BestShips"
 fileext = ".txt"
-maze = maze(1)
+maze = maze(height = height, width = width)
 walls = maze.obstacles
 checkpoints = maze.checkpoints
 checkpointPerLap = len(checkpoints)
@@ -109,7 +109,7 @@ screen = pygame.display.set_mode(size)
 newbestsurface = [None]*nseeds
 newBest = False
 allcrashed = False
-ships = [ship(50,50,0,(240,100,100),walls,checkpoints,width,height) for i in range(100)]
+ships = [ship(walls = walls,checkpoints = checkpoints) for i in range(100)]
 bestship = []
 leadship = []
 
@@ -140,7 +140,7 @@ while 1:
         # Create next generation
         copyShips(ships,bestship,nseeds,generation)
     # Move
-    allcrashed = moveAndDrawShips(ships,width,height)
+    allcrashed = moveAndDrawShips(ships,maze)
     
     # Draw all the overlay stuff
     drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints)

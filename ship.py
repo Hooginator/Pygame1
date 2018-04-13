@@ -32,7 +32,7 @@ class ship:
     # Stuff that is run once at the start of each generation
     ########################################################
 
-    def __init__(self, x, y, angle,colour,walls,checkpoints,width,height):
+    def __init__(self,  x = 50, y = 50, angle = 0,colour = (240,100,100),width = 1600,height = 900, walls = None,checkpoints = None):
         """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
         self.walls, self.checkpoints = walls, checkpoints
@@ -60,16 +60,7 @@ class ship:
         for i, dim in enumerate(DIMENSIONS[1:]):
             self.weights.append(np.random.uniform(-1,1,(DIMENSIONS[i],dim)))
             self.bias.append(np.random.uniform(-1,1,(1,dim)))
-    def copyAll(self,shp):
-        """ Takes all properties from supplied shp and applies them to self.  
-        Used in determining the best ship each generation"""
-        self.copyWeights(shp, 0, shp.colour)
-        self.score = shp.score
-        self.x = shp.x
-        self.y = shp.y
-        self.checkpoint = shp.checkpoint
-        self.laps = shp.laps
-    def copyWeights(self, shp, stray, colour):
+    def copyWeights(self, shp, stray = 0, colour = (240,100,100)):
         """ Changes weights to be around the ones provided by shp.  
         This is used to generate offspring from the shp provided."""
         if(stray == 0): # straight copy
@@ -99,10 +90,10 @@ class ship:
         for bs in self.bias:
             bs[bs>1] = 1
             bs[bs<-1] = -1
-    def copyWeightsExper(self, shp, stray, colour):
+    def copyWeightsExper(self, shp, stray = 0, colour = (240,100,100)):
         """ version of copyWeights() that only take 1 element of each weight matrix 
         and changes it absolutely to a new value, regardless of the input value. """
-        self.copyWeights(shp, stray, colour)
+        self.copyWeights(shp, stray = stray, colour = colour)
         for wt in self.weights:
             i = np.random.randint(wt.shape[0])
             j = np.random.randint(wt.shape[1])
@@ -163,7 +154,7 @@ class ship:
         self.timeDriving +=1
         self.x += self.vx
         self.y += self.vy
-    def getInputs(self):
+    def getInputs(self,maze):
         """ Determine which of the input locations are in walls / out of bounds for the input vector"""
         self.inputPos = []
         distances = [50,100,150]
@@ -175,7 +166,7 @@ class ship:
             blocked = False
             for dis in distances:
                 self.inputPos.append([int(self.x + dis*np.cos(self.angle+ang)), int(self.y  + dis*np.sin(self.angle+ang))])
-                if(checkCollisions(self.walls,self.inputPos[i],self.width,self.height) or blocked):
+                if(maze.checkCollisions(self.inputPos[i]) or blocked):
                     blocked = True
                     self.inputColour[i] = colours[1] 
                     self.scan[i] = 0
@@ -222,12 +213,12 @@ class ship:
     # Stuff related to creating various visual effects on screen
     ########################################################
         
-    def drawShip(self,screen):
+    def drawShip(self,screen,maze):
         """ Draw triangular ship, get the input values and draw a red or blue circle at their location"""
         pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
                                    [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
                                    [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
-        self.getInputs()
+        self.getInputs(maze)
         i = 0
         # Draw where the inputs are for decision making.
         for pos in self.inputPos:
