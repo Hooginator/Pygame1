@@ -34,11 +34,13 @@ class ship:
 
     def __init__(self,  x = 50, y = 50, angle = 0, colour = (240,100,100),
                  width = 1600, height = 900, walls = None, checkpoints = None,
-                 dimensions = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
+                 dimensions = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
+                 parentname = "", parentcolour = (240,100,100)):
         """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
         self.walls, self.checkpoints = walls, checkpoints
         self.width, self.height = width, height
+        self.parentname, self.parentcolour = parentname, parentcolour
         # Create dimensions array based on input, intermediate dimensions and output (4)
         self.dimensions = [len(inputdistance)*len(inputangle)]
         self.dimensions.extend(dimensions)
@@ -60,6 +62,10 @@ class ship:
     def resetPos(self):
         """ Go back to start location """
         self.x, self.y, self.angle = self.startx, self.starty, self.startangle
+    def newSpawn(self, colour = (100,100,240)):
+        self.initWeights()
+        self.parentname = ""
+        self.parentcolour = colour
     def initWeights(self):
         """ Initializes weights to randomly selected ones."""
         self.weights = []
@@ -82,6 +88,8 @@ class ship:
                 bs[:] = shp.bias[i] + np.random.normal(0,stray,(1,self.dimensions[i+1]))
             self.normalizeWeights()
         self.colour = colour
+        self.parentname = shp.getName()
+        self.parentcolour = shp.colour
     def saveWeights(self, basename, generation):
         """ Saves the np array of weights for easy loading later"""
         if not os.path.exists("./data/"+basename):
@@ -238,8 +246,11 @@ class ship:
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on different points in the decision process """
         bp = pos # base position bp
+        namesurface = myfont.render(self.parentname, False, self.parentcolour)
+        screen.blit(namesurface,(bp[0]-60,bp[1] -70),) 
+        tempOffset = namesurface.get_width()
         namesurface = myfont.render(self.getName(), False, self.colour)
-        screen.blit(namesurface,(bp[0],bp[1] -40),)  
+        screen.blit(namesurface,(bp[0] ,bp[1]-40),) 
         size = 10
         separationx = 12
         separationy = 20

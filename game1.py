@@ -21,7 +21,7 @@ def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,check
     if(newBest): drawLeaderboard(screen,bestship,nseeds,bp)
     #drawCurrentLeaders(screen,ships,nseeds,[0,150])
     leadship = max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))
-    leadship.drawMatrix(screen,[bp[0] + 70,bp[1] + 400])
+    leadship.drawMatrix(screen,[bp[0] + 70,bp[1] + 450])
     leadship.highlight(screen)
         
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
@@ -60,8 +60,7 @@ def copyShips(ships,bestship,nseeds,generation):
         elif(n < 80): 
             shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,240,240))
         elif(n < 90): 
-            shp.initWeights()
-            shp.colour = (100,100,240)
+            shp.newSpawn(colour = (100,100,240))
         elif(n < 1000): 
             shp.copyWeightsExper(bestship[n%nseeds],stray = 1*gencoef, colour = (240,100,240))
         n+=1
@@ -88,7 +87,7 @@ def moveAndDrawShips(screen, ships,maze):
 ############################################################
 
 def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
-             nships = 100, nseeds = 10, maxGen = 1000):
+             nships = 100, nseeds = 9, maxGen = 1000):
     
     # Initialization    
     size = width, height
