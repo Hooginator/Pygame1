@@ -67,7 +67,7 @@ def copyShips(ships,bestship,nseeds,generation):
         n+=1
         shp.reset()
 
-def moveAndDrawShips(ships,maze):
+def moveAndDrawShips(screen, ships,maze):
     """ Calculate the new position that the ships will be at and draw them there. """
     allcrashed = True
     for shp in ships:
@@ -83,69 +83,60 @@ def moveAndDrawShips(ships,maze):
     return allcrashed
 
 
-
-############################################################
-########## CONSTANTS #######################################
-############################################################
-
-
-# Screen constants
-size = width, height = 1600, 900
-FPS = 40
-frame = 0
-
-# Initialization     
-time = pygame.time.Clock()
-generation = 0
-nseeds = 10
-
-filename = "./data/BestShips"
-fileext = ".txt"
-maze = maze(height = height, width = width)
-walls = maze.obstacles
-checkpoints = maze.checkpoints
-checkpointPerLap = len(checkpoints)
-screen = pygame.display.set_mode(size)
-newbestsurface = [None]*nseeds
-newBest = False
-allcrashed = False
-ships = [ship(walls = walls,checkpoints = checkpoints) for i in range(100)]
-bestship = []
-leadship = []
-
-
-
 ############################################################
 ########## MAIN PROGRAM ####################################
 ############################################################
 
-
-while 1:
-    frame +=1
-    # Check for quit
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-    maze.drawMap(screen)
+def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
+             nships = 100, nseeds = 10, maxGen = 1000):
     
-    # Once everyone has crashed / run out of fuel we restart at the next generation
-    if(allcrashed):
-        generation +=1
-        # Determine best ships
-        bestship = getBestShip(ships,nseeds)
-        # Flag to start displaying leaderboard
-        newBest = True
-        # Save top of each generation
-        bestship[0].saveWeights(filename, generation)
-        print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
-        # Create next generation
-        copyShips(ships,bestship,nseeds,generation)
-    # Move
-    allcrashed = moveAndDrawShips(ships,maze)
+    # Initialization    
+    size = width, height
+    generation = 0
+    frame = 0
+    newBest = allcrashed = False
     
-    # Draw all the overlay stuff
-    drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints)
+    time = pygame.time.Clock()
+    mymaze = maze(height = height, width = width)
+    walls = mymaze.obstacles
+    checkpoints = mymaze.checkpoints
+    checkpointPerLap = len(checkpoints)
+    screen = pygame.display.set_mode(size)
+    newbestsurface = [None]*nseeds
+    
+    ships = [ship(walls = walls,checkpoints = checkpoints) for i in range(nships)]
+    bestship = []
+    leadship = []
+    
+    # Main Loop
+    while generation < maxGen:
+        frame +=1
+        # Check for quit
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: sys.exit()
+        mymaze.drawMap(screen)
+    
+        # Once everyone has crashed / run out of fuel we restart at the next generation
+        if(allcrashed):
+            generation +=1
+            # Determine best ships
+            bestship = getBestShip(ships,nseeds)
+            # Flag to start displaying leaderboard
+            newBest = True
+            # Save top of each generation
+            bestship[0].saveWeights(basename, generation)
+            print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
+            # Create next generation
+            copyShips(ships,bestship,nseeds,generation)
+        # Move
+        allcrashed = moveAndDrawShips(screen, ships,mymaze)
+    
+        # Draw all the overlay stuff
+        drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints)
  
-    # Wait for next frame time          
-    time.tick(FPS)
-    # Updates screen
-    pygame.display.flip()
+        # Wait for next frame time          
+        time.tick(FPS)
+        # Updates screen
+        pygame.display.flip()
+
+playGame()

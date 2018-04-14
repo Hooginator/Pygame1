@@ -6,7 +6,7 @@ Created on Wed Mar 21 10:37:25 2018
 """
 
 from functions import *
-
+import os
 # Ship constants
 colours = [(100,100,240),(240,100,100)]
 MAX_SPEED = 20
@@ -15,7 +15,7 @@ maxaccel = 1
 
 # Ship neural net dimensions
 INPUTS = 15
-INTERMEDIATES = (8,)
+INTERMEDIATES = ()
 OUTPUTS = 4
 DIMENSIONS = [INPUTS]
 DIMENSIONS.extend(INTERMEDIATES)
@@ -32,11 +32,18 @@ class ship:
     # Stuff that is run once at the start of each generation
     ########################################################
 
-    def __init__(self,  x = 50, y = 50, angle = 0,colour = (240,100,100),width = 1600,height = 900, walls = None,checkpoints = None):
+    def __init__(self,  x = 50, y = 50, angle = 0, colour = (240,100,100),
+                 width = 1600, height = 900, walls = None, checkpoints = None,
+                 dimensions = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
         """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
         self.walls, self.checkpoints = walls, checkpoints
         self.width, self.height = width, height
+        # Create dimensions array based on input, intermediate dimensions and output (4)
+        self.dimensions = [len(inputdistance)*len(inputangle)]
+        self.dimensions.extend(dimensions)
+        self.dimensions.append(4)
+        self.inputdistance, self.inputangle,  = inputdistance, inputangle
         self.drag = 0.96
         self.mazeType = "circular"
         self.initWeights()
@@ -47,8 +54,8 @@ class ship:
         self.vx, self.vy  = 0, 0
         self.crashed = False
         self.timeDriving, self.score, self.checkpoint, self.laps = 0, 0, 0, 0
-        self.inputColour = [colours[0] for i in range(INPUTS)]
-        self.scan = np.array([0 for i in range(INPUTS)])
+        self.inputColour = [colours[0] for i in range(self.dimensions[0])]
+        self.scan = np.array([0 for i in range(self.dimensions[0])])
         self.cost = [0 for i in range(6)]
     def resetPos(self):
         """ Go back to start location """
@@ -57,8 +64,8 @@ class ship:
         """ Initializes weights to randomly selected ones."""
         self.weights = []
         self.bias = []
-        for i, dim in enumerate(DIMENSIONS[1:]):
-            self.weights.append(np.random.uniform(-1,1,(DIMENSIONS[i],dim)))
+        for i, dim in enumerate(self.dimensions[1:]):
+            self.weights.append(np.random.uniform(-1,1,(self.dimensions[i],dim)))
             self.bias.append(np.random.uniform(-1,1,(1,dim)))
     def copyWeights(self, shp, stray = 0, colour = (240,100,100)):
         """ Changes weights to be around the ones provided by shp.  
@@ -70,17 +77,19 @@ class ship:
                 bs[:] = shp.bias[i]
         else: # Copy with some random added in
             for i,wt in enumerate(self.weights):
-                wt[:] = shp.weights[i] + np.random.normal(0,stray,(DIMENSIONS[i],DIMENSIONS[i+1]))
+                wt[:] = shp.weights[i] + np.random.normal(0,stray,(self.dimensions[i],self.dimensions[i+1]))
             for i,bs in enumerate(self.bias):
-                bs[:] = shp.bias[i] + np.random.normal(0,stray,(1,DIMENSIONS[i+1]))
+                bs[:] = shp.bias[i] + np.random.normal(0,stray,(1,self.dimensions[i+1]))
             self.normalizeWeights()
         self.colour = colour
-    def saveWeights(self, filename, generation):
+    def saveWeights(self, basename, generation):
         """ Saves the np array of weights for easy loading later"""
+        if not os.path.exists("./data/"+basename):
+            os.makedirs("./data/"+basename)
         for i,wt in enumerate(self.weights):
-            np.save(filename + "_W"+str(i)+"_G" + str(generation),wt)
+            np.save("./data/"+basename+"/"+basename + "_W"+str(i)+"_G" + str(generation),wt)
         for i,bs in enumerate(self.bias):
-            np.save(filename + "_B"+str(i)+"_G" + str(generation),bs)
+            np.save("./data/"+basename+"/"+basename + "_B"+str(i)+"_G" + str(generation),bs)
         
     def normalizeWeights(self):
         """ Make sure the weights and biases stay inside (-1,1) """
@@ -235,7 +244,7 @@ class ship:
         separationx = 12
         separationy = 20
         # Cycle through array of inputs
-        for i in range(INPUTS):
+        for i in range(self.dimensions[0]):
             # Create red - green colour based on array
             temp_colour = (int((1-self.scan[i])*255),int(self.scan[i]*255),0)
             # Draw square that is slightly offset of previous square
