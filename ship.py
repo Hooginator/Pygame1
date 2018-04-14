@@ -9,17 +9,6 @@ from functions import *
 import os
 # Ship constants
 colours = [(100,100,240),(240,100,100)]
-MAX_SPEED = 20
-maxangle = 0.2
-maxaccel = 1
-
-# Ship neural net dimensions
-INPUTS = 15
-INTERMEDIATES = ()
-OUTPUTS = 4
-DIMENSIONS = [INPUTS]
-DIMENSIONS.extend(INTERMEDIATES)
-DIMENSIONS.append(OUTPUTS)
 
 
 ############################################################
@@ -33,17 +22,19 @@ class ship:
     ########################################################
 
     def __init__(self,  x = 50, y = 50, angle = 0, colour = (240,100,100),
+                 maxSpeed = 20, maxAccel = 1, maxAngle = 0.2,
                  width = 1600, height = 900, walls = None, checkpoints = None,
-                 dimensions = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
+                 intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
                  parentname = "", parentcolour = (240,100,100)):
         """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
+        self.maxSpeed, self.maxAccel, self.maxAngle = maxSpeed, maxAccel, maxAngle
         self.walls, self.checkpoints = walls, checkpoints
         self.width, self.height = width, height
         self.parentname, self.parentcolour = parentname, parentcolour
         # Create dimensions array based on input, intermediate dimensions and output (4)
         self.dimensions = [len(inputdistance)*len(inputangle)]
-        self.dimensions.extend(dimensions)
+        self.dimensions.extend(intermediates)
         self.dimensions.append(4)
         self.inputdistance, self.inputangle,  = inputdistance, inputangle
         self.drag = 0.96
@@ -98,7 +89,6 @@ class ship:
             np.save("./data/"+basename+"/"+basename + "_W"+str(i)+"_G" + str(generation),wt)
         for i,bs in enumerate(self.bias):
             np.save("./data/"+basename+"/"+basename + "_B"+str(i)+"_G" + str(generation),bs)
-        
     def normalizeWeights(self):
         """ Make sure the weights and biases stay inside (-1,1) """
         for wt in self.weights:
@@ -129,9 +119,9 @@ class ship:
         angle = 0
         accel = 0   
         controlInputs = self.getDecision()
-        angle -= logis(controlInputs[0]) * maxangle
-        angle += logis(controlInputs[1]) * maxangle
-        accel += logis(controlInputs[2]) * maxaccel
+        angle -= logis(controlInputs[0]) * self.maxAngle
+        angle += logis(controlInputs[1]) * self.maxAngle
+        accel += logis(controlInputs[2]) * self.maxAccel
         brake =  logis(controlInputs[3])
             
         self.updateSpeed(accel,angle,brake) 
@@ -159,10 +149,10 @@ class ship:
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
         # flat cap on speed
-        if(self.vx > MAX_SPEED): self.vx = MAX_SPEED
-        if(self.vy > MAX_SPEED): self.vy = MAX_SPEED
-        if(self.vx < -1*MAX_SPEED): self.vx = -1*MAX_SPEED
-        if(self.vy < -1*MAX_SPEED): self.vy = -1*MAX_SPEED
+        if(self.vx > self.maxSpeed): self.vx = self.maxSpeed
+        if(self.vy > self.maxSpeed): self.vy = self.maxSpeed
+        if(self.vx < -1*self.maxSpeed): self.vx = -1*self.maxSpeed
+        if(self.vy < -1*self.maxSpeed): self.vy = -1*self.maxSpeed
         # apply drag and braking to slow down
         self.vx = self.vx * self.drag*(1-brake/6)
         self.vy = self.vy * self.drag*(1-brake/6)
@@ -203,6 +193,7 @@ class ship:
         return temp[len(self.weights)].tolist()[0] # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
     def getScore(self):
+        """ determine the current score of the ship """
         tempscore = 1000  -  0.01*self.timeDriving 
         tempscore -=  0.1*getDist(self.checkpoints[self.checkpoint].getMid(),[self.x,self.y])
         tempscore += self.checkpoint *1000

@@ -59,8 +59,8 @@ def copyShips(ships,bestship,nseeds,generation):
             shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
         elif(n < 80): 
             shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,240,240))
-        elif(n < 90): 
-            shp.newSpawn(colour = (100,100,240))
+        #elif(n < 90): 
+        #    shp.newSpawn(colour = (100,100,240))
         elif(n < 1000): 
             shp.copyWeightsExper(bestship[n%nseeds],stray = 1*gencoef, colour = (240,100,240))
         n+=1
@@ -81,13 +81,17 @@ def moveAndDrawShips(screen, ships,maze):
         shp.drawShip(screen,maze)
     return allcrashed
 
+def quitGame():
+    pygame.display.quit()
+    sys.exit()
+
 
 ############################################################
 ########## MAIN PROGRAM ####################################
 ############################################################
 
 def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
-             nships = 100, nseeds = 9, maxGen = 1000):
+             nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,)):
     
     # Initialization    
     size = width, height
@@ -103,7 +107,7 @@ def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
     screen = pygame.display.set_mode(size)
     newbestsurface = [None]*nseeds
     
-    ships = [ship(walls = walls,checkpoints = checkpoints) for i in range(nships)]
+    ships = [ship(walls = walls,checkpoints = checkpoints, intermediates = intermediates) for i in range(nships)]
     bestship = []
     leadship = []
     
@@ -137,5 +141,3 @@ def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
         time.tick(FPS)
         # Updates screen
         pygame.display.flip()
-
-playGame()
