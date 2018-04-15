@@ -21,13 +21,13 @@ class ship:
     # Stuff that is run once at the start of each generation
     ########################################################
 
-    def __init__(self,  x = 50, y = 50, angle = 0, colour = (240,100,100),
+    def __init__(self,  startpos = [50,50], angle = 0, colour = (240,100,100),
                  maxSpeed = 20, maxAccel = 1, maxAngle = 0.2,
                  width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
                  parentname = "", parentcolour = (240,100,100)):
         """ Creates the ship with randomly assigned weights """
-        self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
+        self.startpos, self.startangle, self.colour = startpos, angle, colour
         self.maxSpeed, self.maxAccel, self.maxAngle = maxSpeed, maxAccel, maxAngle
         self.maze = maze
         self.width, self.height = width, height
@@ -51,7 +51,9 @@ class ship:
         self.cost = [0 for i in range(6)]
     def resetPos(self):
         """ Go back to start location """
-        self.x, self.y, self.angle = self.startx, self.starty, self.startangle
+        self.angle = self.startangle
+        self.pos = []
+        self.pos.extend(self.startpos)
     def newSpawn(self, colour = (100,100,240)):
         self.initWeights()
         self.parentname = ""
@@ -127,7 +129,7 @@ class ship:
         self.updatePos()
     def checkCheckpoint(self):
         """Determines if we have passed a checkpoint this timestep"""
-        if self.maze.checkpoints[self.checkpoint].checkCollision([self.x,self.y]):
+        if self.maze.checkpoints[self.checkpoint].checkCollision(self.pos):
             self.checkpoint +=1
             if(self.checkpoint >= self.maze.chechpointsPerLap):
                 if(self.mazeType == "circular"):
@@ -158,8 +160,8 @@ class ship:
     def updatePos(self):
         """ Update where the ship is each timestep based on calculated velocity."""
         self.timeDriving +=1
-        self.x += self.vx
-        self.y += self.vy
+        self.pos[0] += self.vx
+        self.pos[1] += self.vy
     def getInputs(self,maze):
         """ Determine which of the input locations are in walls / out of bounds for the input vector"""
         self.inputPos = []
@@ -171,7 +173,7 @@ class ship:
         for ang in angles:
             blocked = False
             for dis in distances:
-                self.inputPos.append([int(self.x + dis*np.cos(self.angle+ang)), int(self.y  + dis*np.sin(self.angle+ang))])
+                self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), int(self.pos[1]  + dis*np.sin(self.angle+ang))])
                 if(maze.checkCollisions(self.inputPos[i]) or blocked):
                     blocked = True
                     self.inputColour[i] = colours[1] 
@@ -194,7 +196,7 @@ class ship:
     def getScore(self):
         """ determine the current score of the ship """
         tempscore = 1000  -  0.01*self.timeDriving 
-        tempscore -=  0.1*getDist(self.maze.checkpoints[self.checkpoint].getMid(),[self.x,self.y])
+        tempscore -=  0.1*getDist(self.maze.checkpoints[self.checkpoint].getMid(),self.pos)
         tempscore += self.checkpoint *1000
         tempscore += self.laps * 1000 * len(self.maze.checkpoints)
         return tempscore
@@ -214,24 +216,26 @@ class ship:
         self.crashed = True
         self.vx = 0
         self.vy = 0
-        print(self.getName() + "  has crashed")
-    
+        print(self.getName() + "  has crashed at: " + str(self.pos[0])+ "  " + str(self.pos[1]))
+    def getIntPos(self):
+        return (int(self.pos[0]),int(self.pos[1]))
     ############### VISUAL #################################
     # Stuff related to creating various visual effects on screen
     ########################################################
         
     def drawShip(self,screen,maze):
         """ Draw triangular ship, get the input values and draw a red or blue circle at their location"""
-        pygame.draw.polygon(screen, self.colour, [[int(self.x+ 10 *np.cos(self.angle)), int(self.y+ 10 *np.sin(self.angle))],
-                                   [int(self.x+ 10 *np.cos(self.angle + 2.64)), int(self.y+ 10 *np.sin(self.angle + 2.64))],
-                                   [int(self.x+ 10 *np.cos(self.angle + 3.64)), int(self.y+ 10 *np.sin(self.angle + 3.64))]])
+        posInt = self.getIntPos()
+        pygame.draw.polygon(screen, self.colour, [[int(posInt[0]+ 10 *np.cos(self.angle)), int(posInt[1]+ 10 *np.sin(self.angle))],
+                                   [int(posInt[0]+ 10 *np.cos(self.angle + 2.64)), int(posInt[1]+ 10 *np.sin(self.angle + 2.64))],
+                                   [int(posInt[0]+ 10 *np.cos(self.angle + 3.64)), int(posInt[1]+ 10 *np.sin(self.angle + 3.64))]])
         self.getInputs(maze)
         i = 0
         # Draw where the inputs are for decision making.
         for pos in self.inputPos:
             pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
             i += 1
-        pygame.draw.circle(screen, (140,160,240), [int(self.x), int(self.y)], 5,2)
+        pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
         
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on different points in the decision process """
@@ -261,9 +265,10 @@ class ship:
 
     def highlight(self,screen):
         """ Draw some expanding circles around the ship """
-        pygame.draw.circle(screen, [max(0,tmp - (10 - self.timeDriving%10)*10) for tmp in self.colour], [int(self.x),int(self.y)], int(10+ (self.timeDriving%10 )),2)
-        pygame.draw.circle(screen, self.colour, [int(self.x),int(self.y)], int(20+ (self.timeDriving%10 )),2)
-        pygame.draw.circle(screen, [max(0,tmp - (self.timeDriving%10)*10) for tmp in self.colour], [int(self.x),int(self.y)], int(30+ (self.timeDriving%10 )),2)
+        posInt = self.getIntPos()
+        pygame.draw.circle(screen, [max(0,tmp - (10 - self.timeDriving%10)*10) for tmp in self.colour], posInt, int(10+ (self.timeDriving%10 )),2)
+        pygame.draw.circle(screen, self.colour, posInt, int(20+ (self.timeDriving%10 )),2)
+        pygame.draw.circle(screen, [max(0,tmp - (self.timeDriving%10)*10) for tmp in self.colour], posInt, int(30+ (self.timeDriving%10 )),2)
     def getName(self):
         """ Get 6 letter "name" based on weight and bias totals """
         l = []

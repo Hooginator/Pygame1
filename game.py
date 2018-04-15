@@ -15,9 +15,9 @@ from wall import *
 ############################################################
 
     
-def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints):
+def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame):
     """ General function that will call all the smaller HUD pieces """
-    bp = [0,200]
+    bp = (0,200)
     if(newBest): drawLeaderboard(screen,bestship,nseeds,bp,generation)
     #drawCurrentLeaders(screen,ships,nseeds,[0,150])
     leadship = max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))
@@ -38,8 +38,8 @@ def drawLeaderboard(screen,bestship,nseeds,pos,gen):
     for i in range(min(nseeds,10)):
         newbestsurface = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
         screen.blit(newbestsurface,(pos[0]+4,pos[1] + 30*i + 50))
-        pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 10,2)
-        pygame.draw.circle(screen, bestship[i].colour, [int(bestship[i].x),int(bestship[i].y)], 20,2)
+        pygame.draw.circle(screen, bestship[i].colour, bestship[i].getIntPos(), 10,2)
+        pygame.draw.circle(screen, bestship[i].colour, bestship[i].getIntPos(), 20,2)
 
 def getBestShip(ships,nseeds):
     """ Determine and return best ships """
@@ -72,11 +72,9 @@ def moveAndDrawShips(screen, ships,maze):
     for shp in ships:
         if(shp.crashed == False):
             shp.moveShip(screen)
-            if(maze.checkCollisions([shp.x,shp.y]) or shp.checkFuel() < 0):
+            if(maze.checkCollisions(shp.pos) or shp.checkFuel() < 0):
                 shp.crash()
             if(allcrashed): # The first one we find not crashed
-                #shp.drawMatrix(screen)
-                #shp.highlight(screen)
                 allcrashed = False
         shp.drawShip(screen,maze)
     return allcrashed
@@ -147,7 +145,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
         allcrashed = moveAndDrawShips(screen, ships,mymaze)
     
         # Draw all the overlay stuff
-        drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints)
+        drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame)
  
         # Wait for next frame time          
         time.tick(FPS)
