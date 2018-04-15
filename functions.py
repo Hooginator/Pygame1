@@ -28,7 +28,6 @@ def logis(a):
     """ "Logistic function" """
     b = 1/(1+np.exp(-1*a))
     return b
-def checkFuelCost(CHPTS, LAPS,checkpointPerLap):
-    return  50 + 200*(LAPS * checkpointPerLap + CHPTS )** 0.7
+
     
     

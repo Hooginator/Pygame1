@@ -23,13 +23,13 @@ class ship:
 
     def __init__(self,  x = 50, y = 50, angle = 0, colour = (240,100,100),
                  maxSpeed = 20, maxAccel = 1, maxAngle = 0.2,
-                 width = 1600, height = 900, walls = None, checkpoints = None,
+                 width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
                  parentname = "", parentcolour = (240,100,100)):
         """ Creates the ship with randomly assigned weights """
         self.startx, self.starty, self.startangle, self.colour = x, y, angle, colour
         self.maxSpeed, self.maxAccel, self.maxAngle = maxSpeed, maxAccel, maxAngle
-        self.walls, self.checkpoints = walls, checkpoints
+        self.maze = maze
         self.width, self.height = width, height
         self.parentname, self.parentcolour = parentname, parentcolour
         # Create dimensions array based on input, intermediate dimensions and output (4)
@@ -38,7 +38,6 @@ class ship:
         self.dimensions.append(4)
         self.inputdistance, self.inputangle,  = inputdistance, inputangle
         self.drag = 0.96
-        self.mazeType = "circular"
         self.initWeights()
         self.reset()
     def reset(self):
@@ -128,9 +127,9 @@ class ship:
         self.updatePos()
     def checkCheckpoint(self):
         """Determines if we have passed a checkpoint this timestep"""
-        if self.checkpoints[self.checkpoint].checkCollision([self.x,self.y]):
+        if self.maze.checkpoints[self.checkpoint].checkCollision([self.x,self.y]):
             self.checkpoint +=1
-            if(self.checkpoint >= len(self.checkpoints)):
+            if(self.checkpoint >= self.maze.chechpointsPerLap):
                 if(self.mazeType == "circular"):
                     self.checkpoint = 0
                     self.laps +=1
@@ -142,7 +141,7 @@ class ship:
     def checkFuel(self):
         """ Returns the score received based on checkpoint progress minus the time driving.  
          If this is below 0 the sihp is said to be out of fuel and crashes"""
-        return  checkFuelCost(self.checkpoint, self.laps,len(self.checkpoints))  -  self.timeDriving
+        return  self.maze.checkFuelCost(self.laps,self.checkpoint)  -  self.timeDriving
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
         self.angle += dangle
@@ -195,9 +194,9 @@ class ship:
     def getScore(self):
         """ determine the current score of the ship """
         tempscore = 1000  -  0.01*self.timeDriving 
-        tempscore -=  0.1*getDist(self.checkpoints[self.checkpoint].getMid(),[self.x,self.y])
+        tempscore -=  0.1*getDist(self.maze.checkpoints[self.checkpoint].getMid(),[self.x,self.y])
         tempscore += self.checkpoint *1000
-        tempscore += self.laps * 1000 * len(self.checkpoints)
+        tempscore += self.laps * 1000 * len(self.maze.checkpoints)
         return tempscore
         
     def crash(self):
@@ -238,10 +237,10 @@ class ship:
         """ Draw a bunch of squares that light up red of green based on different points in the decision process """
         bp = pos # base position bp
         namesurface = myfont.render(self.parentname, False, self.parentcolour)
-        screen.blit(namesurface,(bp[0]-60,bp[1] -70),) 
+        screen.blit(namesurface,(bp[0]-50,bp[1] -60),) 
         tempOffset = namesurface.get_width()
         namesurface = myfont.render(self.getName(), False, self.colour)
-        screen.blit(namesurface,(bp[0] ,bp[1]-40),) 
+        screen.blit(namesurface,(bp[0]-40 ,bp[1]-30),) 
         size = 10
         separationx = 12
         separationy = 20
@@ -269,9 +268,9 @@ class ship:
         """ Get 6 letter "name" based on weight and bias totals """
         l = []
         for wt in self.weights:
-            l.append(chr( int( 97 + (wt.sum() * 100) % 26 ) ))
+            l.append(chr( int( 97 + (wt.sum() * 10) % 26 ) ))
         for bs in self.bias:
-            l.append(chr( int( 97 + (bs.sum() * 100) % 26 ) ))
+            l.append(chr( int( 97 + (bs.sum() * 10) % 26 ) ))
         l[0] = chr(ord(l[0]) - 32)
         return ''.join(l)
         

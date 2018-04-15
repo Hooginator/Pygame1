@@ -18,10 +18,10 @@ from wall import *
 def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame,checkpoints):
     """ General function that will call all the smaller HUD pieces """
     bp = [0,200]
-    if(newBest): drawLeaderboard(screen,bestship,nseeds,bp)
+    if(newBest): drawLeaderboard(screen,bestship,nseeds,bp,generation)
     #drawCurrentLeaders(screen,ships,nseeds,[0,150])
     leadship = max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))
-    leadship.drawMatrix(screen,[bp[0] + 70,bp[1] + 450])
+    leadship.drawMatrix(screen,[bp[0] + 70,bp[1] + 440])
     leadship.highlight(screen)
         
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
@@ -30,10 +30,10 @@ def drawCurrentLeaders(screen,ships,nseeds,pos):
     """ Creates a list of who currently hjas the best score and displays that list. """
     currentLeaders = getBestShip(ships,10)
     drawLeaderboard(screen,currentLeaders,10,pos)
-def drawLeaderboard(screen,bestship,nseeds,pos):
+def drawLeaderboard(screen,bestship,nseeds,pos,gen):
     """ Displays a list of the top scoring ships in bestship """
     pygame.draw.rect(screen,(0,0,0),(pos[0],pos[1],200,500))
-    newbestsurface = myfont.render(" LEADERBOARD",False, (250,250,250))
+    newbestsurface = myfont.render("GEN "+str(gen-1)+ " WINNERS",False, (250,250,250))
     screen.blit(newbestsurface,(pos[0]+10,pos[1]))
     for i in range(min(nseeds,10)):
         newbestsurface = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
@@ -90,24 +90,31 @@ def quitGame():
 ########## MAIN PROGRAM ####################################
 ############################################################
 
-def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
-             nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,)):
+def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "BestShips",
+             nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
+             inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
     
     # Initialization    
-    size = width, height
     generation = 0
     frame = 0
     newBest = allcrashed = False
+    
+    if(screen == None):
+        size = width, height
+        screen = pygame.display.set_mode(size)
+    else:
+        width = screen.get_width()
+        height = screen.get_height()
     
     time = pygame.time.Clock()
     mymaze = maze(height = height, width = width)
     walls = mymaze.obstacles
     checkpoints = mymaze.checkpoints
     checkpointPerLap = len(checkpoints)
-    screen = pygame.display.set_mode(size)
     newbestsurface = [None]*nseeds
     
-    ships = [ship(walls = walls,checkpoints = checkpoints, intermediates = intermediates) for i in range(nships)]
+    ships = [ship(maze = mymaze, intermediates = intermediates,
+                  inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
     bestship = []
     leadship = []
     
@@ -121,16 +128,21 @@ def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
     
         # Once everyone has crashed / run out of fuel we restart at the next generation
         if(allcrashed):
-            generation +=1
             # Determine best ships
             bestship = getBestShip(ships,nseeds)
             # Flag to start displaying leaderboard
             newBest = True
+            f = open("./data/"+basename+"/topscores","a")
+            for bs in bestship:
+                f.write(str(bs.getScore()) + " ")
+            f.write("\n")
+            f.close()
             # Save top of each generation
             bestship[0].saveWeights(basename, generation)
             print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
             # Create next generation
             copyShips(ships,bestship,nseeds,generation)
+            generation +=1
         # Move
         allcrashed = moveAndDrawShips(screen, ships,mymaze)
     
@@ -141,3 +153,4 @@ def playGame(width = 1600, height = 900, FPS = 40, basename = "BestShips",
         time.tick(FPS)
         # Updates screen
         pygame.display.flip()
+
