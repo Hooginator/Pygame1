@@ -9,6 +9,7 @@ Created on Wed Jan 24 15:08:54 2018
 from functions import *
 from ship import *
 from wall import *
+from hud import *
 
 ############################################################
 ########## FUNCTIONS #######################################
@@ -26,6 +27,8 @@ def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame):
         
     textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
     screen.blit(textsurface,(0,0))  
+def drawClock(screen,frame):
+    pass
 def drawCurrentLeaders(screen,ships,nseeds,pos):
     """ Creates a list of who currently hjas the best score and displays that list. """
     currentLeaders = getBestShip(ships,10)
@@ -34,10 +37,10 @@ def drawLeaderboard(screen,bestship,nseeds,pos,gen):
     """ Displays a list of the top scoring ships in bestship """
     pygame.draw.rect(screen,(0,0,0),(pos[0],pos[1],200,500))
     newbestsurface = myfont.render("GEN "+str(gen-1)+ " WINNERS",False, (250,250,250))
-    screen.blit(newbestsurface,(pos[0]+10,pos[1]))
+    screen.blit(newbestsurface,(pos[0]+5,pos[1]))
     for i in range(min(nseeds,10)):
         newbestsurface = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
-        screen.blit(newbestsurface,(pos[0]+4,pos[1] + 30*i + 50))
+        screen.blit(newbestsurface,(pos[0]+5,pos[1] + 30*i + 50))
         pygame.draw.circle(screen, bestship[i].colour, bestship[i].getIntPos(), 10,2)
         pygame.draw.circle(screen, bestship[i].colour, bestship[i].getIntPos(), 20,2)
 
@@ -58,7 +61,7 @@ def copyShips(ships,bestship,nseeds,generation):
         elif(n < 60): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
         elif(n < 80): 
-            shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,240,240))
+            shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,200,240))
         #elif(n < 90): 
         #    shp.newSpawn(colour = (100,100,240))
         elif(n < 1000): 
@@ -113,8 +116,10 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
     
     ships = [ship(maze = mymaze, intermediates = intermediates,
                   inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
-    bestship = []
+    bestship = None
     leadship = []
+    
+    headsUp = hud()
     
     # Main Loop
     while generation < maxGen:
@@ -145,8 +150,8 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
         allcrashed = moveAndDrawShips(screen, ships,mymaze)
     
         # Draw all the overlay stuff
-        drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame)
- 
+        #drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame)
+        headsUp.update(screen,generation,frame, bestships = bestship,ships = ships)
         # Wait for next frame time          
         time.tick(FPS)
         # Updates screen
