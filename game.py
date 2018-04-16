@@ -15,35 +15,6 @@ from hud import *
 ########## FUNCTIONS #######################################
 ############################################################
 
-    
-def drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame):
-    """ General function that will call all the smaller HUD pieces """
-    bp = (0,200)
-    if(newBest): drawLeaderboard(screen,bestship,nseeds,bp,generation)
-    #drawCurrentLeaders(screen,ships,nseeds,[0,150])
-    leadship = max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))
-    leadship.drawMatrix(screen,[bp[0] + 70,bp[1] + 440])
-    leadship.highlight(screen)
-        
-    textsurface = myfont.render("Gen: "+str(generation), False, (240, 240, 240))
-    screen.blit(textsurface,(0,0))  
-def drawClock(screen,frame):
-    pass
-def drawCurrentLeaders(screen,ships,nseeds,pos):
-    """ Creates a list of who currently hjas the best score and displays that list. """
-    currentLeaders = getBestShip(ships,10)
-    drawLeaderboard(screen,currentLeaders,10,pos)
-def drawLeaderboard(screen,bestship,nseeds,pos,gen):
-    """ Displays a list of the top scoring ships in bestship """
-    pygame.draw.rect(screen,(0,0,0),(pos[0],pos[1],200,500))
-    newbestsurface = myfont.render("GEN "+str(gen-1)+ " WINNERS",False, (250,250,250))
-    screen.blit(newbestsurface,(pos[0]+5,pos[1]))
-    for i in range(min(nseeds,10)):
-        newbestsurface = myfont.render(str(i) + ":   " + str(int(bestship[i].score)) +"   "+bestship[i].getName(),  False, bestship[i].colour)
-        screen.blit(newbestsurface,(pos[0]+5,pos[1] + 30*i + 50))
-        pygame.draw.circle(screen, bestship[i].colour, bestship[i].getIntPos(), 10,2)
-        pygame.draw.circle(screen, bestship[i].colour, bestship[i].getIntPos(), 20,2)
-
 def getBestShip(ships,nseeds):
     """ Determine and return best ships """
     ships.sort(key = lambda x: x.score, reverse = True)
