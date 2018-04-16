@@ -54,7 +54,7 @@ class maze:
     def __init__(self,i = 1,height = 900,width = 1600):
         self.obstacles = obstacles(i)
         self.checkpoints = checkpoints(i)
-        self.chechpointsPerLap = len(self.checkpoints)
+        self.checkpointsPerLap = len(self.checkpoints)
         self.screenWidth, self.screenHeight = width, height
         self.getFuelCosts(i)
         if(i > 2):
@@ -63,8 +63,11 @@ class maze:
             self.mazeType = "linear"
     def getFuelCosts(self,mazeNumber):
         self.fuelParams = fuelParams(mazeNumber)
-    def checkFuelCost(self, currentLap,currentCheckpoint):
+    def checkFuelCost(self, currentCheckpoint, currentLap = None):
         """ Claculates the amount of time in frames a ship gets to make a checkpoint """
+        if(currentLap == None): 
+            currentLap = currentCheckpoint //  self.checkpointsPerLap
+            currentCheckpoint = currentCheckpoint % self.checkpointsPerLap
         return  self.fuelParams[0] + self.fuelParams[1]*(currentLap * len(self.checkpoints) + currentCheckpoint )** self.fuelParams[2]
     def drawWalls(self,screen):
         """ Create blocking visual for the list of walls given"""

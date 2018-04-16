@@ -90,7 +90,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
     bestship = None
     leadship = []
     
-    headsUp = hud()
+    headsUp = hud(maze = mymaze)
     
     # Main Loop
     while generation < maxGen:

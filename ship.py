@@ -131,7 +131,7 @@ class ship:
         """Determines if we have passed a checkpoint this timestep"""
         if self.maze.checkpoints[self.checkpoint].checkCollision(self.pos):
             self.checkpoint +=1
-            if(self.checkpoint >= self.maze.chechpointsPerLap):
+            if(self.checkpoint >= self.maze.checkpointsPerLap):
                 if(self.mazeType == "circular"):
                     self.checkpoint = 0
                     self.laps +=1
@@ -143,7 +143,7 @@ class ship:
     def checkFuel(self):
         """ Returns the score received based on checkpoint progress minus the time driving.  
          If this is below 0 the sihp is said to be out of fuel and crashes"""
-        return  self.maze.checkFuelCost(self.laps,self.checkpoint)  -  self.timeDriving
+        return  self.maze.checkFuelCost(self.checkpoint,currentLap = self.laps)  -  self.timeDriving
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
         self.angle += dangle
