@@ -17,25 +17,25 @@ def drawBackground(screen):
 def obstacles(i):
     """ Here is the "savefile" of the walls for mazes.  """
     if(i == 0):
-        return [wall(80,100,70,350),wall(150,100,300,50),wall(150,400,200,50),wall(300,250,300,50)]
+        return [wall((80,100),(70,350)),wall((150,100),(300,50)),wall((150,400),(200,50)),wall((300,250),(300,50))]
     elif(i == 1):
-        return [wall(200,650,1000,50),wall(200,200,50,450),wall(400,0,50,400),wall(450,350,300,50),
-                wall(850,100,50,550),wall(600,100,250,50),wall(1000,0,50,500),wall(1200,200,50,500),
-                wall(1250,200,200,50),wall(1400,400,200,50),wall(1250,650,200,50)]
+        return [wall((200,650),(1000,50)),wall((200,200),(50,450)),wall((400,0),(50,400)),wall((450,350),(300,50)),
+                wall((850,100),(50,550)),wall((600,100),(250,50)),wall((1000,0),(50,500)),wall((1200,200),(50,500)),
+                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50)),movingBall((200,200),50,0)]
     elif(i == 2):
-        return [ball(100,300,50,0),ball(400,250,50,0),ball(700,200,50,0),ball(1000,150,50,0),ball(1300,100,50,0),
-                ball(200,600,50,0),ball(500,550,50,0),ball(800,500,50,0),ball(1100,450,50,0),ball(1400,400,50,0),
-                ball(300,900,50,0),ball(600,850,50,0),ball(900,800,50,0),ball(1200,750,50,0),ball(1500,700,50,0),]
+        return [ball((100,300),50,0),ball((400,250),50,0),ball((700,200),50,0),ball((1000,150),50,0),ball((1300,100),50,0),
+                ball((200,600),50,0),ball((500,550),50,0),ball((800,500),50,0),ball((1100,450),50,0),ball((1400,400),50,0),
+                ball((300,900),50,0),ball((600,850),50,0),ball((900,800),50,0),ball((1200,750),50,0),ball((1500,700),50,0),]
     
 def checkpoints(i):
     """ Here is the "savefile" of my checkpoints corresponding to the above maps.  """
     if(i == 0):
-        return [wall(0,450,150,150),wall(50,0,150,150),wall(450,50,150,150),wall(150,200,150,150),wall(250,450,150,150)]
+        return [wall((0,450),(150,150)),wall((50,0),(150,150)),wall((450,50),(150,150)),wall((150,200),(150,150)),wall((250,450),(150,150))]
     elif(i == 1):
-        return [wall(200,0,200,200),wall(400,400,250,250),wall(750,300,100,100),wall(450,0,200,100),wall(900,0,100,150),wall(1050,400,150,150),
-        wall(1450,100,150,150),wall(1250,400,150,150),wall(1400,650,200,200),wall(0,500,200,200)]
+        return [wall((200,0),(200,200)),wall((400,400),(250,250)),wall((750,300),(100,100)),wall((450,0),(200,100)),wall((900,0),(100,150)),wall((1050,400),(150,150)),
+        wall((1450,100),(150,150)),wall((1250,400),(150,150)),wall((1400,650),(200,200)),wall((0,500),(200,200))]
     elif(i == 2):
-        return [ball(500,800,60,0),ball(300,100,60,0),ball(1300,600,60,0),ball(200,800,60,0)]    
+        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
 
 def fuelParams(i):
     fp = {0 : [50,200,0.7],
@@ -78,8 +78,12 @@ class maze:
     def drawMap(self,screen):
         """ Draw the background, walls and checkpoints."""
         drawBackground(screen)
+        for obs in self.obstacles:
+            obs.update()
         self.drawWalls(screen)
-    #drawWalls(checkpoints,screen)    
+    #drawWalls(checkpoints,screen)   
+    def newGeneration(self):
+        for obs in self.obstacles: obs.restart()
     def checkCollisions(self,pos):
         """ Checks pos (x,y) against all walls for collision"""
         for obs in self.obstacles:
@@ -92,51 +96,80 @@ class maze:
 
 class obstacle():
     """ Base class for all obstacles to inherit from """
-    def __init__():
+    def __init__(self):
         raise NotImplementedError
-    def draw():
+    def draw(self):
         raise NotImplementedError
-    def checkCollision():
+    def checkCollision(self):
         raise NotImplementedError
+    def update(self):
+        pass
+    def restart(self):
+        pass
      
 class wall(obstacle):
     """ for impassable, rectangular walls and checkpoints"""
-    def __init__(self,posx,posy,sizex,sizey):
-        self.posx = posx
-        self.posy = posy
-        self.sizex = sizex
-        self.sizey = sizey
+    def __init__(self,pos,size):
+        self.pos = pos
+        self.size = size
     def draw(self,screen):
         """ Draw rectangle in the way"""
-        pygame.draw.rect(screen,(0,0,255),(self.posx, self.posy, self.sizex, self.sizey))
+        pygame.draw.rect(screen,(0,0,255),(self.pos[0], self.pos[1], self.size[0], self.size[1]))
     def drawCheckpoint(self,screen):
         """ Less intrusive draw for checkpoints"""
         pygame.draw.circle(screen,(255,255,255),self.getMidInt(), 20, 3)
     def checkCollision(self,pos):
-        return ((self.posx <= pos[0]) and (self.posx + self.sizex >= pos[0]) and (self.posy <= pos[1]) and (self.posy + self.sizey >= pos[1]))
+        return ((self.pos[0] <= pos[0]) and (self.pos[0] + self.size[0] >= pos[0]) 
+                and (self.pos[1] <= pos[1]) and (self.pos[1] + self.size[1] >= pos[1]))
     def getMid(self):
         """ returns the center of the wall"""
-        return [self.posx + self.sizex/2,self.posy + self.sizey/2]
+        return [self.pos[0] + self.size[0]/2,self.pos[1] + self.size[1]/2]
     def getMidInt(self):
         """ returns the center of the wall AS AN INTEGER!!"""
-        return [int(self.posx + self.sizex/2),int(self.posy + self.sizey/2)]
+        return [int(self.pos[0] + self.size[0]/2),int(self.pos[1] + self.size[1]/2)]
 
 class ball(obstacle):
     """ for impassable, rectangular walls and checkpoints"""
-    def __init__(self,posx,posy,radius,width):
-        self.posx = posx
-        self.posy = posy
+    def __init__(self,pos,radius,width):
+        self.pos = pos
         self.width = width
         self.radius = radius
     def draw(self,screen):
         """ Draw rectangle in the way"""
-        pygame.draw.circle(screen,(0,0,255),(self.posx, self.posy), self.radius, self.width)
+        pygame.draw.circle(screen,(0,0,255),self.pos, self.radius, self.width)
     def checkCollision(self,pos):
-        dist = (pos[0]-self.posx)**2 + (pos[1]-self.posy)**2
+        dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
         return dist <(self.radius)**2 and dist > (self.radius-self.width)**2
     def getMid(self):
         """ returns the center of the wall"""
-        return [self.posx,self.posy]
+        return self.pos
 
-    
+class movingBall(obstacle):
+    def __init__(self,pos,radius,width,vel = None):
+        self.pos = list(map(int,pos))
+        self.startpos = list(map(int,pos))
+        self.width = int(width)
+        self.radius = int(radius)    
+        
+        if(vel == None):
+            self.vel = np.random.randint(-10,10,2)
+        else: 
+            self.vel = vel
+    def draw(self,screen):
+        """ Draw rectangle in the way"""
+        pygame.draw.circle(screen,(0,0,255),self.pos, self.radius, self.width)
+    def checkCollision(self,pos):
+        dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
+        if(self.width == 0):
+            return dist <(self.radius)**2
+        else:
+            return dist <(self.radius)**2 and dist > (self.radius-self.width)**2 
+    def update(self):
+        self.pos[0] += self.vel[0]
+        self.pos[1] += self.vel[1]
+    def restart(self):
+        self.pos[0] = self.startpos[0]
+        self.pos[1] = self.startpos[1]
+        
+        
    

@@ -103,6 +103,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
         # Once everyone has crashed / run out of fuel we restart at the next generation
         if(allcrashed):
             # Determine best ships
+            mymaze.newGeneration()
             bestship = getBestShip(ships,nseeds)
             # Flag to start displaying leaderboard
             newBest = True
