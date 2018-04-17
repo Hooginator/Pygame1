@@ -232,9 +232,10 @@ class ship:
         self.getInputs(maze)
         i = 0
         # Draw where the inputs are for decision making.
-        for pos in self.inputPos:
-            pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
-            i += 1
+        if(self.crashed == False):
+            for pos in self.inputPos:
+                pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
+                i += 1
         pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
         
     def drawMatrix(self,screen,pos):
