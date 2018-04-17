@@ -21,7 +21,7 @@ def obstacles(i):
     elif(i == 1):
         return [wall((200,650),(1000,50)),wall((200,200),(50,450)),wall((400,0),(50,400)),wall((450,350),(300,50)),
                 wall((850,100),(50,550)),wall((600,100),(250,50)),wall((1000,0),(50,500)),wall((1200,200),(50,500)),
-                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50)),movingBall((200,200),50,0)]
+                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50)),movingBall((300,300),50,0)]
     elif(i == 2):
         return [ball((100,300),50,0),ball((400,250),50,0),ball((700,200),50,0),ball((1000,150),50,0),ball((1300,100),50,0),
                 ball((200,600),50,0),ball((500,550),50,0),ball((800,500),50,0),ball((1100,450),50,0),ball((1400,400),50,0),
@@ -145,11 +145,12 @@ class ball(obstacle):
         return self.pos
 
 class movingBall(obstacle):
-    def __init__(self,pos,radius,width,vel = None):
+    def __init__(self,pos,radius,width,vel = None,xlims = (0,1600), ylims = (0,900)):
         self.pos = list(map(int,pos))
         self.startpos = list(map(int,pos))
         self.width = int(width)
         self.radius = int(radius)    
+        self.xlims, self.ylims = xlims, ylims
         
         if(vel == None):
             self.vel = np.random.randint(-10,10,2)
@@ -167,6 +168,10 @@ class movingBall(obstacle):
     def update(self):
         self.pos[0] += self.vel[0]
         self.pos[1] += self.vel[1]
+        if(self.pos[0] < self.xlims[0] - self.radius or self.pos[0] > self.xlims[1] + self.radius ): 
+            self.vel[0] = -1*self.vel[0] 
+        if(self.pos[1] < self.ylims[0] - self.radius or self.pos[1] > self.ylims[1] + self.radius ): 
+            self.vel[1] = -1*self.vel[1] 
     def restart(self):
         self.pos[0] = self.startpos[0]
         self.pos[1] = self.startpos[1]

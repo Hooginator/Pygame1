@@ -132,10 +132,10 @@ class ship:
         if self.maze.checkpoints[self.checkpoint].checkCollision(self.pos):
             self.checkpoint +=1
             if(self.checkpoint >= self.maze.checkpointsPerLap):
-                if(self.mazeType == "circular"):
+                if(self.maze.mazeType == "circular"):
                     self.checkpoint = 0
                     self.laps +=1
-                elif(self.mazeType == "linear"):
+                elif(self.maze.mazeType == "linear"):
                     self.checkpoint = 0
                     self.laps +=1
                     self.resetPos()
