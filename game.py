@@ -27,12 +27,16 @@ def copyShips(ships,bestship,nseeds,generation):
     for shp in ships:
         if(n < 20): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef*gencoef, colour = (240,100,100))
+            shp.setName("Gggg")
         elif(n < 40): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef, colour = (240,240,100))
+            shp.setName("Gggg")
         elif(n < 60): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
+            shp.setName("Gggg")
         elif(n < 80): 
             shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,200,240))
+            shp.setName("Gggg")
         #elif(n < 90): 
         #    shp.newSpawn(colour = (100,100,240))
         elif(n < 1000): 

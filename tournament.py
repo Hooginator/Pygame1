@@ -15,7 +15,7 @@ def drawWinners():
 for i in range(1):
     screen = pygame.display.set_mode((1600,900))
     #playCountdown(screen)
-    playGame(screen = screen, maxGen = 100, basename = "INT_0_"+str(i),intermediates = ())
+    playGame(screen = screen, maxGen = 100, basename = "INT_0_"+str(i),intermediates = (7,))
 quitGame()
 
 

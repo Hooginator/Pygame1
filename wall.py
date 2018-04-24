@@ -64,9 +64,9 @@ class maze:
         self.screenWidth, self.screenHeight = width, height
         self.getFuelCosts(i)
         if(i > 2):
-            self.mazeType = "circular"
-        else:
             self.mazeType = "linear"
+        else:
+            self.mazeType = "circular"
     def getFuelCosts(self,mazeNumber):
         self.fuelParams = fuelParams(mazeNumber)
     def checkFuelCost(self, currentCheckpoint, currentLap = None):

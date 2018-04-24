@@ -216,7 +216,7 @@ class ship:
         self.crashed = True
         self.vx = 0
         self.vy = 0
-        print(self.getName() + "  has crashed at: " + str(self.pos[0])+ "  " + str(self.pos[1]))
+        #print(self.getName() + "  has crashed at: " + str(self.pos[0])+ "  " + str(self.pos[1]))
     def getIntPos(self):
         return (int(self.pos[0]),int(self.pos[1]))
     ############### VISUAL #################################
@@ -279,6 +279,38 @@ class ship:
             l.append(chr( int( 97 + (bs.sum() * 10) % 26 ) ))
         l[0] = chr(ord(l[0]) - 32)
         return ''.join(l)
+    def setName(self,newName):
+        for i, wt in enumerate(self.weights):
+            tempcoef = 0
+            tempoff = ord(newName[i]) - ord(self.getName()[i])
+            if(tempoff > 0): 
+                tempcoef = 0.1
+            else: 
+                tempcoef = -0.1
+            #print("Was:  "+newName + "  " + self.getName() + "   " + str(tempoff))
+            tempoff = np.abs(tempoff)
+            for j in range(tempoff):    
+                a = np.random.randint(wt.shape[0])
+                b = np.random.randint(wt.shape[1])
+                wt[a,b] += tempcoef
+        ### SOMETHING IS BROKEN HERE :(
+        ### the first part of setname works perfect, currently testing sending names to Gggg
+        ### the bias is just sending shit wherever it wants.  when tempoff is -13 or 0 we get it right
+        ### otherwise it's wrong.  use brain to fix later
+        for v, bs in enumerate(self.bias):
+            tempcoef = 0
+            tempoff = ord(newName[v+len(self.weights)]) - ord(self.getName()[v+len(self.weights)])
+            if(tempoff > 0): 
+                tempcoef = 0.1
+            else: 
+                tempcoef = -0.1
+            print("Now:  "+ str(v) + "  " +newName + "  " + self.getName() + "   " + str(tempoff))
+            tempoff = np.abs(tempoff)
+            for j in range(tempoff):    
+                c = np.random.randint(bs.shape[0])
+                bs[c] = bs[c] + tempcoef
+        
+            
         
 
     
