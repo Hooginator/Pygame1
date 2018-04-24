@@ -64,7 +64,7 @@ class ship:
         self.bias = []
         for i, dim in enumerate(self.dimensions[1:]):
             self.weights.append(np.random.uniform(-1,1,(self.dimensions[i],dim)))
-            self.bias.append(np.random.uniform(-1,1,(1,dim)))
+            self.bias.append(np.random.uniform(-1,1,dim))
     def copyWeights(self, shp, stray = 0, colour = (240,100,100)):
         """ Changes weights to be around the ones provided by shp.  
         This is used to generate offspring from the shp provided."""
@@ -191,7 +191,7 @@ class ship:
         temp.append( np.array(self.scan) )
         for i,wt in enumerate(self.weights):
             temp.append(np.add(temp[i].dot(wt),self.bias[i]))
-        return temp[len(self.weights)].tolist()[0] # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
+        return temp[len(self.weights)].tolist() # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
     def getScore(self):
         """ determine the current score of the ship """
@@ -260,8 +260,8 @@ class ship:
         # Repeat
         for j, bs in enumerate(self.bias):
             temp_vector = np.add(temp_vector.dot(self.weights[j]), bs)
-            for i in range(temp_vector.shape[1]):
-                temp_colour = (int(max(min((1-temp_vector[0,i])*240,240),0)),int(max(min(temp_vector[0,i]*240,240),0)),0)
+            for i in range(temp_vector.shape[0]):
+                temp_colour = (int(max(min((1-temp_vector[i])*240,240),0)),int(max(min(temp_vector[i]*240,240),0)),0)
                 pygame.draw.rect(screen,temp_colour ,(bp[0] + (j+1)*separationy,bp[1] + separationx*i,size,size))
 
     def highlight(self,screen):
@@ -274,9 +274,10 @@ class ship:
         """ Get 6 letter "name" based on weight and bias totals """
         l = []
         for wt in self.weights:
-            l.append(chr( int( 97 + (wt.sum() * 10) % 26 ) ))
+            l.append(chr( int( 97 + (sum(map(sum,wt)) * 10) % 26 ) ))
         for bs in self.bias:
-            l.append(chr( int( 97 + (bs.sum() * 10) % 26 ) ))
+            #print("BS: "+str(bs[0]))
+            l.append(chr( int( 97 + (sum(bs) * 10) % 26 ) ))
         l[0] = chr(ord(l[0]) - 32)
         return ''.join(l)
     def setName(self,newName):
@@ -304,11 +305,11 @@ class ship:
                 tempcoef = 0.1
             else: 
                 tempcoef = -0.1
-            print("Now:  "+ str(v) + "  " +newName + "  " + self.getName() + "   " + str(tempoff))
+            #print("Now:  "+ str(v) + "  " +newName + "  " + self.getName() + "   " + str(tempoff))
             tempoff = np.abs(tempoff)
             for j in range(tempoff):    
                 c = np.random.randint(bs.shape[0])
-                bs[c] = bs[c] + tempcoef
+                bs[c] += tempcoef
         
             
         
