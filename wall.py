@@ -8,7 +8,9 @@ Created on Thu Mar 29 19:40:19 2018
 from functions import *
 
 
-
+def rotate(pos,angle):
+    return(pos[0]*np.cos(angle)- pos[1]*np.sin(angle),
+           pos[0]*np.sin(angle)+ pos[1]*np.cos(angle))
 
 def drawBackground(screen):
     """ Draws a black rectangle over the whole screen as a backdrop """
@@ -21,7 +23,7 @@ def obstacles(i):
     elif(i == 1):
         return [wall((200,650),(1000,50)),wall((200,200),(50,450)),wall((400,0),(50,400)),wall((450,350),(300,50)),
                 wall((850,100),(50,550)),wall((600,100),(250,50)),wall((1000,0),(50,500)),wall((1200,200),(50,500)),
-                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50))]
+                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50)),rotatingRect((300,300),(20,200),)]
     elif(i == 2):
         return [ball((100,300),50,0),ball((400,250),50,0),ball((700,200),50,0),ball((1000,150),50,0),ball((1300,100),50,0),
                 ball((200,600),50,0),ball((500,550),50,0),ball((800,500),50,0),ball((1100,450),50,0),ball((1400,400),50,0),
@@ -195,5 +197,36 @@ class movingBall(obstacle):
         self.pos[0] = self.startpos[0]
         self.pos[1] = self.startpos[1]
         
+class rotatingRect(obstacle):
+    def __init__(self,midPos,rectSize,vel = 0.01,startAngle = 0.5):
+        self.midPos = midPos
+        self.size = rectSize
+        self.angle = startAngle
+        self.vel = vel
+        self.basePoint = ((-0.5*self.size[0],-0.5*self.size[1]),
+                          (0.5*self.size[0],-0.5*self.size[1]),
+                          (0.5*self.size[0],0.5*self.size[1]),
+                          (-0.5*self.size[0],0.5*self.size[1]))
+        
+    def draw(self,screen):
+        pygame.draw.polygon(screen,(0,0,240),self.pointList)
+    def update(self):
+        self.angle += self.vel
+        self.updatePointList()
+    def updatePointList(self):
+        self.pointList = []
+        for bp in self.basePoint:
+            temppoint = rotate(bp,self.angle)
+            self.pointList.append((self.midPos[0] +temppoint[0]
+                            ,self.midPos[1] +temppoint[1]))
+        
+
+    def checkCollision(self,pos,size = 0):
+        temp = (pos[0] - self.midPos[0], pos[1] - self.midPos[1])
+        temp = rotate(temp,-1*self.angle)     
+        return ((-0.5*self.size[0]- size <= temp[0]) and (0.5*self.size[0] + size + self.size[0] >= temp[0]) 
+                and (-0.5*self.size[1] - size <= temp[1]) and (0.5*self.size[1] + size + self.size[1] >= temp[1]))
+    
+        return False
         
    
