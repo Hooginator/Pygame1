@@ -43,10 +43,10 @@ def checkpoints(i):
         return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
 
 def fuelParams(i):
-    fp = {0 : [50,200,0.7],
-          1 : [50,200,0.7],
-          2 : [300,300,0.7],
-          3 : [300,300,0.7],
+    fp = {0 : [200,0.8],
+          1 : [200,0.8],
+          2 : [500,0.9],
+          3 : [500,0.9],
           }
     return fp[i]
 
@@ -57,7 +57,7 @@ def fuelParams(i):
 
 class maze:
     """ Master class for all the objects on the map that get in your way or help """
-    def __init__(self,i = 3,height = 900,width = 1600):
+    def __init__(self,i = 1,height = 900,width = 1600):
         self.obstacles = obstacles(i)
         self.checkpoints = checkpoints(i)
         self.checkpointsPerLap = len(self.checkpoints)
@@ -74,13 +74,15 @@ class maze:
         if(currentLap == None): 
             currentLap = currentCheckpoint //  self.checkpointsPerLap
             currentCheckpoint = currentCheckpoint % self.checkpointsPerLap
-        return  self.fuelParams[0] + self.fuelParams[1]*(currentLap * len(self.checkpoints) + currentCheckpoint )** self.fuelParams[2]
+        return  self.fuelParams[0]*(currentLap * len(self.checkpoints)+ 1 + currentCheckpoint )** self.fuelParams[1]
     def drawWalls(self,screen):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen)
-    def drawCheckpoints(self,screen):
+    def drawCheckpoints(self,screen,frame):
         """ Create small checkpointvisual for the list of walls given"""
-        for obs in self.obstacles: obs.drawCheckpoint(screen)
+        for chp in self.checkpoints: chp.drawCheckpoint(screen,frame)
+    def drawCheckpoint(self,screen,i,frame):
+        self.checkpoints[i%len(self.checkpoints)].drawCheckpoint(screen,frame)
     def drawMap(self,screen):
         """ Draw the background, walls and checkpoints."""
         drawBackground(screen)
@@ -120,10 +122,14 @@ class wall(obstacle):
         self.size = size
     def draw(self,screen):
         """ Draw rectangle in the way"""
-        pygame.draw.rect(screen,(0,0,255),(self.pos[0], self.pos[1], self.size[0], self.size[1]))
-    def drawCheckpoint(self,screen):
+        pygame.draw.rect(screen,(0,0,240),(self.pos[0], self.pos[1], self.size[0], self.size[1]))
+    def drawCheckpoint(self,screen,frame):
         """ Less intrusive draw for checkpoints"""
-        pygame.draw.circle(screen,(255,255,255),self.getMidInt(), 20, 3)
+        pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
+                                   self.getMidInt(), 1 + frame %20, 1)
+        pygame.draw.circle(screen,(240,240,240),self.getMidInt(), 21 + frame %20, 1)
+        pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
+                                   self.getMidInt(), 41 + frame %20, 1)
     def checkCollision(self,pos):
         return ((self.pos[0] <= pos[0]) and (self.pos[0] + self.size[0] >= pos[0]) 
                 and (self.pos[1] <= pos[1]) and (self.pos[1] + self.size[1] >= pos[1]))
@@ -142,7 +148,7 @@ class ball(obstacle):
         self.radius = radius
     def draw(self,screen):
         """ Draw rectangle in the way"""
-        pygame.draw.circle(screen,(0,0,255),self.pos, self.radius, self.width)
+        pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
     def checkCollision(self,pos):
         dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
         return dist <(self.radius)**2 and dist > (self.radius-self.width)**2
@@ -164,7 +170,7 @@ class movingBall(obstacle):
             self.vel = vel
     def draw(self,screen):
         """ Draw rectangle in the way"""
-        pygame.draw.circle(screen,(0,0,255),self.pos, self.radius, self.width)
+        pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
     def checkCollision(self,pos):
         dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
         if(self.width == 0):

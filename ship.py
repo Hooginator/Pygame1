@@ -252,7 +252,7 @@ class ship:
         # Cycle through array of inputs
         for i in range(self.dimensions[0]):
             # Create red - green colour based on array
-            temp_colour = (int((1-self.scan[i])*255),int(self.scan[i]*255),0)
+            temp_colour = (int((1-self.scan[i])*240),int(self.scan[i]*240),0)
             # Draw square that is slightly offset of previous square
             pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / 3),bp[1] - separationx*(i%3) + 3*separationx,size,size))
         # Calculate intermediate decision array
@@ -261,7 +261,7 @@ class ship:
         for j, bs in enumerate(self.bias):
             temp_vector = np.add(temp_vector.dot(self.weights[j]), bs)
             for i in range(temp_vector.shape[1]):
-                temp_colour = (int(max(min((1-temp_vector[0,i])*255,255),0)),int(max(min(temp_vector[0,i]*255,255),0)),0)
+                temp_colour = (int(max(min((1-temp_vector[0,i])*240,240),0)),int(max(min(temp_vector[0,i]*240,240),0)),0)
                 pygame.draw.rect(screen,temp_colour ,(bp[0] + (j+1)*separationy,bp[1] + separationx*i,size,size))
 
     def highlight(self,screen):

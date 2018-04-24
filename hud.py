@@ -24,8 +24,8 @@ class hud:
         self.genSurface = None
         self.winnerPos = []
         self.winnerColour = []
-        self.updateGeneration(generation)
         self.maze = maze
+        self.updateGeneration(generation)
     def update(self,screen,generation, frame,bestships = None,ships = None):
         """general update function"""
         self.frame = frame
@@ -63,6 +63,10 @@ class hud:
         tempsize = int(angle * 3)
         pygame.draw.line(screen,(240,240,240),(50,50),temppos,2)
         pygame.draw.circle(screen,(240,240,240),(50,50),max(24-tempsize,1),1)
+        
+        # Also draw the next checkpoint
+        self.maze.drawCheckpoint(screen,self.checkpoint,self.frame)
+
     def drawWinners(self,screen):
         for i, surf in enumerate(self.winnerSurface):
             screen.blit(surf,(self.basepos[0]+5,self.basepos[1]+30*i))
@@ -74,7 +78,7 @@ class hud:
         self.genStartFrame = self.frame
         self.checkpoint = 0
         self.lastCheckpointCost = 0
-        self.nextCheckpointCost = 0
+        self.nextCheckpointCost = self.maze.checkFuelCost(self.checkpoint)
         self.genSurface = myfont.render("Gen: "+str(self.gen), False, (240, 240, 240))
     def drawGeneration(self,screen):
         screen.blit(self.genSurface,(0,0)) 
