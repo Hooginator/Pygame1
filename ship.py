@@ -281,6 +281,8 @@ class ship:
         l[0] = chr(ord(l[0]) - 32)
         return ''.join(l)
     def setName(self,newName):
+        """ Changes the weights and biases randomly in order to have the 
+        getName() function return the name specified here """
         for i, wt in enumerate(self.weights):
             tempcoef = 0
             tempoff = ord(newName[i]) - ord(self.getName()[i])
@@ -294,10 +296,7 @@ class ship:
                 a = np.random.randint(wt.shape[0])
                 b = np.random.randint(wt.shape[1])
                 wt[a,b] += tempcoef
-        ### SOMETHING IS BROKEN HERE :(
-        ### the first part of setname works perfect, currently testing sending names to Gggg
-        ### the bias is just sending shit wherever it wants.  when tempoff is -13 or 0 we get it right
-        ### otherwise it's wrong.  use brain to fix later
+
         for v, bs in enumerate(self.bias):
             tempcoef = 0
             tempoff = ord(newName[v+len(self.weights)]) - ord(self.getName()[v+len(self.weights)])
@@ -310,8 +309,10 @@ class ship:
             for j in range(tempoff):    
                 c = np.random.randint(bs.shape[0])
                 bs[c] += tempcoef
-        
+    def nameShip(self,newName,colour = None):
+        self.setName(newName)
+        if colour is not None:
+            self.colour = colour
             
-        
 
     

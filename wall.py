@@ -43,8 +43,8 @@ def checkpoints(i):
         return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
 
 def fuelParams(i):
-    fp = {0 : [200,0.8],
-          1 : [200,0.8],
+    fp = {0 : [200,0.7],
+          1 : [200,0.7],
           2 : [500,0.9],
           3 : [500,0.9],
           }
@@ -92,10 +92,10 @@ class maze:
     #drawWalls(checkpoints,screen)   
     def newGeneration(self):
         for obs in self.obstacles: obs.restart()
-    def checkCollisions(self,pos):
+    def checkCollisions(self,pos,size = 0):
         """ Checks pos (x,y) against all walls for collision"""
         for obs in self.obstacles:
-            if(obs.checkCollision(pos)): return True
+            if(obs.checkCollision(pos,size)): return True
         if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) or (pos[1] > self.screenHeight)): return True
         return False
 ############################################################
@@ -109,6 +109,7 @@ class obstacle():
     def draw(self):
         raise NotImplementedError
     def checkCollision(self):
+        """ Returns true on collision """
         raise NotImplementedError
     def update(self):
         pass
@@ -130,9 +131,10 @@ class wall(obstacle):
         pygame.draw.circle(screen,(240,240,240),self.getMidInt(), 21 + frame %20, 1)
         pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
                                    self.getMidInt(), 41 + frame %20, 1)
-    def checkCollision(self,pos):
-        return ((self.pos[0] <= pos[0]) and (self.pos[0] + self.size[0] >= pos[0]) 
-                and (self.pos[1] <= pos[1]) and (self.pos[1] + self.size[1] >= pos[1]))
+    def checkCollision(self,pos,size = 0):
+        """ Returns true on collision """
+        return ((self.pos[0]+ size <= pos[0]) and (self.pos[0] + size + self.size[0] >= pos[0]) 
+                and (self.pos[1] + size <= pos[1]) and (self.pos[1] + size + self.size[1] >= pos[1]))
     def getMid(self):
         """ returns the center of the wall"""
         return [self.pos[0] + self.size[0]/2,self.pos[1] + self.size[1]/2]
@@ -149,9 +151,13 @@ class ball(obstacle):
     def draw(self,screen):
         """ Draw rectangle in the way"""
         pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
-    def checkCollision(self,pos):
+    def checkCollision(self,pos,size = 0):
+        """ Returns true on collision """
         dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
-        return dist <(self.radius)**2 and dist > (self.radius-self.width)**2
+        if(self.width == 0):
+            return dist - size <(self.radius)**2
+        else:
+            return dist - size <(self.radius)**2 and dist + size > (self.radius-self.width)**2 
     def getMid(self):
         """ returns the center of the wall"""
         return self.pos
@@ -171,12 +177,13 @@ class movingBall(obstacle):
     def draw(self,screen):
         """ Draw rectangle in the way"""
         pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
-    def checkCollision(self,pos):
+    def checkCollision(self,pos,size = 0):
+        """ Returns true on collision """
         dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
         if(self.width == 0):
-            return dist <(self.radius)**2
+            return dist - size <(self.radius)**2
         else:
-            return dist <(self.radius)**2 and dist > (self.radius-self.width)**2 
+            return dist - size <(self.radius)**2 and dist + size > (self.radius-self.width)**2 
     def update(self):
         self.pos[0] += self.vel[0]
         self.pos[1] += self.vel[1]

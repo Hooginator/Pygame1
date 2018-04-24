@@ -27,16 +27,12 @@ def copyShips(ships,bestship,nseeds,generation):
     for shp in ships:
         if(n < 20): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef*gencoef, colour = (240,100,100))
-            shp.setName("Gggg")
         elif(n < 40): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef, colour = (240,240,100))
-            shp.setName("Gggg")
         elif(n < 60): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
-            shp.setName("Gggg")
         elif(n < 80): 
             shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,200,240))
-            shp.setName("Gggg")
         #elif(n < 90): 
         #    shp.newSpawn(colour = (100,100,240))
         elif(n < 1000): 
@@ -69,7 +65,7 @@ def quitGame():
 def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
-    
+    print("#### STARTING GAME ####")
     # Initialization    
     generation = 0
     frame = 0
@@ -111,13 +107,13 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
             bestship = getBestShip(ships,nseeds)
             # Flag to start displaying leaderboard
             newBest = True
+            # Save top of each generation
+            bestship[0].saveWeights(basename, generation)
             f = open("./data/"+basename+"/topscores","a")
             for bs in bestship:
                 f.write(str(bs.getScore()) + " ")
             f.write("\n")
             f.close()
-            # Save top of each generation
-            bestship[0].saveWeights(basename, generation)
             print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
             # Create next generation
             copyShips(ships,bestship,nseeds,generation)
@@ -132,4 +128,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
         time.tick(FPS)
         # Updates screen
         pygame.display.flip()
+    
+    # END OF GAME
+    return bestship
 

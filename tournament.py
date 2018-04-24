@@ -11,26 +11,51 @@ from game import *
 def drawWinners():
     pass
 
-
-for i in range(1):
-    screen = pygame.display.set_mode((1600,900))
-    #playCountdown(screen)
-    playGame(screen = screen, maxGen = 100, basename = "INT_0_"+str(i),intermediates = (7,))
-quitGame()
-
-
-
 ############################################################
 ########## EXTRA SCREENS ###################################
 ############################################################
 
-def playCountdown(screen, seconds = 5,pos = (500,400)):
+def playCountdown(screen, seconds = 5,pos = (500,400),winningShip = None):
+    winsurface = []
+    if winningShip is not None:
+        winsurface.append(myfont.render("Top Scorer:  ", False,(240,240,240)))
+        winsurface.append(myfont.render(winningShip[0].getName() + " " 
+                  + str(int(winningShip[0].score)), False, winningShip[0].colour))
+        
+
+        
+    
     time = pygame.time.Clock()
     for t in range(seconds):
         drawBackground(screen)
-        timersurface = myfont.render(str(seconds - t), False, (240,240,240))
-        screen.blit(timersurface,pos,) 
+        if winningShip is not None:
+            dist = 0
+            for wn in winsurface:
+                screen.blit(wn,(pos[0]-40+dist,pos[1]-100)) 
+                dist += wn.get_width()
+        timersurface = myfont.render("Next race starting in ... " + str(seconds - t), False, (240,240,240))
+        screen.blit(timersurface,pos) 
         # Updates screen
         pygame.display.flip()
         # Wait for next frame time          
         time.tick(1)
+
+
+
+
+
+
+############################################################
+########## TOURNAMENT ## ###################################
+############################################################
+
+winningShip = None
+for i in range(10):
+    screen = pygame.display.set_mode((1600,900))
+    playCountdown(screen,winningShip = winningShip)
+    winningShip = playGame(screen = screen, maxGen = 1, basename = "INT_0_"+str(i),intermediates = (7,))
+quitGame()
+
+
+
+

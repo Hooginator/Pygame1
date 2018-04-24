@@ -26,7 +26,7 @@ class hud:
         self.winnerColour = []
         self.maze = maze
         self.updateGeneration(generation)
-    def update(self,screen,generation, frame,bestships = None,ships = None):
+    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = False):
         """general update function"""
         self.frame = frame
         if(generation > self.gen or frame == 0): 
@@ -35,10 +35,10 @@ class hud:
         if((frame % 10 == 0) and (ships is not None)):
             self.leadship = [max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))]
         if(self.leadship is not None):
-            self.drawBackground(screen)
+            if drawLeaderboard: self.drawBackground(screen)
             self.leadship[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 440])
             self.leadship[0].highlight(screen)
-        self.drawWinners(screen)
+        if drawLeaderboard: self.drawWinners(screen)
         self.drawGeneration(screen)
         self.drawTimer(screen)
             
