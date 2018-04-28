@@ -36,7 +36,7 @@ class hud:
             self.leadship = [max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))]
         if(self.leadship is not None):
             if drawLeaderboard: self.drawBackground(screen)
-            self.leadship[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 440])
+            self.leadship[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 500])
             self.leadship[0].highlight(screen)
         if drawLeaderboard: self.drawWinners(screen)
         self.drawGeneration(screen)

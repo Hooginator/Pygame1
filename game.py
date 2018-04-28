@@ -64,7 +64,8 @@ def quitGame():
 
 def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
-             inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
+             inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
+             saveFrames = True):
     print("#### STARTING GAME ####")
     # Initialization    
     generation = 0
@@ -124,6 +125,11 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
         # Draw all the overlay stuff
         #drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame)
         headsUp.update(screen,generation,frame, bestships = bestship,ships = ships)
+        
+        if(saveFrames):
+            if not os.path.exists("./data/"+basename+"/frames/"):
+                os.makedirs("./data/"+basename+"/frames/")
+            pygame.image.save(screen,"./data/"+basename+"/frames/frame"+str(frame).zfill(10))
         # Wait for next frame time          
         time.tick(FPS)
         # Updates screen
