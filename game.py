@@ -16,7 +16,7 @@ from hud import *
 ############################################################
 
 def getBestShip(ships,nseeds):
-    """ Determine and return best ships """
+    """ Determine and return ships with the highest score """
     ships.sort(key = lambda x: x.score, reverse = True)
     return  copy.deepcopy(ships[0:nseeds])
     
@@ -54,9 +54,26 @@ def moveAndDrawShips(screen, ships,maze):
     return allcrashed
 
 def quitGame():
+    """ Uninitialize everything and close pygame screen """
     pygame.display.quit()
     sys.exit()
 
+def saveBestships(bestships,basename,gen):
+    """ Save top weight of each generation and the top 10 scores"""
+    bestships[0].saveWeights(basename, gen)
+    f = open("./data/"+basename+"/topscores","a")
+    for bs in bestships:
+        f.write(str(bs.getScore()) + " ")
+    f.write("\n")
+    f.close()
+    print("All crashed for generation " + str(generation) +"  Top Ship score: " 
+          + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
+            
+def saveFrame(screen,basename,frame):
+    """ Saves the currently displayed image on screen """
+    if not os.path.exists("./data/"+basename+"/frames/"):
+        os.makedirs("./data/"+basename+"/frames/")
+    pygame.image.save(screen,"./data/"+basename+"/frames/frame"+str(frame).zfill(10))
 
 ############################################################
 ########## MAIN PROGRAM ####################################
@@ -70,8 +87,15 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
     # Initialization    
     generation = 0
     frame = 0
-    newBest = allcrashed = False
+    allcrashed = False
+    bestship = None
+    time = pygame.time.Clock()
+    mymaze = maze(height = height, width = width)
+    ships = [ship(maze = mymaze, intermediates = intermediates,
+                  inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
+    headsUp = hud(maze = mymaze)
     
+    # Create pygame screen if we need to
     if(screen == None):
         size = width, height
         screen = pygame.display.set_mode(size)
@@ -79,57 +103,32 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
         width = screen.get_width()
         height = screen.get_height()
     
-    time = pygame.time.Clock()
-    mymaze = maze(height = height, width = width)
-    walls = mymaze.obstacles
-    checkpoints = mymaze.checkpoints
-    checkpointPerLap = len(checkpoints)
-    newbestsurface = [None]*nseeds
-    
-    ships = [ship(maze = mymaze, intermediates = intermediates,
-                  inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
-    bestship = None
-    leadship = []
-    
-    headsUp = hud(maze = mymaze)
-    
     # Main Loop
     while generation < maxGen:
         frame +=1
         # Check for quit
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
-        mymaze.drawMap(screen)
     
         # Once everyone has crashed / run out of fuel we restart at the next generation
         if(allcrashed):
-            # Determine best ships
+            # Reinitialize the environment
             mymaze.newGeneration()
+            # Determine best ships
             bestship = getBestShip(ships,nseeds)
-            # Flag to start displaying leaderboard
-            newBest = True
-            # Save top of each generation
-            bestship[0].saveWeights(basename, generation)
-            f = open("./data/"+basename+"/topscores","a")
-            for bs in bestship:
-                f.write(str(bs.getScore()) + " ")
-            f.write("\n")
-            f.close()
-            print("All crashed for generation " + str(generation) +"  Top Ship score: " + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
+            # Save the best ships
+            saveBestships(bestship,basename,generation)
             # Create next generation
             copyShips(ships,bestship,nseeds,generation)
             generation +=1
-        # Move
+        # Draw and update the map
+        mymaze.drawMap(screen)
+        # Move and draw the ships, returns true is each ship has crashed
         allcrashed = moveAndDrawShips(screen, ships,mymaze)
-    
         # Draw all the overlay stuff
-        #drawHUD(screen,bestship,leadship,ships,nseeds,generation,newBest,frame)
         headsUp.update(screen,generation,frame, bestships = bestship,ships = ships)
-        
-        if(saveFrames):
-            if not os.path.exists("./data/"+basename+"/frames/"):
-                os.makedirs("./data/"+basename+"/frames/")
-            pygame.image.save(screen,"./data/"+basename+"/frames/frame"+str(frame).zfill(10))
+        # Save the image on screen if that's what we're doing
+        if(saveFrames): saveFrame(screen,basename,frame)
         # Wait for next frame time          
         time.tick(FPS)
         # Updates screen

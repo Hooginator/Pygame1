@@ -80,6 +80,7 @@ class hud:
             pygame.draw.circle(screen, self.winnerColour[i], pos, 10,2)
             pygame.draw.circle(screen, self.winnerColour[i], pos, 20,2)
     def updateGeneration(self,generation):
+        """ Everything the HUD needs to do after a generation has ended """
         self.gen = generation
         self.genStartFrame = self.frame
         self.checkpoint = 0

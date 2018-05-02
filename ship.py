@@ -310,6 +310,7 @@ class ship:
                 c = np.random.randint(bs.shape[0])
                 bs[c] += tempcoef
     def nameShip(self,newName,colour = None):
+        """ Forces the ship to conform to the name and colour provided """
         self.setName(newName)
         if colour is not None:
             self.colour = colour
