@@ -33,7 +33,8 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
             for wn in winsurface:
                 screen.blit(wn,(pos[0]-40+dist,pos[1]-100)) 
                 dist += wn.get_width()
-        timersurface = myfont.render("Next race starting in ... " + str(seconds - t), False, (240,240,240))
+        timersurface = myfont.render("Next race starting in ... " 
+                                     + str(seconds - t), False, (240,240,240))
         screen.blit(timersurface,pos) 
         # Updates screen
         pygame.display.flip()
@@ -53,7 +54,8 @@ winningShip = None
 for i in range(10):
     screen = pygame.display.set_mode((1600,900))
     playCountdown(screen,winningShip = winningShip)
-    winningShip = playGame(screen = screen, maxGen = 10, basename = "INT_0_"+str(i),intermediates = (7,))
+    winningShip = playGame(screen = screen, maxGen = 10, basename = "INT_0_" 
+                           + str(i),intermediates = (7,))
 quitGame()
 
 

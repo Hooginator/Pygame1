@@ -58,8 +58,9 @@ def fuelParams(i):
 ############################################################
 
 class maze:
-    """ Master class for all the objects on the map that get in your way or help """
-    def __init__(self,i = 1,height = 900,width = 1600):
+    """ Master class for all the objects on the map that get in your way or 
+    help """
+    def __init__(self,i = 3,height = 900,width = 1600):
         self.obstacles = obstacles(i)
         self.checkpoints = checkpoints(i)
         self.checkpointsPerLap = len(self.checkpoints)
@@ -69,22 +70,30 @@ class maze:
             self.mazeType = "linear"
         else:
             self.mazeType = "circular"
+            
     def getFuelCosts(self,mazeNumber):
         self.fuelParams = fuelParams(mazeNumber)
+        
     def checkFuelCost(self, currentCheckpoint, currentLap = None):
-        """ Claculates the amount of time in frames a ship gets to make a checkpoint """
+        """ Claculates the amount of time in frames a ship gets to make a 
+        checkpoint """
         if(currentLap == None): 
             currentLap = currentCheckpoint //  self.checkpointsPerLap
             currentCheckpoint = currentCheckpoint % self.checkpointsPerLap
-        return  self.fuelParams[0]*(currentLap * len(self.checkpoints)+ 1 + currentCheckpoint )** self.fuelParams[1]
+        return  self.fuelParams[0]*(currentLap * len(self.checkpoints)+ 1 
+                               + currentCheckpoint )** self.fuelParams[1]
+        
     def drawWalls(self,screen):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen)
+    
     def drawCheckpoints(self,screen,frame):
         """ Create small checkpointvisual for the list of walls given"""
         for chp in self.checkpoints: chp.drawCheckpoint(screen,frame)
+    
     def drawCheckpoint(self,screen,i,frame):
         self.checkpoints[i%len(self.checkpoints)].drawCheckpoint(screen,frame)
+    
     def drawMap(self,screen):
         """ Draw the background, walls and checkpoints."""
         drawBackground(screen)
@@ -92,24 +101,38 @@ class maze:
             obs.update()
         self.drawWalls(screen)
     #drawWalls(checkpoints,screen)   
+    
     def newGeneration(self):
         for obs in self.obstacles: obs.restart()
+    
     def checkCollisions(self,pos,size = 0):
         """ Checks pos (x,y) against all walls for collision"""
         for obs in self.obstacles:
             if(obs.checkCollision(pos,size)): return True
-        if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) or (pos[1] > self.screenHeight)): return True
+        if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) 
+            or (pos[1] > self.screenHeight)): return True
         return False
 ############################################################
 ########### WALL CLASS #####################################
 ############################################################
 
 class obstacle():
-    """ Base class for all obstacles to inherit from """
+    """ Base class for all obstacles to inherit from containing some universal
+    functions and a few that need to be overwritten for any obstacle."""
     def __init__(self):
+        raise NotImplementedError
+    def getMidInt(self):
         raise NotImplementedError
     def draw(self):
         raise NotImplementedError
+    def drawCheckpoint(self,screen,frame):
+        """ Draws the checkpoint indicator in the middle of the selected object
+        Usually for showing where time is about to expire"""
+        pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
+                                   self.getMidInt(), 1 + frame %20, 1)
+        pygame.draw.circle(screen,(240,240,240),self.getMidInt(), 21 + frame %20, 1)
+        pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
+                                   self.getMidInt(), 41 + frame %20, 1)
     def checkCollision(self):
         """ Returns true on collision """
         raise NotImplementedError
@@ -120,39 +143,43 @@ class obstacle():
      
 class wall(obstacle):
     """ for impassable, rectangular walls and checkpoints"""
+    
     def __init__(self,pos,size):
         self.pos = pos
         self.size = size
+    
     def draw(self,screen):
         """ Draw rectangle in the way"""
         pygame.draw.rect(screen,(0,0,240),(self.pos[0], self.pos[1], self.size[0], self.size[1]))
-    def drawCheckpoint(self,screen,frame):
-        """ Less intrusive draw for checkpoints"""
-        pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
-                                   self.getMidInt(), 1 + frame %20, 1)
-        pygame.draw.circle(screen,(240,240,240),self.getMidInt(), 21 + frame %20, 1)
-        pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
-                                   self.getMidInt(), 41 + frame %20, 1)
+    
+    
     def checkCollision(self,pos,size = 0):
         """ Returns true on collision """
-        return ((self.pos[0]+ size <= pos[0]) and (self.pos[0] + size + self.size[0] >= pos[0]) 
-                and (self.pos[1] + size <= pos[1]) and (self.pos[1] + size + self.size[1] >= pos[1]))
+        return ((self.pos[0]+ size <= pos[0]) 
+                and (self.pos[0] + size + self.size[0] >= pos[0]) 
+                and (self.pos[1] + size <= pos[1]) 
+                and (self.pos[1] + size + self.size[1] >= pos[1]))
+    
     def getMid(self):
         """ returns the center of the wall"""
         return [self.pos[0] + self.size[0]/2,self.pos[1] + self.size[1]/2]
+    
     def getMidInt(self):
         """ returns the center of the wall AS AN INTEGER!!"""
         return [int(self.pos[0] + self.size[0]/2),int(self.pos[1] + self.size[1]/2)]
 
 class ball(obstacle):
     """ for impassable, rectangular walls and checkpoints"""
+    
     def __init__(self,pos,radius,width):
         self.pos = pos
         self.width = width
         self.radius = radius
+    
     def draw(self,screen):
-        """ Draw rectangle in the way"""
+        """ Draw circle at the ball's position"""
         pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
+    
     def checkCollision(self,pos,size = 0):
         """ Returns true on collision """
         dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
@@ -160,11 +187,16 @@ class ball(obstacle):
             return dist - size <(self.radius)**2
         else:
             return dist - size <(self.radius)**2 and dist + size > (self.radius-self.width)**2 
+    
     def getMid(self):
         """ returns the center of the wall"""
         return self.pos
+    def getMidInt(self):
+        """ returns the center of the wall AS AN INTEGER!!"""
+        return [int(self.pos[0]),int(self.pos[1])]
 
-class movingBall(obstacle):
+class movingBall(ball):
+    """ Inherits from a regular ball with added motion """
     def __init__(self,pos,radius,width,vel = None,xlims = (0,1600), ylims = (0,900)):
         self.pos = list(map(int,pos))
         self.startpos = list(map(int,pos))
@@ -176,28 +208,23 @@ class movingBall(obstacle):
             self.vel = np.random.randint(-10,10,2)
         else: 
             self.vel = vel
-    def draw(self,screen):
-        """ Draw rectangle in the way"""
-        pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
-    def checkCollision(self,pos,size = 0):
-        """ Returns true on collision """
-        dist = (pos[0]-self.pos[0])**2 + (pos[1]-self.pos[1])**2
-        if(self.width == 0):
-            return dist - size <(self.radius)**2
-        else:
-            return dist - size <(self.radius)**2 and dist + size > (self.radius-self.width)**2 
     def update(self):
+        """ Move the ball according to speed and bounce off of screen limits """
         self.pos[0] += self.vel[0]
         self.pos[1] += self.vel[1]
-        if(self.pos[0] < self.xlims[0] - self.radius or self.pos[0] > self.xlims[1] + self.radius ): 
+        if(self.pos[0] < self.xlims[0] - self.radius 
+           or self.pos[0] > self.xlims[1] + self.radius ): 
             self.vel[0] = -1*self.vel[0] 
-        if(self.pos[1] < self.ylims[0] - self.radius or self.pos[1] > self.ylims[1] + self.radius ): 
+        if(self.pos[1] < self.ylims[0] - self.radius 
+           or self.pos[1] > self.ylims[1] + self.radius ): 
             self.vel[1] = -1*self.vel[1] 
     def restart(self):
+        """ Go back to where you were at the start of the generation """
         self.pos[0] = self.startpos[0]
         self.pos[1] = self.startpos[1]
         
 class rotatingRect(obstacle):
+    """ Inherits from the rectangular wall, with added rotational movement! """
     def __init__(self,midPos,rectSize,vel = 0.01,startAngle = 0.5):
         self.midPos = midPos
         self.size = rectSize
@@ -209,11 +236,14 @@ class rotatingRect(obstacle):
                           (-0.5*self.size[0],0.5*self.size[1]))
         
     def draw(self,screen):
+        """ Draws the oddly oriented rectangle """
         pygame.draw.polygon(screen,(0,0,240),self.pointList)
     def update(self):
         self.angle += self.vel
         self.updatePointList()
     def updatePointList(self):
+        """ Calculate where the vertices of the rectangle will moved based on 
+        the angle swept per frame """
         self.pointList = []
         for bp in self.basePoint:
             temppoint = rotate(bp,self.angle)
@@ -222,11 +252,10 @@ class rotatingRect(obstacle):
         
 
     def checkCollision(self,pos,size = 0):
+        """ Returns true on collision """
         temp = (pos[0] - self.midPos[0], pos[1] - self.midPos[1])
         temp = rotate(temp,-1*self.angle)     
-        return ((-0.5*self.size[0]- size <= temp[0]) and (0.5*self.size[0] + size + self.size[0] >= temp[0]) 
-                and (-0.5*self.size[1] - size <= temp[1]) and (0.5*self.size[1] + size + self.size[1] >= temp[1]))
-    
-        return False
-        
-   
+        return ((-0.5*self.size[0]- size <= temp[0]) 
+                and (0.5*self.size[0] + size + self.size[0] >= temp[0]) 
+                and (-0.5*self.size[1] - size <= temp[1]) 
+                and (0.5*self.size[1] + size + self.size[1] >= temp[1]))

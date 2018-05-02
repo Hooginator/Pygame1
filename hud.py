@@ -26,7 +26,7 @@ class hud:
         self.winnerColour = []
         self.maze = maze
         self.updateGeneration(generation)
-    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = False):
+    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = True):
         """general update function"""
         self.frame = frame
         if(generation > self.gen or frame == 0): 
@@ -50,10 +50,14 @@ class hud:
         self.winnerColour = []
         self.winnerSurface.append(myfont.render("GEN "+str(self.gen-1)+ " WINNERS",False, (250,250,250)))
         for i, shp in enumerate(bestships):
-            self.winnerSurface.append(myfont.render(str(i) + ":   " + str(int(shp.score)) +"   "+shp.getName(),  False, shp.colour))
+            tempSurf = myfont.render(str(i) + ":   " + str(int(shp.score)) 
+                                    +"   "+shp.getName(),  False, shp.colour)
+            self.winnerSurface.append(tempSurf)
             self.winnerPos.append(shp.getIntPos())
             self.winnerColour.append(shp.colour)
     def drawTimer(self,screen):
+        """ Creates and places the small pulsing timer that rotates each time 
+        another checkpoint has expired """
         if(self.frame - self.genStartFrame >= self.nextCheckpointCost):
             self.checkpoint +=1
             self.lastCheckpointCost = self.nextCheckpointCost
@@ -64,10 +68,12 @@ class hud:
         pygame.draw.line(screen,(240,240,240),(50,50),temppos,2)
         pygame.draw.circle(screen,(240,240,240),(50,50),max(24-tempsize,1),1)
         
-        # Also draw the next checkpoint
+        # Also draw the indicator for current checkpoint
         self.maze.drawCheckpoint(screen,self.checkpoint,self.frame)
 
     def drawWinners(self,screen):
+        """ Draws a list of the last generation's top 10 performers with their
+        scores """
         for i, surf in enumerate(self.winnerSurface):
             screen.blit(surf,(self.basepos[0]+5,self.basepos[1]+30*i))
         for i, pos in enumerate(self.winnerPos):
