@@ -61,13 +61,16 @@ def quitGame():
 def saveBestships(bestships,basename,gen):
     """ Save top weight of each generation and the top 10 scores"""
     bestships[0].saveWeights(basename, gen)
-    f = open("./data/"+basename+"/topscores","a")
+    if(gen == 0):
+        f = open("./data/"+basename+"/topscores","w")
+    else:
+        f = open("./data/"+basename+"/topscores","a")
     for bs in bestships:
         f.write(str(bs.getScore()) + " ")
     f.write("\n")
     f.close()
-    print("All crashed for generation " + str(generation) +"  Top Ship score: " 
-          + str(bestship[0].score) + "  at  " + str(bestship[0].weights[0][0][0]))
+    print("All crashed for generation " + str(gen) +"  Top Ship score: " 
+          + str(bestships[0].score) + "  at  " + str(bestships[0].weights[0][0][0]))
             
 def saveFrame(screen,basename,frame):
     """ Saves the currently displayed image on screen """
@@ -82,7 +85,7 @@ def saveFrame(screen,basename,frame):
 def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = True):
+             saveFrames = True, ships = None):
     print("#### STARTING GAME ####")
     # Initialization    
     generation = 0
@@ -91,7 +94,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
     bestship = None
     time = pygame.time.Clock()
     mymaze = maze(height = height, width = width)
-    ships = [ship(maze = mymaze, intermediates = intermediates,
+    if ships is None : ships = [ship(maze = mymaze, intermediates = intermediates,
                   inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
     headsUp = hud(maze = mymaze)
     

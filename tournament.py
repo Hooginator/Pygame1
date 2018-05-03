@@ -21,9 +21,6 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         winsurface.append(myfont.render("Top Scorer:  ", False,(240,240,240)))
         winsurface.append(myfont.render(winningShip[0].getName() + " " 
                   + str(int(winningShip[0].score)), False, winningShip[0].colour))
-        
-
-        
     
     time = pygame.time.Clock()
     for t in range(seconds):
@@ -55,7 +52,7 @@ for i in range(10):
     screen = pygame.display.set_mode((1600,900))
     playCountdown(screen,winningShip = winningShip)
     winningShip = playGame(screen = screen, maxGen = 10, basename = "INT_0_" 
-                           + str(i),intermediates = (7,))
+                           + str(i),intermediates = ())
 quitGame()
 
 
