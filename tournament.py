@@ -37,7 +37,11 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         pygame.display.flip()
         # Wait for next frame time          
         time.tick(1)
-
+        
+        
+def victoryLap(screen,basename,i,gens = 10):
+    playGame(screen = screen, maxGen = 1, basename = basename
+                           + str(i),intermediates = (),victoryLap = True,nships = gens)
 
 
 
@@ -51,8 +55,9 @@ winningShip = None
 for i in range(10):
     screen = pygame.display.set_mode((1600,900))
     playCountdown(screen,winningShip = winningShip)
-    winningShip = playGame(screen = screen, maxGen = 10, basename = "INT_0_" 
+    winningShip = playGame(screen = screen, maxGen = 1, basename = "INT_0_" 
                            + str(i),intermediates = ())
+    victoryLap(screen,basename = "INT_0_",i=i,gens = 20)
 quitGame()
 
 

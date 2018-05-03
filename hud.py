@@ -10,7 +10,8 @@ from functions import *
 
 class hud:
     """ Heads Up Display class to manage all the addons """
-    def __init__(self, generation = 0,nseeds = 10, basepos = (0,200),maze = None):
+    def __init__(self, generation = 0,nseeds = 10, basepos = (0,200),maze = None,
+                 victoryLap = False):
         self.gen = generation
         self.leadship = None
         self.nseeds = nseeds
@@ -25,9 +26,10 @@ class hud:
         self.winnerPos = []
         self.winnerColour = []
         self.maze = maze
+        self.victoryLap = victoryLap
         self.updateGeneration(generation)
     def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = True):
-        """general update function"""
+        """general update function that calls all the other pieces"""
         self.frame = frame
         if(generation > self.gen or frame == 0): 
             self.updateGeneration(generation)
@@ -39,7 +41,10 @@ class hud:
             self.leadship[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 500])
             self.leadship[0].highlight(screen)
         if drawLeaderboard: self.drawWinners(screen)
-        self.drawGeneration(screen)
+        if(self.victoryLap):
+            pass
+        else:
+            self.drawGeneration(screen)
         self.drawTimer(screen)
             
     def updateWinners(self,bestships,generation):

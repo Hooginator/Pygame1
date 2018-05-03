@@ -60,7 +60,7 @@ def fuelParams(i):
 class maze:
     """ Master class for all the objects on the map that get in your way or 
     help """
-    def __init__(self,i = 3,height = 900,width = 1600):
+    def __init__(self,i = 1,height = 900,width = 1600):
         self.obstacles = obstacles(i)
         self.checkpoints = checkpoints(i)
         self.checkpointsPerLap = len(self.checkpoints)

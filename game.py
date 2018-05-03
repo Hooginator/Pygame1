@@ -82,10 +82,10 @@ def saveFrame(screen,basename,frame):
 ########## MAIN PROGRAM ####################################
 ############################################################
 
-def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "BestShips",
+def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = True, ships = None):
+             saveFrames = True,victoryLap = False):
     print("#### STARTING GAME ####")
     # Initialization    
     generation = 0
@@ -94,9 +94,13 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 40, basename = "Be
     bestship = None
     time = pygame.time.Clock()
     mymaze = maze(height = height, width = width)
-    if ships is None : ships = [ship(maze = mymaze, intermediates = intermediates,
+    ships = [ship(maze = mymaze, intermediates = intermediates, 
                   inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
-    headsUp = hud(maze = mymaze)
+    if(victoryLap):
+        for i, shp in enumerate(ships):
+            shp.loadWeights(basename,i)
+            shp.name = "Gen: "+str(i)
+    headsUp = hud(maze = mymaze,victoryLap = victoryLap)
     
     # Create pygame screen if we need to
     if(screen == None):

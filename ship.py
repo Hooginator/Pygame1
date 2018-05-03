@@ -25,7 +25,7 @@ class ship:
                  maxSpeed = 20, maxAccel = 1, maxAngle = 0.2,
                  width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-                 parentname = "", parentcolour = (240,100,100)):
+                 parentname = "", parentcolour = (240,100,100), name = None):
         """ Creates the ship with randomly assigned weights """
         self.startpos, self.startangle, self.colour = startpos, angle, colour
         self.maxSpeed, self.maxAccel, self.maxAngle = maxSpeed, maxAccel, maxAngle
@@ -39,7 +39,15 @@ class ship:
         self.inputdistance, self.inputangle,  = inputdistance, inputangle
         self.drag = 0.96
         self.initWeights()
+        if name is not None: 
+            self.name = name
+        else:
+            self.name = self.getName()
+                
         self.reset()
+        
+        
+      
     def reset(self):
         """ Returns the ship to its starting location and reinitializes """
         self.resetPos()
@@ -49,15 +57,19 @@ class ship:
         self.inputColour = [colours[0] for i in range(self.dimensions[0])]
         self.scan = np.array([0 for i in range(self.dimensions[0])])
         self.cost = [0 for i in range(6)]
+        
     def resetPos(self):
         """ Go back to start location """
         self.angle = self.startangle
         self.pos = []
         self.pos.extend(self.startpos)
+        
     def newSpawn(self, colour = (100,100,240)):
         self.initWeights()
+        self.name = self.getName()
         self.parentname = ""
         self.parentcolour = colour
+        
     def initWeights(self):
         """ Initializes weights to randomly selected ones."""
         self.weights = []
@@ -65,6 +77,7 @@ class ship:
         for i, dim in enumerate(self.dimensions[1:]):
             self.weights.append(np.random.uniform(-1,1,(self.dimensions[i],dim)))
             self.bias.append(np.random.uniform(-1,1,dim))
+            
     def copyWeights(self, shp, stray = 0, colour = (240,100,100)):
         """ Changes weights to be around the ones provided by shp.  
         This is used to generate offspring from the shp provided."""
@@ -80,8 +93,9 @@ class ship:
                 bs[:] = shp.bias[i] + np.random.normal(0,stray,(1,self.dimensions[i+1]))
             self.normalizeWeights()
         self.colour = colour
-        self.parentname = shp.getName()
+        self.parentname = shp.name
         self.parentcolour = shp.colour
+        
     def saveWeights(self, basename, generation):
         """ Saves the np array of weights for easy loading later"""
         if not os.path.exists("./data/"+basename):
@@ -90,6 +104,20 @@ class ship:
             np.save("./data/"+basename+"/"+basename + "_W"+str(i)+"_G" + str(generation),wt)
         for i,bs in enumerate(self.bias):
             np.save("./data/"+basename+"/"+basename + "_B"+str(i)+"_G" + str(generation),bs)
+            
+    def loadWeights(self,basename,generation):
+        temp = "./data/"+basename+"/"+basename
+        for i, wt in enumerate(self.weights):  
+            wn = temp + "_W"+str(i)+"_G" + str(generation)+".npy"
+            if(os.path.isfile(wn)):
+                wt[:] = np.load(wn)
+            else: print ("No file found for: " + wn)
+        for i,bs in enumerate(self.bias):
+            bn = temp + "_B"+str(i)+"_G" + str(generation)+".npy"
+            if(os.path.isfile(bn)):
+                bs[:] = np.load(bn)
+            else: print ("No file found for: " + bn)
+        
     def normalizeWeights(self):
         """ Make sure the weights and biases stay inside (-1,1) """
         for wt in self.weights:
@@ -244,7 +272,7 @@ class ship:
         namesurface = myfont.render(self.parentname, False, self.parentcolour)
         screen.blit(namesurface,(bp[0]-50,bp[1] -60),) 
         tempOffset = namesurface.get_width()
-        namesurface = myfont.render(self.getName(), False, self.colour)
+        namesurface = myfont.render(self.name, False, self.colour)
         screen.blit(namesurface,(bp[0]-40 ,bp[1]-30),) 
         size = 10
         separationx = 12
@@ -279,7 +307,8 @@ class ship:
             #print("BS: "+str(bs[0]))
             l.append(chr( int( 97 + (sum(bs) * 10) % 26 ) ))
         l[0] = chr(ord(l[0]) - 32)
-        return ''.join(l)
+        self.name = ''.join(l)
+        return self.name
     def setName(self,newName):
         """ Changes the weights and biases randomly in order to have the 
         getName() function return the name specified here """
