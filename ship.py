@@ -107,6 +107,7 @@ class ship:
             
     def loadWeights(self,basename,generation):
         temp = "./data/"+basename+"/"+basename
+        print (temp)
         for i, wt in enumerate(self.weights):  
             wn = temp + "_W"+str(i)+"_G" + str(generation)+".npy"
             if(os.path.isfile(wn)):
@@ -193,14 +194,12 @@ class ship:
     def getInputs(self,maze):
         """ Determine which of the input locations are in walls / out of bounds for the input vector"""
         self.inputPos = []
-        distances = [50,100,150]
-        angles = [1.2,0.6,0,-0.6,-1.2]
         i = 0
         
         # array of front views
-        for ang in angles:
+        for ang in self.inputangle:
             blocked = False
-            for dis in distances:
+            for dis in self.inputdistance:
                 self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), int(self.pos[1]  + dis*np.sin(self.angle+ang))])
                 if(maze.checkCollisions(self.inputPos[i]) or blocked):
                     blocked = True
@@ -267,7 +266,8 @@ class ship:
         pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
         
     def drawMatrix(self,screen,pos):
-        """ Draw a bunch of squares that light up red of green based on different points in the decision process """
+        """ Draw a bunch of squares that light up red of green based on 
+        different points in the decision process """
         bp = pos # base position bp
         namesurface = myfont.render(self.parentname, False, self.parentcolour)
         screen.blit(namesurface,(bp[0]-50,bp[1] -60),) 
@@ -282,7 +282,8 @@ class ship:
             # Create red - green colour based on array
             temp_colour = (int((1-self.scan[i])*240),int(self.scan[i]*240),0)
             # Draw square that is slightly offset of previous square
-            pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / 3),bp[1] - separationx*(i%3) + 3*separationx,size,size))
+            pygame.draw.rect(screen,temp_colour ,(bp[0] - separationx *int(i / len(self.inputdistance)),
+                                                  bp[1] - separationx*(i%len(self.inputdistance)) + 3*separationx,size,size))
         # Calculate intermediate decision array
         temp_vector = self.scan 
         # Repeat

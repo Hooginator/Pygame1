@@ -87,6 +87,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = True,victoryLap = False):
     print("#### STARTING GAME ####")
+    print(basename)
     # Initialization    
     generation = 0
     frame = 0
@@ -124,7 +125,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
             # Determine best ships
             bestship = getBestShip(ships,nseeds)
             # Save the best ships
-            saveBestships(bestship,basename,generation)
+            if(not victoryLap): saveBestships(bestship,basename,generation)
             # Create next generation
             copyShips(ships,bestship,nseeds,generation)
             generation +=1

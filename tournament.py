@@ -39,9 +39,10 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         time.tick(1)
         
         
-def victoryLap(screen,basename,i,gens = 10):
-    playGame(screen = screen, maxGen = 1, basename = basename
-                           + str(i),intermediates = (),victoryLap = True,nships = gens)
+def victoryLap(screen,basename,gens = 10, inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
+    playGame(screen = screen, maxGen = 1, basename = basename,intermediates = (),
+             victoryLap = True,nships = gens, inputdistance = inputdistance,
+             inputangle = inputangle)
 
 
 
@@ -51,13 +52,22 @@ def victoryLap(screen,basename,i,gens = 10):
 ########## TOURNAMENT ## ###################################
 ############################################################
 
+inputangles = [[0.8,-0.8],[1,0.4,-0.4,-1],[1.2,0.6,0.2,-0.2,-0.6,-1.2]]
+inputdistances = [[50,],[50,100],[50,100,150]]
+
+
 winningShip = None
-for i in range(10):
-    screen = pygame.display.set_mode((1600,900))
-    playCountdown(screen,winningShip = winningShip)
-    winningShip = playGame(screen = screen, maxGen = 1, basename = "INT_0_" 
-                           + str(i),intermediates = ())
-    victoryLap(screen,basename = "INT_0_",i=i,gens = 20)
+i = 0
+for ina in inputangles:
+    for ind in inputdistances:
+        screen = pygame.display.set_mode((1600,900))
+        playCountdown(screen,winningShip = winningShip)
+        winningShip = playGame(screen = screen, maxGen = 10, basename = "TEEEST" 
+                + str(i),intermediates = (),inputdistance = ind, 
+                inputangle = ina)
+        victoryLap(screen,basename = "TEEEST"+ str(i),gens = 20,inputdistance = ind, 
+                inputangle = ina)
+        i += 1
 quitGame()
 
 
