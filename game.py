@@ -40,8 +40,8 @@ def copyShips(ships,bestship,nseeds,generation):
         n+=1
         shp.reset()
 
-def moveAndDrawShips(screen, ships,maze):
-    """ Calculate the new position that the ships will be at and draw them there. """
+def moveShips(screen, ships,maze):
+    """ Calculate the new position that the ships will be at """
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
@@ -50,8 +50,10 @@ def moveAndDrawShips(screen, ships,maze):
                 shp.crash()
             if(allcrashed): # The first one we find not crashed
                 allcrashed = False
-        shp.drawShip(screen,maze)
-    return allcrashed
+    return 
+def drawShips(screen,ships,maze):
+    for shp in ships:
+       shp.drawShip(screen,maze) 
 
 def quitGame():
     """ Uninitialize everything and close pygame screen """
@@ -93,7 +95,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
     frame = 0
     allcrashed = False
     bestship = None
-    time = pygame.time.Clock()
+    clock = pygame.time.Clock()
     mymaze = maze(height = height, width = width)
     ships = [ship(maze = mymaze, intermediates = intermediates, 
                   inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
@@ -113,6 +115,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
     
     # Main Loop
     while generation < maxGen:
+        #t1 = time.time()
         frame +=1
         # Check for quit
         for event in pygame.event.get():
@@ -129,16 +132,23 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
             # Create next generation
             copyShips(ships,bestship,nseeds,generation)
             generation +=1
+        #t2 = time.time()    
+        # Move the ships, returns true if every ship has crashed
+        allcrashed = moveShips(screen,ships,mymaze)
         # Draw and update the map
         mymaze.drawMap(screen)
-        # Move and draw the ships, returns true is each ship has crashed
-        allcrashed = moveAndDrawShips(screen, ships,mymaze)
+        # Draw the ships
+        drawShips(screen,ships,mymaze)
         # Draw all the overlay stuff
         headsUp.update(screen,generation,frame, bestships = bestship,ships = ships)
+        #t3 = time.time()
         # Save the image on screen if that's what we're doing
         if(saveFrames): saveFrame(screen,basename,frame)
+        #t4 = time.time()
         # Wait for next frame time          
-        time.tick(FPS)
+        clock.tick(FPS)
+        #t5 = time.time()
+        #print(str(t2-t1) + "  " +str(t3-t1) + "  " +str(t4-t1) + "  "+ str(t5-t1))
         # Updates screen
         pygame.display.flip()
     

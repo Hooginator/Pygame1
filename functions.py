@@ -9,6 +9,7 @@ import sys, pygame
 import numpy as np
 import copy
 import os
+import time
 
 pygame.init()
 pygame.display.init()

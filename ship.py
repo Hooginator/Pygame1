@@ -192,7 +192,8 @@ class ship:
         self.pos[0] += self.vx
         self.pos[1] += self.vy
     def getInputs(self,maze):
-        """ Determine which of the input locations are in walls / out of bounds for the input vector"""
+        """ Determine which of the input locations are in walls / out of bounds
+        for the input vector"""
         self.inputPos = []
         i = 0
         
@@ -200,7 +201,8 @@ class ship:
         for ang in self.inputangle:
             blocked = False
             for dis in self.inputdistance:
-                self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), int(self.pos[1]  + dis*np.sin(self.angle+ang))])
+                self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), 
+                                      int(self.pos[1]  + dis*np.sin(self.angle+ang))])
                 if(maze.checkCollisions(self.inputPos[i]) or blocked):
                     blocked = True
                     self.inputColour[i] = colours[1] 
@@ -213,7 +215,8 @@ class ship:
         #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))]) 
                 
     def getDecision(self):
-        """ Use the input vector and all the weights to decide how to control the ship this timestep."""
+        """ Use the input vector and all the weights to decide how to control 
+        the ship this timestep."""
         temp = []
         temp.append( np.array(self.scan) )
         for i,wt in enumerate(self.weights):
@@ -229,8 +232,9 @@ class ship:
         return tempscore
         
     def crash(self):
-        """ Once the ship's run has expired it crashes.  Here its score is tallied and it is stopped until it is reset
-         The cost increases as weights tend away from 0, resulting in fewer extreme weights"""
+        """ Once the ship's run has expired it crashes.  Here its score is 
+        tallied and it is stopped until it is reset The cost increases as 
+        weights tend away from 0, resulting in fewer extreme weights"""
         self.cost = 0
         for wt in self.weights:
             self.cost += np.abs(wt).sum()
@@ -251,7 +255,8 @@ class ship:
     ########################################################
         
     def drawShip(self,screen,maze):
-        """ Draw triangular ship, get the input values and draw a red or blue circle at their location"""
+        """ Draw triangular ship, get the input values and draw a red or blue 
+        circle at their location"""
         posInt = self.getIntPos()
         pygame.draw.polygon(screen, self.colour, [[int(posInt[0]+ 10 *np.cos(self.angle)), int(posInt[1]+ 10 *np.sin(self.angle))],
                                    [int(posInt[0]+ 10 *np.cos(self.angle + 2.64)), int(posInt[1]+ 10 *np.sin(self.angle + 2.64))],
@@ -296,9 +301,11 @@ class ship:
     def highlight(self,screen):
         """ Draw some expanding circles around the ship """
         posInt = self.getIntPos()
-        pygame.draw.circle(screen, [max(0,tmp - (10 - self.timeDriving%10)*10) for tmp in self.colour], posInt, int(10+ (self.timeDriving%10 )),2)
+        pygame.draw.circle(screen, [max(0,tmp - (10 - self.timeDriving%10)*10) for tmp in self.colour], 
+                                    posInt, int(10+ (self.timeDriving%10 )),2)
         pygame.draw.circle(screen, self.colour, posInt, int(20+ (self.timeDriving%10 )),2)
-        pygame.draw.circle(screen, [max(0,tmp - (self.timeDriving%10)*10) for tmp in self.colour], posInt, int(30+ (self.timeDriving%10 )),2)
+        pygame.draw.circle(screen, [max(0,tmp - (self.timeDriving%10)*10) for tmp in self.colour], 
+                                    posInt, int(30+ (self.timeDriving%10 )),2)
     def getName(self):
         """ Get 6 letter "name" based on weight and bias totals """
         l = []
