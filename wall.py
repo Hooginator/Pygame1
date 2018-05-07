@@ -65,6 +65,7 @@ class maze:
         self.checkpoints = checkpoints(i)
         self.checkpointsPerLap = len(self.checkpoints)
         self.screenWidth, self.screenHeight = width, height
+        self.addBoundaryWall()
         self.getFuelCosts(i)
         if(i > 2):
             self.mazeType = "linear"
@@ -87,7 +88,12 @@ class maze:
     def drawWalls(self,screen,midpos = (450,800),zoom = 1):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen,midpos = midpos)
-    
+    def addBoundaryWall(self):
+        self.obstacles.append(wall((-50,-50),(self.screenWidth + 100,50)))
+        self.obstacles.append(wall((-50,self.screenHeight),(self.screenWidth + 100,50)))
+        self.obstacles.append(wall((-50,0),(50,self.screenHeight + 50)))
+        self.obstacles.append(wall((self.screenWidth,0),(50,self.screenHeight + 50)))
+        
     def drawCheckpoints(self,screen,frame,midpos):
         """ Create small checkpointvisual for the list of walls given"""
         for chp in self.checkpoints: chp.drawCheckpoint(screen,frame,midpos)
@@ -95,12 +101,11 @@ class maze:
     def drawCheckpoint(self,screen,i,frame,midpos):
         self.checkpoints[i%len(self.checkpoints)].drawCheckpoint(screen,frame,midpos = midpos)
     
-    def drawMap(self,screen,leadships = None, followLead = False):
+    def drawMap(self,screen,midpos = None, followLead = False):
         """ Draw the background, walls and checkpoints."""
         
-        if leadships is None or followLead is False: 
+        if midpos is None or followLead is False: 
             midpos = (800,450)
-        else:midpos = leadships[0].pos
         drawBackground(screen)
         for obs in self.obstacles:
             obs.update()
