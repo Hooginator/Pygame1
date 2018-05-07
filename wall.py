@@ -86,20 +86,28 @@ class maze:
     def drawWalls(self,screen):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen)
+        
+    def drawWalls2(self,screen,midpos = (450,800),zoom = 1):
+        """ Create blocking visual for the list of walls given"""
+        for obs in self.obstacles: obs.draw(screen,midpos = midpos)
     
-    def drawCheckpoints(self,screen,frame):
+    def drawCheckpoints(self,screen,frame,midpos):
         """ Create small checkpointvisual for the list of walls given"""
-        for chp in self.checkpoints: chp.drawCheckpoint(screen,frame)
+        for chp in self.checkpoints: chp.drawCheckpoint(screen,frame,midpos)
     
-    def drawCheckpoint(self,screen,i,frame):
-        self.checkpoints[i%len(self.checkpoints)].drawCheckpoint(screen,frame)
+    def drawCheckpoint(self,screen,i,frame,midpos):
+        self.checkpoints[i%len(self.checkpoints)].drawCheckpoint(screen,frame,midpos = midpos)
     
-    def drawMap(self,screen):
+    def drawMap(self,screen,leadships = None, followLead = False):
         """ Draw the background, walls and checkpoints."""
+        
+        if leadships is None or followLead is False: 
+            midpos = (800,450)
+        else:midpos = leadships[0].pos
         drawBackground(screen)
         for obs in self.obstacles:
             obs.update()
-        self.drawWalls(screen)
+        self.drawWalls2(screen,midpos = midpos)
     #drawWalls(checkpoints,screen)   
     
     def newGeneration(self):
@@ -125,14 +133,16 @@ class obstacle():
         raise NotImplementedError
     def draw(self):
         raise NotImplementedError
-    def drawCheckpoint(self,screen,frame):
+    def drawCheckpoint(self,screen,frame,midpos = (800,450)):
         """ Draws the checkpoint indicator in the middle of the selected object
-        Usually for showing where time is about to expire"""
+        Usually for showing where time is about to expire"""       
+        
+        temppos = getOffsetPos(self.getMidInt(),midpos)
         pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
-                                   self.getMidInt(), 1 + frame %20, 1)
-        pygame.draw.circle(screen,(240,240,240),self.getMidInt(), 21 + frame %20, 1)
+                                   temppos, 1 + frame %20, 1)
+        pygame.draw.circle(screen,(240,240,240),temppos, 21 + frame %20, 1)
         pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
-                                   self.getMidInt(), 41 + frame %20, 1)
+                                   temppos, 41 + frame %20, 1)
     def checkCollision(self):
         """ Returns true on collision """
         raise NotImplementedError
@@ -148,9 +158,10 @@ class wall(obstacle):
         self.pos = pos
         self.size = size
     
-    def draw(self,screen):
+    def draw(self,screen,midpos = (450,800)):
         """ Draw rectangle in the way"""
-        pygame.draw.rect(screen,(0,0,240),(self.pos[0], self.pos[1], self.size[0], self.size[1]))
+        temppos = getOffsetPos(self.pos,midpos)
+        pygame.draw.rect(screen,(0,0,240),(temppos[0], temppos[1], self.size[0], self.size[1]))
     
     
     def checkCollision(self,pos,size = 0):
@@ -176,9 +187,10 @@ class ball(obstacle):
         self.width = width
         self.radius = radius
     
-    def draw(self,screen):
+    def draw(self,screen,midpos = (450,800)):
         """ Draw circle at the ball's position"""
-        pygame.draw.circle(screen,(0,0,240),self.pos, self.radius, self.width)
+        temppos = getOffsetPos(self.pos,midpos)
+        pygame.draw.circle(screen,(0,0,240),temppos, self.radius, self.width)
     
     def checkCollision(self,pos,size = 0):
         """ Returns true on collision """
@@ -235,9 +247,10 @@ class rotatingRect(obstacle):
                           (0.5*self.size[0],0.5*self.size[1]),
                           (-0.5*self.size[0],0.5*self.size[1]))
         
-    def draw(self,screen):
+    def draw(self,screen,midpos = (450,800)):
         """ Draws the oddly oriented rectangle """
-        pygame.draw.polygon(screen,(0,0,240),self.pointList)
+        templist = [getOffsetPos(pt,midpos) for pt in self.pointList]
+        pygame.draw.polygon(screen,(0,0,240),templist)
     def update(self):
         self.angle += self.vel
         self.updatePointList()

@@ -269,7 +269,31 @@ class ship:
                 pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
                 i += 1
         pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
-        
+    
+    def drawShip2(self,screen,maze,midpos = (450,800),zoom = 1):
+        """ Draw triangular ship, get the input values and draw a red or blue 
+        circle at their location"""
+        posInt = self.getIntPos()
+        posInt = getOffsetPos(posInt,midpos)
+        pygame.draw.polygon(screen, self.colour, [[int(posInt[0]+ 10 *np.cos(self.angle)), int(posInt[1]+ 10 *np.sin(self.angle))],
+                                   [int(posInt[0]+ 10 *np.cos(self.angle + 2.64)), int(posInt[1]+ 10 *np.sin(self.angle + 2.64))],
+                                   [int(posInt[0]+ 10 *np.cos(self.angle + 3.64)), int(posInt[1]+ 10 *np.sin(self.angle + 3.64))]])
+        self.getInputs(maze)
+        i = 0
+        # Draw where the inputs are for decision making.
+        if(self.crashed == False):
+            for pos in self.inputPos:
+                pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 4,1)
+                i += 1
+        pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
+    
+
+
+
+
+
+
+    
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on 
         different points in the decision process """
@@ -298,9 +322,10 @@ class ship:
                 temp_colour = (int(max(min((1-temp_vector[i])*240,240),0)),int(max(min(temp_vector[i]*240,240),0)),0)
                 pygame.draw.rect(screen,temp_colour ,(bp[0] + (j+1)*separationy,bp[1] + separationx*i,size,size))
 
-    def highlight(self,screen):
+    def highlight(self,screen,midpos = (800,450)):
         """ Draw some expanding circles around the ship """
         posInt = self.getIntPos()
+        posInt = getOffsetPos(posInt,midpos)
         pygame.draw.circle(screen, [max(0,tmp - (10 - self.timeDriving%10)*10) for tmp in self.colour], 
                                     posInt, int(10+ (self.timeDriving%10 )),2)
         pygame.draw.circle(screen, self.colour, posInt, int(20+ (self.timeDriving%10 )),2)

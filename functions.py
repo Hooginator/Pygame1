@@ -31,4 +31,7 @@ def logis(a):
     return b
 
     
-    
+def getOffsetPos(pos,midpos,height = 900,width  = 1600):
+    return (int(pos[0] - (midpos[0]-width/2)), int(pos[1] - (midpos[1]-height/2)))
+
+# pos = (50,50), midpos = (50,50) newpos = (mid screen, w/2,h/2) = pos - mid + w/2

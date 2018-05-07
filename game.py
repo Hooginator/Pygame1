@@ -50,10 +50,20 @@ def moveShips(screen, ships,maze):
                 shp.crash()
             if(allcrashed): # The first one we find not crashed
                 allcrashed = False
-    return 
-def drawShips(screen,ships,maze):
+    return allcrashed
+
+
+def getLeadShips(ships):
+    leadship = [max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))]
+    return leadship
+
+def drawShips(screen,ships,maze,leadships = None,followLead = False):
+    if leadships is None or followLead is False: 
+        midpos = (800,450)
+    else:
+        midpos = leadships[0].pos        
     for shp in ships:
-       shp.drawShip(screen,maze) 
+       shp.drawShip2(screen,maze,midpos = midpos) 
 
 def quitGame():
     """ Uninitialize everything and close pygame screen """
@@ -87,7 +97,7 @@ def saveFrame(screen,basename,frame):
 def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = True,victoryLap = False):
+             saveFrames = True,victoryLap = False,followLead = True):
     print("#### STARTING GAME ####")
     print(basename)
     # Initialization    
@@ -99,6 +109,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
     mymaze = maze(height = height, width = width)
     ships = [ship(maze = mymaze, intermediates = intermediates, 
                   inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
+    leadships = None
     if(victoryLap):
         for i, shp in enumerate(ships):
             shp.loadWeights(basename,i)
@@ -135,12 +146,16 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
         #t2 = time.time()    
         # Move the ships, returns true if every ship has crashed
         allcrashed = moveShips(screen,ships,mymaze)
+        # Find current leading ships
+        if(frame %10 == 0): leadships = getLeadShips(ships)
+        
         # Draw and update the map
-        mymaze.drawMap(screen)
+        mymaze.drawMap(screen,leadships = leadships,followLead = followLead)
         # Draw the ships
-        drawShips(screen,ships,mymaze)
+        drawShips(screen,ships,mymaze,leadships=leadships,followLead = followLead)
         # Draw all the overlay stuff
-        headsUp.update(screen,generation,frame, bestships = bestship,ships = ships)
+        headsUp.update(screen,generation,frame, bestships = bestship,ships = ships,
+                       leadships = leadships,followLead = followLead)
         #t3 = time.time()
         # Save the image on screen if that's what we're doing
         if(saveFrames): saveFrame(screen,basename,frame)

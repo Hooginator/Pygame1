@@ -28,25 +28,28 @@ class hud:
         self.maze = maze
         self.victoryLap = victoryLap
         self.updateGeneration(generation)
-    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = True):
+    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = True,
+               leadships = None,followLead = False):
         """general update function that calls all the other pieces"""
         self.frame = frame
+        midpos = (800,450)
         if(generation > self.gen or frame == 0): 
             self.updateGeneration(generation)
             self.updateWinners(bestships,generation)
-        if((frame % 10 == 0) and (ships is not None)):
-            self.leadship = [max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))]
-        if(self.leadship is not None):
+        if(leadships is not None):
             if drawLeaderboard: self.drawBackground(screen)
-            self.leadship[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 500])
-            self.leadship[0].highlight(screen)
+            if(followLead): midpos = leadships[0].pos
+            leadships[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 500])
+            leadships[0].highlight(screen,midpos = midpos)
         if drawLeaderboard: self.drawWinners(screen)
         if(self.victoryLap):
             pass
         else:
             self.drawGeneration(screen)
         self.drawTimer(screen)
-            
+        # Also draw the indicator for current checkpoint
+        self.maze.drawCheckpoint(screen,self.checkpoint,self.frame,midpos = midpos)
+        return
     def updateWinners(self,bestships,generation):
         """ Updates / creates the list of names of the winners of the last 
         generation that will be displayed """
@@ -73,8 +76,7 @@ class hud:
         pygame.draw.line(screen,(240,240,240),(50,50),temppos,2)
         pygame.draw.circle(screen,(240,240,240),(50,50),max(24-tempsize,1),1)
         
-        # Also draw the indicator for current checkpoint
-        self.maze.drawCheckpoint(screen,self.checkpoint,self.frame)
+        
 
     def drawWinners(self,screen):
         """ Draws a list of the last generation's top 10 performers with their
