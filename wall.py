@@ -83,11 +83,8 @@ class maze:
         return  self.fuelParams[0]*(currentLap * len(self.checkpoints)+ 1 
                                + currentCheckpoint )** self.fuelParams[1]
         
-    def drawWalls(self,screen):
-        """ Create blocking visual for the list of walls given"""
-        for obs in self.obstacles: obs.draw(screen)
         
-    def drawWalls2(self,screen,midpos = (450,800),zoom = 1):
+    def drawWalls(self,screen,midpos = (450,800),zoom = 1):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen,midpos = midpos)
     
@@ -107,7 +104,7 @@ class maze:
         drawBackground(screen)
         for obs in self.obstacles:
             obs.update()
-        self.drawWalls2(screen,midpos = midpos)
+        self.drawWalls(screen,midpos = midpos)
     #drawWalls(checkpoints,screen)   
     
     def newGeneration(self):

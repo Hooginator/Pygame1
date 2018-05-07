@@ -63,7 +63,7 @@ def drawShips(screen,ships,maze,leadships = None,followLead = False):
     else:
         midpos = leadships[0].pos        
     for shp in ships:
-       shp.drawShip2(screen,maze,midpos = midpos) 
+       shp.drawShip(screen,maze,midpos = midpos) 
 
 def quitGame():
     """ Uninitialize everything and close pygame screen """

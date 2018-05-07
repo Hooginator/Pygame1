@@ -253,24 +253,8 @@ class ship:
     ############### VISUAL #################################
     # Stuff related to creating various visual effects on screen
     ########################################################
-        
-    def drawShip(self,screen,maze):
-        """ Draw triangular ship, get the input values and draw a red or blue 
-        circle at their location"""
-        posInt = self.getIntPos()
-        pygame.draw.polygon(screen, self.colour, [[int(posInt[0]+ 10 *np.cos(self.angle)), int(posInt[1]+ 10 *np.sin(self.angle))],
-                                   [int(posInt[0]+ 10 *np.cos(self.angle + 2.64)), int(posInt[1]+ 10 *np.sin(self.angle + 2.64))],
-                                   [int(posInt[0]+ 10 *np.cos(self.angle + 3.64)), int(posInt[1]+ 10 *np.sin(self.angle + 3.64))]])
-        self.getInputs(maze)
-        i = 0
-        # Draw where the inputs are for decision making.
-        if(self.crashed == False):
-            for pos in self.inputPos:
-                pygame.draw.circle(screen, self.inputColour[i], pos, 4,1)
-                i += 1
-        pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
-    
-    def drawShip2(self,screen,maze,midpos = (450,800),zoom = 1):
+            
+    def drawShip(self,screen,maze,midpos = (450,800),zoom = 1):
         """ Draw triangular ship, get the input values and draw a red or blue 
         circle at their location"""
         posInt = self.getIntPos()
