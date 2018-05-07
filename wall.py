@@ -205,6 +205,7 @@ class ball(obstacle):
     def getMid(self):
         """ returns the center of the wall"""
         return self.pos
+    
     def getMidInt(self):
         """ returns the center of the wall AS AN INTEGER!!"""
         return [int(self.pos[0]),int(self.pos[1])]
@@ -222,6 +223,7 @@ class movingBall(ball):
             self.vel = np.random.randint(-10,10,2)
         else: 
             self.vel = vel
+   
     def update(self):
         """ Move the ball according to speed and bounce off of screen limits """
         self.pos[0] += self.vel[0]
@@ -232,6 +234,7 @@ class movingBall(ball):
         if(self.pos[1] < self.ylims[0] - self.radius 
            or self.pos[1] > self.ylims[1] + self.radius ): 
             self.vel[1] = -1*self.vel[1] 
+    
     def restart(self):
         """ Go back to where you were at the start of the generation """
         self.pos[0] = self.startpos[0]
@@ -253,9 +256,11 @@ class rotatingRect(obstacle):
         """ Draws the oddly oriented rectangle """
         templist = [getOffsetPos(pt,midpos) for pt in self.pointList]
         pygame.draw.polygon(screen,(0,0,240),templist)
+    
     def update(self):
         self.angle += self.vel
         self.updatePointList()
+    
     def updatePointList(self):
         """ Calculate where the vertices of the rectangle will moved based on 
         the angle swept per frame """
@@ -265,7 +270,6 @@ class rotatingRect(obstacle):
             self.pointList.append((self.midPos[0] +temppoint[0]
                             ,self.midPos[1] +temppoint[1]))
         
-
     def checkCollision(self,pos,size = 0):
         """ Returns true on collision """
         temp = (pos[0] - self.midPos[0], pos[1] - self.midPos[1])

@@ -69,7 +69,7 @@ def quitGame():
     sys.exit()
 
 def updateCameraPos(oldPos,target):
-    MAXSPEED = 30
+    MAXSPEED = 10
     temp = (target[0]-oldPos[0],target[1]-oldPos[1])
     tempsize = getDist(temp,(0,0))
     if(np.abs(tempsize) < MAXSPEED): 
@@ -78,6 +78,8 @@ def updateCameraPos(oldPos,target):
         pos = [oldPos[0]+temp[0]*MAXSPEED/tempsize,oldPos[1]+temp[1]*MAXSPEED/tempsize]
         
     return pos
+def resetCameraPos():
+    return (50,50)
 
 def saveBestships(bestships,basename,gen):
     """ Save top weight of each generation and the top 10 scores"""
@@ -106,7 +108,7 @@ def saveFrame(screen,basename,frame):
 def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = True,victoryLap = False,followLead = False):
+             saveFrames = True,victoryLap = False,followLead = True):
     print("#### STARTING GAME ####")
     print(basename)
     # Initialization    
@@ -124,8 +126,8 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
             shp.loadWeights(basename,i)
             shp.name = "Gen: "+str(i)
     headsUp = hud(maze = mymaze,victoryLap = victoryLap)
-    camerapos = (800,450)
-    cameratargetpos = (800,450)
+    
+    camerapos = resetCameraPos()
     
     # Create pygame screen if we need to
     if(screen == None):
@@ -153,6 +155,8 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
             if(not victoryLap): saveBestships(bestship,basename,generation)
             # Create next generation
             copyShips(ships,bestship,nseeds,generation)
+            # Move camera to start location
+            camerapos = resetCameraPos()
             generation +=1
         #t2 = time.time()    
         # Move the ships, returns true if every ship has crashed

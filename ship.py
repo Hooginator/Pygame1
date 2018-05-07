@@ -127,6 +127,7 @@ class ship:
         for bs in self.bias:
             bs[bs>1] = 1
             bs[bs<-1] = -1
+    
     def copyWeightsExper(self, shp, stray = 0, colour = (240,100,100)):
         """ version of copyWeights() that only take 1 element of each weight matrix 
         and changes it absolutely to a new value, regardless of the input value. """
@@ -156,6 +157,7 @@ class ship:
             
         self.updateSpeed(accel,angle,brake) 
         self.updatePos()
+    
     def checkCheckpoint(self):
         """Determines if we have passed a checkpoint this timestep"""
         if self.maze.checkpoints[self.checkpoint].checkCollision(self.pos):
@@ -173,6 +175,7 @@ class ship:
         """ Returns the score received based on checkpoint progress minus the time driving.  
          If this is below 0 the sihp is said to be out of fuel and crashes"""
         return  self.maze.checkFuelCost(self.checkpoint,currentLap = self.laps)  -  self.timeDriving
+    
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
         self.angle += dangle
@@ -186,11 +189,13 @@ class ship:
         # apply drag and braking to slow down
         self.vx = self.vx * self.drag*(1-brake/6)
         self.vy = self.vy * self.drag*(1-brake/6)
+        
     def updatePos(self):
         """ Update where the ship is each timestep based on calculated velocity."""
         self.timeDriving +=1
         self.pos[0] += self.vx
         self.pos[1] += self.vy
+        
     def getInputs(self,maze):
         """ Determine which of the input locations are in walls / out of bounds
         for the input vector"""
@@ -254,14 +259,28 @@ class ship:
     # Stuff related to creating various visual effects on screen
     ########################################################
             
-    def drawShip(self,screen,maze,midpos = (450,800),zoom = 1):
+    def drawShip(self,screen,maze,midpos = (450,800),zoom = 1,fancyShip = False):
         """ Draw triangular ship, get the input values and draw a red or blue 
         circle at their location"""
-        posInt = self.getIntPos()
-        posInt = getOffsetPos(posInt,midpos)
-        pygame.draw.polygon(screen, self.colour, [[int(posInt[0]+ 10 *np.cos(self.angle)), int(posInt[1]+ 10 *np.sin(self.angle))],
-                                   [int(posInt[0]+ 10 *np.cos(self.angle + 2.64)), int(posInt[1]+ 10 *np.sin(self.angle + 2.64))],
-                                   [int(posInt[0]+ 10 *np.cos(self.angle + 3.64)), int(posInt[1]+ 10 *np.sin(self.angle + 3.64))]])
+        bp = self.getIntPos()
+        bp = getOffsetPos(bp,midpos)
+        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
+                                [[int(bp[0]+ 10 *np.cos(self.angle+3.14)), 
+                              int(bp[1]+ 10 *np.sin(self.angle+3.14))], 
+                            [int(bp[0]+ 10 *np.cos(self.angle+1)), 
+                              int(bp[1]+ 10 *np.sin(self.angle+1))], 
+                            [int(bp[0]), 
+                              int(bp[1])], 
+                            [int(bp[0]+ 10 *np.cos(self.angle-1)), 
+                              int(bp[1]+ 10 *np.sin(self.angle-1))]])
+    
+        pygame.draw.polygon(screen, self.colour, 
+                            [[int(bp[0]+ 10 *np.cos(self.angle)), 
+                              int(bp[1]+ 10 *np.sin(self.angle))],
+                            [int(bp[0]+ 10 *np.cos(self.angle + 2.64)), 
+                             int(bp[1]+ 10 *np.sin(self.angle + 2.64))],
+                            [int(bp[0]+ 10 *np.cos(self.angle + 3.64)), 
+                             int(bp[1]+ 10 *np.sin(self.angle + 3.64))]])
         self.getInputs(maze)
         i = 0
         # Draw where the inputs are for decision making.
@@ -269,14 +288,7 @@ class ship:
             for pos in self.inputPos:
                 pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 4,1)
                 i += 1
-        pygame.draw.circle(screen, (140,160,240), posInt, 5,2)
-    
-
-
-
-
-
-
+        pygame.draw.circle(screen, (140,160,240), bp, 5,2)
     
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on 
@@ -326,6 +338,7 @@ class ship:
         l[0] = chr(ord(l[0]) - 32)
         self.name = ''.join(l)
         return self.name
+    
     def setName(self,newName):
         """ Changes the weights and biases randomly in order to have the 
         getName() function return the name specified here """
@@ -355,6 +368,7 @@ class ship:
             for j in range(tempoff):    
                 c = np.random.randint(bs.shape[0])
                 bs[c] += tempcoef
+                
     def nameShip(self,newName,colour = None):
         """ Forces the ship to conform to the name and colour provided """
         self.setName(newName)

@@ -28,6 +28,7 @@ class hud:
         self.maze = maze
         self.victoryLap = victoryLap
         self.updateGeneration(generation)
+        
     def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = True,
                leadships = None, camerapos = None,followLead = False):
         """general update function that calls all the other pieces"""
@@ -43,7 +44,7 @@ class hud:
             if drawLeaderboard: self.drawBackground(screen)
             leadships[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 500])
             leadships[0].highlight(screen,midpos = midpos)
-        if drawLeaderboard: self.drawWinners(screen)
+        if drawLeaderboard: self.drawWinners(screen,midpos = midpos)
         if(self.victoryLap):
             pass
         else:
@@ -65,6 +66,7 @@ class hud:
             self.winnerSurface.append(tempSurf)
             self.winnerPos.append(shp.getIntPos())
             self.winnerColour.append(shp.colour)
+            
     def drawTimer(self,screen):
         """ Creates and places the small pulsing timer that rotates each time 
         another checkpoint has expired """
@@ -80,14 +82,15 @@ class hud:
         
         
 
-    def drawWinners(self,screen):
+    def drawWinners(self,screen,midpos = (800,450)):
         """ Draws a list of the last generation's top 10 performers with their
         scores """
         for i, surf in enumerate(self.winnerSurface):
             screen.blit(surf,(self.basepos[0]+5,self.basepos[1]+30*i))
         for i, pos in enumerate(self.winnerPos):
-            pygame.draw.circle(screen, self.winnerColour[i], pos, 10,2)
-            pygame.draw.circle(screen, self.winnerColour[i], pos, 20,2)
+            pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 10,2)
+            pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 20,2)
+            
     def updateGeneration(self,generation):
         """ Everything the HUD needs to do after a generation has ended """
         self.gen = generation
@@ -96,7 +99,11 @@ class hud:
         self.lastCheckpointCost = 0
         self.nextCheckpointCost = self.maze.checkFuelCost(self.checkpoint)
         self.genSurface = myfont.render("Gen: "+str(self.gen), False, (240, 240, 240))
+        
     def drawGeneration(self,screen):
+        """ Draw surface that shows the generation number in the top left corner """
         screen.blit(self.genSurface,(0,0)) 
-    def drawBackground(self,screen):        
+        
+    def drawBackground(self,screen):      
+        """ Draw a black background for the leaderboard """
         pygame.draw.rect(screen,(0,0,0),(self.basepos[0],self.basepos[1],200,500))
