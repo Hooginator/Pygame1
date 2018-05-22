@@ -21,16 +21,16 @@ class hud:
         self.lastCheckpointCost = 0
         self.nextCheckpointCost = 0
         self.basepos = basepos
-        self.winnerSurface = []
+        self.winnerSurface = None
         self.genSurface = None
-        self.winnerPos = []
+        self.winnerPos =None
         self.winnerColour = []
         self.maze = maze
         self.victoryLap = victoryLap
         self.updateGeneration(generation)
         
-    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = True,
-               leadships = None, camerapos = None,followLead = False):
+    def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = False,
+               leadships = None, camerapos = None,followLead = False, drawMatrix = True):
         """general update function that calls all the other pieces"""
         self.frame = frame
         if camerapos is not None:
@@ -40,11 +40,12 @@ class hud:
         if(generation > self.gen or frame == 0): 
             self.updateGeneration(generation)
             self.updateWinners(bestships,generation)
-        if(leadships is not None):
-            if drawLeaderboard: self.drawBackground(screen)
-            leadships[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 500])
+        if drawLeaderboard and self.winnerSurface is not None: 
+            self.drawBackground(screen)
+            self.drawWinners(screen,midpos = midpos)
+        if(leadships is not None and drawMatrix):
+            leadships[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 450])
             leadships[0].highlight(screen,midpos = midpos)
-        if drawLeaderboard: self.drawWinners(screen,midpos = midpos)
         if(self.victoryLap):
             pass
         else:
@@ -59,7 +60,7 @@ class hud:
         self.winnerSurface = []
         self.winnerPos = []
         self.winnerColour = []
-        self.winnerSurface.append(myfont.render("GEN "+str(self.gen-1)+ " WINNERS",False, (250,250,250)))
+        self.winnerSurface.append(myfont.render("GEN "+str(self.gen-1)+ " BEST",False, (250,250,250)))
         for i, shp in enumerate(bestships):
             tempSurf = myfont.render(str(i) + ":   " + str(int(shp.score)) 
                                     +"   "+shp.getName(),  False, shp.colour)
@@ -86,7 +87,7 @@ class hud:
         """ Draws a list of the last generation's top 10 performers with their
         scores """
         for i, surf in enumerate(self.winnerSurface):
-            screen.blit(surf,(self.basepos[0]+5,self.basepos[1]+30*i))
+            screen.blit(surf,(self.basepos[0]+6,self.basepos[1]+30*i))
         for i, pos in enumerate(self.winnerPos):
             pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 10,2)
             pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 20,2)
@@ -106,4 +107,5 @@ class hud:
         
     def drawBackground(self,screen):      
         """ Draw a black background for the leaderboard """
-        pygame.draw.rect(screen,(0,0,0),(self.basepos[0],self.basepos[1],200,500))
+        pygame.draw.rect(screen,(240,240,240),(self.basepos[0],self.basepos[1],204,504))
+        pygame.draw.rect(screen,(0,0,0),(self.basepos[0]+2,self.basepos[1]+2,200,500))

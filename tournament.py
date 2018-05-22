@@ -39,8 +39,12 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         time.tick(1)
         
         
-def victoryLap(screen,basename,gens = 10, inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2]):
-    playGame(screen = screen, maxGen = 1, basename = basename,intermediates = (),
+def victoryLap(screen, basename, gens = 10, 
+               inputdistance = [40,80,120,160], 
+               inputangle = [1.6,1.2,0.8,0.4,0,-0.4,-0.8,-1.2,-1.6],
+               intermediates =  (20,16,8)):
+    """ Loads previous winners instead of random ships """
+    playGame(screen = screen, maxGen = 1, basename = basename,intermediates = intermediates,
              victoryLap = True,nships = gens, inputdistance = inputdistance,
              inputangle = inputangle)
 
@@ -52,9 +56,9 @@ def victoryLap(screen,basename,gens = 10, inputdistance = [50,100,150], inputang
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-inputangles = [[0.8,-0.8],[1,0.4,-0.4,-1],[1.2,0.6,0.2,-0.2,-0.6,-1.2]]
-inputdistances = [[50,],[50,100],[50,100,150]]
-
+inputangles = [[1.6,1.2,0.8,0.4,0,-0.4,-0.8,-1.2,-1.6]]
+inputdistances = [[40,80,120,160]]
+intermediates = (20,16,8)
 
 winningShip = None
 i = 0
@@ -62,14 +66,14 @@ for ina in inputangles:
     for ind in inputdistances:
         screen = pygame.display.set_mode((1600,900))
         playCountdown(screen,winningShip = winningShip)
-        winningShip = playGame(screen = screen, maxGen = 100, basename = "TEEEST" 
-                + str(i),intermediates = (),inputdistance = ind, 
+        winningShip = playGame(screen = screen, maxGen = 500, basename = "temp" 
+                + str(i),intermediates = intermediates,inputdistance = ind, 
                 inputangle = ina)
-        victoryLap(screen,basename = "TEEEST"+ str(i),gens = 20,inputdistance = ind, 
-                inputangle = ina)
+        victoryLap(screen,basename = "SOLO"+ str(i),gens = 200,inputdistance = ind, 
+                inputangle = ina,intermediates = intermediates)
         i += 1
 quitGame()
-
+os.system("shutdown now -h")
 
 
 
