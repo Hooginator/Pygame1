@@ -111,7 +111,7 @@ def saveFrame(screen,basename,frame):
 def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = False,victoryLap = False,followLead = False,displayHUD = True):
+             saveFrames = False,victoryLap = False,followLead = True,displayHUD = True):
     print("#### STARTING GAME ####")
     print(basename)
     # Initialization    
@@ -126,7 +126,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
     leadships = None
     if(victoryLap):
         for i, shp in enumerate(ships):
-            shp.loadWeights(basename,i)
+            shp.loadWeights(basename,i,colour = (int(240*i/nships),int(240*(nships-i)/nships),20))
             shp.name = "Gen: "+str(i)
     if (displayHUD): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
     

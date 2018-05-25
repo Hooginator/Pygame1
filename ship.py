@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Created on Wed Mar 21 10:37:25 2018
 
@@ -105,19 +105,31 @@ class ship:
         for i,bs in enumerate(self.bias):
             np.save("./data/"+basename+"/"+basename + "_B"+str(i)+"_G" + str(generation),bs)
             
-    def loadWeights(self,basename,generation):
+    def loadWeights(self,basename,generation,colour = None):
         temp = "./data/"+basename+"/"+basename
         print (temp)
-        for i, wt in enumerate(self.weights):  
+        
+        self.weights = []
+        done = False
+        i = 0
+        while(not done):
             wn = temp + "_W"+str(i)+"_G" + str(generation)+".npy"
             if(os.path.isfile(wn)):
-                wt[:] = np.load(wn)
-            else: print ("No file found for: " + wn)
-        for i,bs in enumerate(self.bias):
+                 self.weights.append(np.load(wn))
+            else: done = True
+            i += 1
+            
+        self.bias = []
+        done = False
+        i = 0
+        while(not done):
             bn = temp + "_B"+str(i)+"_G" + str(generation)+".npy"
             if(os.path.isfile(bn)):
-                bs[:] = np.load(bn)
-            else: print ("No file found for: " + bn)
+                 self.bias.append(np.load(bn))
+            else: done = True
+            i += 1
+        if(colour is not None):
+            self.colour = colour
         
     def normalizeWeights(self):
         """ Make sure the weights and biases stay inside (-1,1) """
@@ -255,6 +267,7 @@ class ship:
         #print(self.getName() + "  has crashed at: " + str(self.pos[0])+ "  " + str(self.pos[1]))
     def getIntPos(self):
         return (int(self.pos[0]),int(self.pos[1]))
+    
     ############### VISUAL #################################
     # Stuff related to creating various visual effects on screen
     ########################################################

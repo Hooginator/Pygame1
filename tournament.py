@@ -41,8 +41,8 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         
 def victoryLap(screen, basename, gens = 10, 
                inputdistance = [40,80,120,160], 
-               inputangle = [1.6,1.2,0.8,0.4,0,-0.4,-0.8,-1.2,-1.6],
-               intermediates =  (20,16,8)):
+               inputangle = [1.2,0.8,0.4,0,-0.4,-0.8,-1.2],
+               intermediates =  (2,16,8)):
     """ Loads previous winners instead of random ships """
     playGame(screen = screen, maxGen = 1, basename = basename,intermediates = intermediates,
              victoryLap = True,nships = gens, inputdistance = inputdistance,
@@ -56,7 +56,7 @@ def victoryLap(screen, basename, gens = 10,
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-inputangles = [[1.6,1.2,0.8,0.4,0,-0.4,-0.8,-1.2,-1.6]]
+inputangles = [[1.2,0.8,0.4,0,-0.4,-0.8,-1.2]]
 inputdistances = [[40,80,120,160]]
 intermediates = (20,16,8)
 
@@ -66,14 +66,14 @@ for ina in inputangles:
     for ind in inputdistances:
         screen = pygame.display.set_mode((1600,900))
         playCountdown(screen,winningShip = winningShip)
-        winningShip = playGame(screen = screen, maxGen = 500, basename = "temp" 
-                + str(i),intermediates = intermediates,inputdistance = ind, 
-                inputangle = ina)
+#        winningShip = playGame(screen = screen, maxGen = 500, basename = "SOLO" 
+#                + str(i),intermediates = intermediates,inputdistance = ind, 
+#                inputangle = ina)
         victoryLap(screen,basename = "SOLO"+ str(i),gens = 200,inputdistance = ind, 
                 inputangle = ina,intermediates = intermediates)
         i += 1
 quitGame()
-os.system("shutdown now -h")
+#os.system("shutdown now -h")
 
 
 
