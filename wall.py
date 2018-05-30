@@ -107,11 +107,13 @@ class maze:
         if midpos is None or followLead is False: 
             midpos = (800,450)
         drawBackground(screen)
-        for obs in self.obstacles:
-            obs.update()
         self.drawWalls(screen,midpos = midpos)
     #drawWalls(checkpoints,screen)   
-    
+    def updateMap(self):
+        """ Updates all objects in the obstacles """
+        for obs in self.obstacles:
+            obs.update()
+        
     def newGeneration(self):
         for obs in self.obstacles: obs.restart()
     

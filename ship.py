@@ -155,7 +155,7 @@ class ship:
     ############### UPDATE #################################
     # Stuff that may be used at each timestep of the race
     ########################################################    
-    def moveShip(self,screen):
+    def moveShip(self,screen,maze):
         """ Based on the ship's brain and inputs, get a decision for this
         timestep and apply it to the acceleration, braking and turning"""
         self.checkCheckpoint()
@@ -169,6 +169,7 @@ class ship:
             
         self.updateSpeed(accel,angle,brake) 
         self.updatePos()
+        self.getInputs(maze)
     
     def checkCheckpoint(self):
         """Determines if we have passed a checkpoint this timestep"""
@@ -294,7 +295,7 @@ class ship:
                              int(bp[1]+ 10 *np.sin(self.angle + 2.64))],
                             [int(bp[0]+ 10 *np.cos(self.angle + 3.64)), 
                              int(bp[1]+ 10 *np.sin(self.angle + 3.64))]])
-        self.getInputs(maze)
+        
         i = 0
         # Draw where the inputs are for decision making.
         if(self.crashed == False):

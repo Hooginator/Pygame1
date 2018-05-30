@@ -61,17 +61,18 @@ inputdistances = [[40,80,120,160]]
 intermediates = (20,16,8)
 
 winningShip = None
-i = 0
+i = 1
 for ina in inputangles:
     for ind in inputdistances:
-        screen = pygame.display.set_mode((1600,900))
-        playCountdown(screen,winningShip = winningShip)
-#        winningShip = playGame(screen = screen, maxGen = 500, basename = "SOLO" 
-#                + str(i),intermediates = intermediates,inputdistance = ind, 
-#                inputangle = ina)
-        victoryLap(screen,basename = "SOLO"+ str(i),gens = 200,inputdistance = ind, 
-                inputangle = ina,intermediates = intermediates)
-        i += 1
+        for a in range(5):
+            screen = pygame.display.set_mode((1600,900))
+            playCountdown(screen,winningShip = winningShip)
+            winningShip = playGame(screen = screen, maxGen = 500, basename = "FAR" 
+                                   + str(i),intermediates = intermediates,inputdistance = ind, 
+                                   inputangle = ina)
+            #victoryLap(screen,basename = "SOLO"+ str(i),gens = 200,inputdistance = ind, 
+            #           inputangle = ina,intermediates = intermediates)
+            i += 1
 quitGame()
 #os.system("shutdown now -h")
 

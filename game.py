@@ -45,7 +45,7 @@ def moveShips(screen, ships,maze):
     allcrashed = True
     for shp in ships:
         if(shp.crashed == False):
-            shp.moveShip(screen)
+            shp.moveShip(screen,maze)
             if(maze.checkCollisions(shp.pos) or shp.checkFuel() < 0):
                 shp.crash()
             if(allcrashed): # The first one we find not crashed
@@ -111,7 +111,8 @@ def saveFrame(screen,basename,frame):
 def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = False,victoryLap = False,followLead = True,displayHUD = True):
+             saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
+             displayOnScreen = False):
     print("#### STARTING GAME ####")
     print(basename)
     # Initialization    
@@ -164,15 +165,17 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
         #t2 = time.time()    
         # Move the ships, returns true if every ship has crashed
         allcrashed = moveShips(screen,ships,mymaze)
+        ## Update any moving parts to the maze
+        mymaze.updateMap()
         # Find current leading ships
-        leadships = getLeadShips(ships)
+        if(displayOnScreen or followLead): leadships = getLeadShips(ships)
         if(followLead):
             camerapos = updateCameraPos(camerapos,leadships[0].pos)
         
         # Draw and update the map
-        mymaze.drawMap(screen,midpos = camerapos,followLead = followLead)
+        if(displayOnScreen): mymaze.drawMap(screen,midpos = camerapos,followLead = followLead)
         # Draw the ships
-        drawShips(screen,ships,mymaze,midpos = camerapos,followLead = followLead)
+        if(displayOnScreen): drawShips(screen,ships,mymaze,midpos = camerapos,followLead = followLead)
         # Draw all the overlay stuff
         if displayHUD: headsUp.update(screen,generation,frame, bestships = bestship,ships = ships,
                        leadships = leadships,followLead = followLead,camerapos = camerapos)
@@ -181,11 +184,11 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
         if(saveFrames): saveFrame(screen,basename,frame)
         #t4 = time.time()
         # Wait for next frame time          
-        clock.tick(FPS)
+        if(displayOnScreen): clock.tick(FPS)
         #t5 = time.time()
         #print(str(t2-t1) + "  " +str(t3-t1) + "  " +str(t4-t1) + "  "+ str(t5-t1))
         # Updates screen
-        pygame.display.flip()
+        if(displayOnScreen): pygame.display.flip()
     
     # END OF GAME
     return bestship
