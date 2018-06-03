@@ -67,7 +67,7 @@ for ina in inputangles:
         for a in range(5):
             screen = pygame.display.set_mode((1600,900))
             playCountdown(screen,winningShip = winningShip)
-            winningShip = playGame(screen = screen, maxGen = 500, basename = "LOW" 
+            winningShip = playGame(screen = screen, maxGen = 100, basename = "LOW" 
                                    + str(i),intermediates = intermediates,inputdistance = ind, 
                                    inputangle = ina, nships = 10, nseeds = 2)
             #victoryLap(screen,basename = "SOLO"+ str(i),gens = 200,inputdistance = ind, 

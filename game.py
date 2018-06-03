@@ -26,15 +26,15 @@ def copyShips(ships,bestship,nseeds,generation,nships):
     n = 0
     for shp in ships:
         if(n/nships < 0.2): 
-            shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef*gencoef, colour = (240,100,100))
+            shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef*gencoef, colour = (240,100,100))
         elif(n/nships < 0.4): 
-            shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef, colour = (240,240,100))
+            shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (240,240,100))
         elif(n/nships < 0.6): 
-            shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
+            shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,240,100))
         elif(n/nships < 0.8): 
-            shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,200,240))
-        #elif(n < 90): 
-        #    shp.newSpawn(colour = (100,100,240))
+            shp.copyWeights(bestship[n%nseeds],stray = 10*gencoef, colour = (100,240,240))
+        elif(n/nships < 0.9): 
+            shp.newSpawn(colour = (100,100,240))
         else: 
             shp.copyWeightsExper(bestship[n%nseeds],stray = 1*gencoef, colour = (240,100,240))
         n+=1
@@ -98,11 +98,11 @@ def saveBestships(bestships,basename,gen):
     print("All crashed for generation " + str(gen) +"  Top Ship score: " 
           + str(bestships[0].score) + "  at  " + str(bestships[0].weights[0][0][0]))
             
-def saveFrame(screen,basename,frame):
+def saveFrame(screen,basename,frame,gen):
     """ Saves the currently displayed image on screen """
     if not os.path.exists("./data/"+basename+"/frames/"):
         os.makedirs("./data/"+basename+"/frames/")
-    pygame.image.save(screen,"./data/"+basename+"/frames/frame"+str(frame).zfill(10))
+    pygame.image.save(screen,"./data/"+basename+"/frames/Gen"+str(gen)+"frame"+str(frame).zfill(10) + ".png")
 
 ############################################################
 ########## MAIN PROGRAM ####################################
@@ -181,7 +181,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
                        leadships = leadships,followLead = followLead,camerapos = camerapos)
         #t3 = time.time()
         # Save the image on screen if that's what we're doing
-        if(saveFrames): saveFrame(screen,basename,frame)
+        if(saveFrames): saveFrame(screen,basename,frame,generation)
         #t4 = time.time()
         # Wait for next frame time          
         if(displayOnScreen): clock.tick(FPS)

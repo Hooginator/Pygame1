@@ -30,7 +30,7 @@ class hud:
         self.updateGeneration(generation)
         
     def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = False,
-               leadships = None, camerapos = None,followLead = False, drawMatrix = True,
+               leadships = None, camerapos = None,followLead = False, drawMatrix = False,
                highlightWinners = True):
         """general update function that calls all the other pieces"""
         self.frame = frame
