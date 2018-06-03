@@ -20,22 +20,22 @@ def getBestShip(ships,nseeds):
     ships.sort(key = lambda x: x.score, reverse = True)
     return  copy.deepcopy(ships[0:nseeds])
     
-def copyShips(ships,bestship,nseeds,generation):
+def copyShips(ships,bestship,nseeds,generation,nships):
     """ Do the inter-generation copying of the best ships from the previous gen """
     gencoef = 1/(generation +1) 
     n = 0
     for shp in ships:
-        if(n < 20): 
+        if(n/nships < 0.2): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef*gencoef, colour = (240,100,100))
-        elif(n < 40): 
+        elif(n/nships < 0.4): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.1*gencoef, colour = (240,240,100))
-        elif(n < 60): 
+        elif(n/nships < 0.6): 
             shp.copyWeights(bestship[n%nseeds],stray = 0.5*gencoef, colour = (100,240,100))
-        elif(n < 80): 
+        elif(n/nships < 0.8): 
             shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,200,240))
         #elif(n < 90): 
         #    shp.newSpawn(colour = (100,100,240))
-        elif(n < 1000): 
+        else: 
             shp.copyWeightsExper(bestship[n%nseeds],stray = 1*gencoef, colour = (240,100,240))
         n+=1
         shp.reset()
@@ -111,8 +111,8 @@ def saveFrame(screen,basename,frame):
 def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
-             displayOnScreen = False):
+             saveFrames = True,victoryLap = False,followLead = False,displayHUD = True,
+             displayOnScreen = True):
     print("#### STARTING GAME ####")
     print(basename)
     # Initialization    
@@ -158,7 +158,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
             # Save the best ships
             if(not victoryLap): saveBestships(bestship,basename,generation)
             # Create next generation
-            copyShips(ships,bestship,nseeds,generation)
+            copyShips(ships,bestship,nseeds,generation,nships)
             # Move camera to start location
             camerapos = resetCameraPos(followLead)
             generation +=1

@@ -40,9 +40,11 @@ class hud:
         if(generation > self.gen or frame == 0): 
             self.updateGeneration(generation)
             self.updateWinners(bestships,generation)
-        if drawLeaderboard and self.winnerSurface is not None: 
-            self.drawBackground(screen)
-            self.drawWinners(screen,midpos = midpos)
+        if drawLeaderboard: 
+            self.highlightWinners(screen,midpos = midpos)
+            if(self.winnerSurface is not None): 
+                self.drawBackground(screen)
+                self.drawLeaderNames(screen,midpos = midpos)
         if(leadships is not None and drawMatrix):
             leadships[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 450])
             leadships[0].highlight(screen,midpos = midpos)
@@ -83,15 +85,18 @@ class hud:
         
         
 
-    def drawWinners(self,screen,midpos = (800,450)):
+    def drawLeaderNames(self,screen,midpos = (800,450)):
         """ Draws a list of the last generation's top 10 performers with their
         scores """
         for i, surf in enumerate(self.winnerSurface):
             screen.blit(surf,(self.basepos[0]+6,self.basepos[1]+30*i))
+            
+    def highlightWinners(self,screen,midpos = (800,450)):
+        """ Draws circles around where the last generations lead ships ended up"""
         for i, pos in enumerate(self.winnerPos):
             pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 10,2)
             pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 20,2)
-            
+        
     def updateGeneration(self,generation):
         """ Everything the HUD needs to do after a generation has ended """
         self.gen = generation
