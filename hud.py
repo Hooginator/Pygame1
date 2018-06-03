@@ -30,7 +30,8 @@ class hud:
         self.updateGeneration(generation)
         
     def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = False,
-               leadships = None, camerapos = None,followLead = False, drawMatrix = True):
+               leadships = None, camerapos = None,followLead = False, drawMatrix = True,
+               highlightWinners = True):
         """general update function that calls all the other pieces"""
         self.frame = frame
         if camerapos is not None:
@@ -40,11 +41,11 @@ class hud:
         if(generation > self.gen or frame == 0): 
             self.updateGeneration(generation)
             self.updateWinners(bestships,generation)
-        if drawLeaderboard: 
+        if (highlightWinners and self.winnerPos is not None): 
             self.highlightWinners(screen,midpos = midpos)
-            if(self.winnerSurface is not None): 
-                self.drawBackground(screen)
-                self.drawLeaderNames(screen,midpos = midpos)
+        if(drawLeaderboard and self.winnerSurface is not None): 
+            self.drawBackground(screen)
+            self.drawLeaderNames(screen,midpos = midpos)
         if(leadships is not None and drawMatrix):
             leadships[0].drawMatrix(screen,[self.basepos[0] + 70,self.basepos[1] + 450])
             leadships[0].highlight(screen,midpos = midpos)
