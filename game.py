@@ -69,7 +69,7 @@ def quitGame():
     sys.exit()
 
 def updateCameraPos(oldPos,target):
-    MAXSPEED = 5
+    MAXSPEED = 7
     temp = (target[0]-oldPos[0],target[1]-oldPos[1])
     tempsize = getDist(temp,(0,0))
     if(np.abs(tempsize) < MAXSPEED): 
@@ -102,7 +102,9 @@ def saveFrame(screen,basename,frame,gen):
     """ Saves the currently displayed image on screen """
     if not os.path.exists("./data/"+basename+"/frames/"):
         os.makedirs("./data/"+basename+"/frames/")
-    pygame.image.save(screen,"./data/"+basename+"/frames/Gen"+str(gen)+"frame"+str(frame).zfill(10) + ".png")
+    if not os.path.exists("./data/"+basename+"/frames/Gen"+str(gen)):
+        os.makedirs("./data/"+basename+"/frames/Gen"+str(gen))
+    pygame.image.save(screen,"./data/"+basename+"/frames/Gen"+str(gen)+"/frame"+str(frame).zfill(10) + ".png")
 
 ############################################################
 ########## MAIN PROGRAM ####################################
@@ -111,8 +113,8 @@ def saveFrame(screen,basename,frame,gen):
 def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-             saveFrames = True,victoryLap = False,followLead = False,displayHUD = True,
-             displayOnScreen = True):
+             saveFrames = True,victoryLap = False,followLead = True,displayHUD = True,
+             displayOnScreen = True, shipLoadOffset = 0):
     print("#### STARTING GAME ####")
     print(basename)
     # Initialization    
@@ -127,7 +129,8 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "Be
     leadships = None
     if(victoryLap):
         for i, shp in enumerate(ships):
-            shp.loadWeights(basename,i,colour = (int(240*i/nships),int(240*(nships-i)/nships),20))
+            shp.loadWeights(basename,i+shipLoadOffset,colour 
+                            = (int(240*(nships-i)/nships),int(240*i/nships),20))
             shp.name = "Gen: "+str(i)
     if (displayHUD): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
     

@@ -107,7 +107,6 @@ class ship:
             
     def loadWeights(self,basename,generation,colour = None):
         temp = "./data/"+basename+"/"+basename
-        print (temp)
         
         self.weights = []
         done = False
@@ -116,6 +115,7 @@ class ship:
             wn = temp + "_W"+str(i)+"_G" + str(generation)+".npy"
             if(os.path.isfile(wn)):
                  self.weights.append(np.load(wn))
+                 print(wn)
             else: done = True
             i += 1
             
@@ -300,7 +300,7 @@ class ship:
         # Draw where the inputs are for decision making.
         if(self.crashed == False):
             for pos in self.inputPos:
-                pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 4,1)
+                pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 2,0)
                 i += 1
         pygame.draw.circle(screen, (140,160,240), bp, 5,2)
     
