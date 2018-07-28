@@ -104,7 +104,9 @@ def saveFrame(screen,basename,frame,gen):
         os.makedirs("./data/"+basename+"/frames/")
     if not os.path.exists("./data/"+basename+"/frames/Gen"+str(gen)):
         os.makedirs("./data/"+basename+"/frames/Gen"+str(gen))
-    pygame.image.save(screen,"./data/"+basename+"/frames/Gen"+str(gen)+"/frame"+str(frame).zfill(10) + ".png")
+    if not os.path.exists("./data/"+basename+"/frames/Gen"+str(gen)+"_"+str(int(frame/1000)).zfill(4)):
+        os.makedirs("./data/"+basename+"/frames/Gen"+str(gen)+"_"+str(int(frame/1000)).zfill(4))
+    pygame.image.save(screen,"./data/"+basename+"/frames/Gen"+str(gen)+"_"+str(int(frame/1000)).zfill(4)+"/frame"+str(frame).zfill(10) + ".png")
 
 ############################################################
 ########## MAIN PROGRAM ####################################
