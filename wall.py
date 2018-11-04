@@ -7,6 +7,47 @@ Created on Thu Mar 29 19:40:19 2018
 
 from functions import *
 
+############################################################
+########### LOADING ########################################
+############################################################
+def mapArrayFromStr(wallPos):
+    """ Takes a string of 1 or 0 corresponding to where walls are with new
+    lines separated by \n"""
+    wallArray = []
+    i = 0 # 'i' counts the current line of the file we are on
+    for line in wallPos.split('\n'):
+        if(len(line) !=0):
+            wallArray.append([int(line[0])])
+        j = 1 # 'j' counts the current character we are on in line 'i'
+        while j < len(line):
+            wallArray[i].append(line[j])
+            j+=1
+        i+=1
+    return wallArray    
+        
+def mapStrFromFile(filename):
+    """ Reads the file given as a string for further processing """
+    with open(filename, 'r') as myfile:
+        data = myfile.read()
+    return data
+
+def generateObstacles(filename):
+    mapArray = mapArrayFromStr(mapStrFromFile(filename+"_wall.txt"))
+    obstacles = []
+    checkpoints = [None]*9
+    i = 0
+    for mapRow in mapArray:
+        for j, w in enumerate(mapRow):
+            if(int(w) == 1):
+                obstacles.append(wall((j*50-25,i*50-25),(50,50)))
+            if(int(w) > 1):
+                checkpoints[int(w)-2] = (wall((j*50-25,i*50-25),(150,150)))
+                
+        i+=1
+    while(checkpoints[-1] == None): del(checkpoints[-1])
+    return obstacles, checkpoints
+        
+
 
 def rotate(pos,angle):
     return(pos[0]*np.cos(angle)- pos[1]*np.sin(angle),
@@ -60,12 +101,11 @@ def fuelParams(i):
 class maze:
     """ Master class for all the objects on the map that get in your way or 
     help """
-    def __init__(self,i = 1,height = 900,width = 1600):
-        self.obstacles = obstacles(i)
-        self.checkpoints = checkpoints(i)
+    def __init__(self,mapName = "Map1",height = 900,width = 1600,i = 2):
+        self.obstacles, self.checkpoints = generateObstacles(mapName)
         self.checkpointsPerLap = len(self.checkpoints)
         self.screenWidth, self.screenHeight = width, height
-        self.addBoundaryWall()
+        #self.addBoundaryWall()
         self.getFuelCosts(i)
         if(i > 2):
             self.mazeType = "linear"

@@ -14,8 +14,8 @@ def mapArrayFromStr(wallPos):
     wallArray = []
     i = 0 # 'i' counts the current line of the file we are on
     for line in wallPos.split('\n'):
-        print(len(line))
-        wallArray.append([line[0]])
+        if(len(line) !=0):
+            wallArray.append([line[0]])
         j = 1 # 'j' counts the current character we are on in line 'i'
         while j < len(line):
             wallArray[i].append(line[j])
@@ -24,7 +24,18 @@ def mapArrayFromStr(wallPos):
     return wallArray    
         
 def mapStrFromFile(filename):
-    pass
+    """ Reads the file given as a string for further processing """
+    with open(filename, 'r') as myfile:
+        data = myfile.read()
+    return data
     
-abc = mapArrayFromStr("111010\n010101010\n0101010101\n01010101010101")
-print(abc)
+cab = mapStrFromFile("Map1_wall.txt")
+abc = mapArrayFromStr(cab)
+
+
+
+
+
+def generateMapStr(XMAX,YMAX,minWidth=3):
+    """ Will build a map of size [XMAX,YMAX] with a path throughout a minimum 
+    of minWidth wide. I don't really know how to do this yet. manual for now"""
