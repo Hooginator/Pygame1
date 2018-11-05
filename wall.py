@@ -5,6 +5,8 @@ Created on Thu Mar 29 19:40:19 2018
 @author: hoog
 """
 
+MIN_WALL_SIZE = 50
+
 from functions import *
 
 ############################################################
@@ -39,15 +41,23 @@ def generateObstacles(filename):
     for mapRow in mapArray:
         for j, w in enumerate(mapRow):
             if(int(w) == 1):
-                obstacles.append(wall((j*50-25,i*50-25),(50,50)))
+                obstacles.append(wall(layoutToPos((j,i)),(MIN_WALL_SIZE,MIN_WALL_SIZE)))
             if(int(w) > 1):
-                checkpoints[int(w)-2] = (wall((j*50-25,i*50-25),(150,150)))
+                checkpoints[int(w)-2] = (wall(layoutToPos((j,i)),
+                            (3*MIN_WALL_SIZE,3*MIN_WALL_SIZE)))
                 
         i+=1
     while(checkpoints[-1] == None): del(checkpoints[-1])
-    return obstacles, checkpoints
+    return mapArray, obstacles, checkpoints
         
 
+def layoutToPos(lpos):
+    """ Returns the center position associated with the grid spot x, y """
+    return (lpos[0]*MIN_WALL_SIZE,lpos[1]*MIN_WALL_SIZE)
+def posToLayout(pos):
+    """ Returns the spot in self.layout that pos would fall in.  For collision check"""
+    return (int(pos[0]/50),int(pos[1]/50))
+    
 
 def rotate(pos,angle):
     return(pos[0]*np.cos(angle)- pos[1]*np.sin(angle),
@@ -102,9 +112,11 @@ class maze:
     """ Master class for all the objects on the map that get in your way or 
     help """
     def __init__(self,mapName = "Map1",height = 900,width = 1600,i = 2):
-        self.obstacles, self.checkpoints = generateObstacles(mapName)
+        # Load the wall and checkpoint information
+        self.layout, self.obstacles, self.checkpoints = generateObstacles(mapName)
         self.checkpointsPerLap = len(self.checkpoints)
         self.screenWidth, self.screenHeight = width, height
+        self.layoutHeight, self.layoutWidth = len(self.layout[:]),len(self.layout[0][:])
         #self.addBoundaryWall()
         self.getFuelCosts(i)
         if(i > 2):
@@ -157,13 +169,33 @@ class maze:
     def newGeneration(self):
         for obs in self.obstacles: obs.restart()
     
+    def isInBoundaries(self,pos):
+        if(pos[0] > 0 and pos[0] < MIN_WALL_SIZE*self.layoutWidth and 
+           pos[1] > 0 and pos[1] < MIN_WALL_SIZE*self.layoutHeight):
+            return True
+        else: return False
+    
+    def checkLayoutCollisions(self,pos,size=0):
+        if(self.isInBoundaries(pos)):
+            temppos = posToLayout(pos)
+            print(str(temppos) + "  " + str(self.layout[temppos[1]][temppos[0]]) + "   " + str((self.layoutWidth,self.layoutHeight)))
+            if(int(self.layout[temppos[1]][temppos[0]]) == 1): 
+                return 1
+            else: return 0
+        else: return 1
+    
     def checkCollisions(self,pos,size = 0):
         """ Checks pos (x,y) against all walls for collision"""
-        for obs in self.obstacles:
-            if(obs.checkCollision(pos,size)): return True
-        if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) 
-            or (pos[1] > self.screenHeight)): return True
+        tempint = self.checkLayoutCollisions(pos)
+        #print(tempint)
+        if(tempint == 1): return True
         return False
+        # Old check for collisions
+        #for obs in self.obstacles:
+        #    if(obs.checkCollision(pos,size)): return True
+        #if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) 
+        #    or (pos[1] > self.screenHeight)): return True
+        #return False
 ############################################################
 ########### WALL CLASS #####################################
 ############################################################
@@ -201,6 +233,7 @@ class wall(obstacle):
     def __init__(self,pos,size):
         self.pos = pos
         self.size = size
+        print("WAll at: "+ str(pos))
     
     def draw(self,screen,midpos = (450,800)):
         """ Draw rectangle in the way"""

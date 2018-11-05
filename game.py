@@ -112,7 +112,7 @@ def saveFrame(screen,basename,frame,gen):
 ########## MAIN PROGRAM ####################################
 ############################################################
 
-def playGame(screen = None, width = 1600, height = 900, FPS = 90, basename = "BestShips",
+def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "BestShips",
              nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,

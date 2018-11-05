@@ -55,8 +55,8 @@ def victoryLap(screen, basename, nships = 10,
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-inputangles = [[0.8,0.4,0,-0.4,-0.8]]
-inputdistances = [[40,80,120,160]]
+inputangles = [[0.4,0,-0.4]]
+inputdistances = [[50,100]]
 intermediates = (8,)
 
 winningShip = None
@@ -68,7 +68,7 @@ for ina in inputangles:
             playCountdown(screen,winningShip = winningShip)
             winningShip = playGame(screen = screen, maxGen = 500, basename = "PRO" 
                                    + str(i),intermediates = intermediates,inputdistance = ind, 
-                                   inputangle = ina, nships = 100, nseeds = 20)
+                                   inputangle = ina, nships = 20, nseeds = 20)
             #victoryLap(screen,basename = "PRO"+ str(1),nships = 1,inputdistance = ind, 
             #           inputangle = ina,intermediates = intermediates)
             i += 1
