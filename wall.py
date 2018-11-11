@@ -43,7 +43,7 @@ def generateObstacles(filename):
             if(int(w) == 1):
                 obstacles.append(wall(layoutToPos((j,i)),(MIN_WALL_SIZE,MIN_WALL_SIZE)))
             if(int(w) > 1):
-                checkpoints[int(w)-2] = (wall(layoutToPos((j,i)),
+                checkpoints[int(w)-2] = (wall(layoutToPos((j-1,i-1)),
                             (3*MIN_WALL_SIZE,3*MIN_WALL_SIZE)))
                 
         i+=1
@@ -127,6 +127,9 @@ class maze:
     def getFuelCosts(self,mazeNumber):
         self.fuelParams = fuelParams(mazeNumber)
         
+    def getCheckpointPos(self,n):
+        return self.checkpoints[n].getMidInt()
+        
     def checkFuelCost(self, currentCheckpoint, currentLap = None):
         """ Claculates the amount of time in frames a ship gets to make a 
         checkpoint """
@@ -178,7 +181,6 @@ class maze:
     def checkLayoutCollisions(self,pos,size=0):
         if(self.isInBoundaries(pos)):
             temppos = posToLayout(pos)
-            print(str(temppos) + "  " + str(self.layout[temppos[1]][temppos[0]]) + "   " + str((self.layoutWidth,self.layoutHeight)))
             if(int(self.layout[temppos[1]][temppos[0]]) == 1): 
                 return 1
             else: return 0
@@ -233,8 +235,7 @@ class wall(obstacle):
     def __init__(self,pos,size):
         self.pos = pos
         self.size = size
-        print("WAll at: "+ str(pos))
-    
+        
     def draw(self,screen,midpos = (450,800)):
         """ Draw rectangle in the way"""
         temppos = getOffsetPos(self.pos,midpos)

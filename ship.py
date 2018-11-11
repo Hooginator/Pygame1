@@ -54,6 +54,7 @@ class ship:
         self.vx, self.vy  = 0, 0
         self.crashed = False
         self.timeDriving, self.score, self.checkpoint, self.laps = 0, 0, 0, 0
+        self.targetCheckpointPos = self.maze.checkpoints[0].getMidInt()
         self.inputColour = [colours[0] for i in range(self.dimensions[0])]
         self.scan = np.array([0 for i in range(self.dimensions[0])])
         self.cost = [0 for i in range(6)]
@@ -175,6 +176,7 @@ class ship:
         """Determines if we have passed a checkpoint this timestep"""
         if self.maze.checkpoints[self.checkpoint].checkCollision(self.pos):
             self.checkpoint +=1
+            self.targetCheckpointPos = self.maze.checkpoints[self.checkpoint].getMidInt()
             if(self.checkpoint >= self.maze.checkpointsPerLap):
                 if(self.maze.mazeType == "circular"):
                     self.checkpoint = 0
@@ -303,6 +305,8 @@ class ship:
                 pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 2,0)
                 i += 1
         pygame.draw.circle(screen, (140,160,240), bp, 5,2)
+        
+        self.drawTargetCheckpoint(screen,maze,bp,midpos = midpos)
     
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on 
@@ -341,6 +345,14 @@ class ship:
         pygame.draw.circle(screen, self.colour, posInt, int(20+ (self.timeDriving%10 )),2)
         pygame.draw.circle(screen, [max(0,tmp - (self.timeDriving%10)*10) for tmp in self.colour], 
                                     posInt, int(30+ (self.timeDriving%10 )),2)
+    
+    def drawTargetCheckpoint(self,screen,maze,pos,midpos = (450,800)):
+        """ Draw an arrow pointing to the next checkpoint we must reach """
+        tarpos = getOffsetPos(self.targetCheckpointPos,midpos)
+        temp = (int(pos[0]+(tarpos[0]-pos[0])/10),
+                int(pos[1]+(tarpos[1]-pos[1])/10))
+        pygame.draw.circle(screen,(130,240,130),temp,2,2)
+    
     def getName(self):
         """ Get 6 letter "name" based on weight and bias totals """
         l = []
