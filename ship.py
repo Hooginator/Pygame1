@@ -21,7 +21,7 @@ class ship:
     # Stuff that is run once at the start of each generation
     ########################################################
 
-    def __init__(self,  startpos = [50,50], angle = 0, colour = (240,100,100),
+    def __init__(self,  startpos = (75,75), angle = 0, colour = (240,100,100),
                  maxSpeed = 20, maxAccel = 1, maxAngle = 0.2,
                  width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
@@ -52,6 +52,7 @@ class ship:
         """ Returns the ship to its starting location and reinitializes """
         self.resetPos()
         self.vx, self.vy  = 0, 0
+        self.accel, self.dangle = 0, 0
         self.crashed = False
         self.timeDriving, self.score, self.checkpoint, self.laps = 0, 0, 0, 0
         self.targetCheckpointPos = self.maze.checkpoints[0].getMidInt()
@@ -176,7 +177,6 @@ class ship:
         """Determines if we have passed a checkpoint this timestep"""
         if self.maze.checkpoints[self.checkpoint].checkCollision(self.pos):
             self.checkpoint +=1
-            self.targetCheckpointPos = self.maze.checkpoints[self.checkpoint].getMidInt()
             if(self.checkpoint >= self.maze.checkpointsPerLap):
                 if(self.maze.mazeType == "circular"):
                     self.checkpoint = 0
@@ -185,6 +185,7 @@ class ship:
                     self.checkpoint = 0
                     self.laps +=1
                     self.resetPos()
+            self.targetCheckpointPos = self.maze.checkpoints[self.checkpoint].getMidInt()
                     
     def checkFuel(self):
         """ Returns the score received based on checkpoint progress minus the time driving.  
@@ -194,6 +195,8 @@ class ship:
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
         self.angle += dangle
+        self.dangle = dangle
+        self.accel = accel
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
         # flat cap on speed
@@ -267,6 +270,8 @@ class ship:
         self.crashed = True
         self.vx = 0
         self.vy = 0
+        self.accel = 0
+        self.dangle = 0
         #print(self.getName() + "  has crashed at: " + str(self.pos[0])+ "  " + str(self.pos[1]))
     def getIntPos(self):
         return (int(self.pos[0]),int(self.pos[1]))
@@ -275,24 +280,45 @@ class ship:
     # Stuff related to creating various visual effects on screen
     ########################################################
             
-    def drawShip(self,screen,maze,midpos = (450,800),zoom = 1,fancyShip = False):
+    def drawShip(self,screen,maze,midpos = (450,800),zoom = 1,fancyShip = False, drawThrusters = True):
         """ Draw triangular ship, get the input values and draw a red or blue 
         circle at their location"""
         bp = self.getIntPos()
         bp = getOffsetPos(bp,midpos)
-        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
-                                [[int(bp[0]+ 10 *np.cos(self.angle+3.14)), 
-                              int(bp[1]+ 10 *np.sin(self.angle+3.14))], 
-                            [int(bp[0]+ 10 *np.cos(self.angle+1)), 
-                              int(bp[1]+ 10 *np.sin(self.angle+1))], 
-                            [int(bp[0]), 
-                              int(bp[1])], 
-                            [int(bp[0]+ 10 *np.cos(self.angle-1)), 
-                              int(bp[1]+ 10 *np.sin(self.angle-1))]])
+#        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
+#                                [[int(bp[0]+ 10 *np.cos(self.angle+3.14)), 
+#                              int(bp[1]+ 10 *np.sin(self.angle+3.14))], 
+#                            [int(bp[0]+ 10 *np.cos(self.angle+1)), 
+#                              int(bp[1]+ 10 *np.sin(self.angle+1))], 
+#                            [int(bp[0]), 
+#                              int(bp[1])], 
+#                            [int(bp[0]+ 10 *np.cos(self.angle-1)), 
+#                              int(bp[1]+ 10 *np.sin(self.angle-1))]])
+        # draw thrusters
+        if(drawThrusters):
+            pygame.draw.polygon(screen, (240,220,220),
+                            [[int(bp[0]+ self.accel*30 *np.cos(self.angle+3.14)), 
+                              int(bp[1]+ self.accel*30 *np.sin(self.angle+3.14))],
+                            [int(bp[0]+ 5 *np.cos(self.angle + 2.64)), 
+                             int(bp[1]+ 5 *np.sin(self.angle + 2.64))],
+                            [int(bp[0]+ 5 *np.cos(self.angle + 3.64)), 
+                             int(bp[1]+ 5 *np.sin(self.angle + 3.64))]])
     
+    
+            pygame.draw.polygon(screen, (240,220,220),
+                            [[int(bp[0]+ self.dangle*80 *np.cos(self.angle-1.57) + 7*np.cos(self.angle)), 
+                              int(bp[1]+ self.dangle*80 *np.sin(self.angle-1.57) + 7*np.sin(self.angle))],
+                            [int(bp[0]+ 5 *np.cos(self.angle)), 
+                             int(bp[1]+ 5 *np.sin(self.angle))],
+                            [int(bp[0]+ 9 *np.cos(self.angle)), 
+                             int(bp[1]+ 9 *np.sin(self.angle))]])
+    
+        # draw ship
         pygame.draw.polygon(screen, self.colour, 
-                            [[int(bp[0]+ 10 *np.cos(self.angle)), 
-                              int(bp[1]+ 10 *np.sin(self.angle))],
+                            [[int(bp[0]+ 10 *np.cos(self.angle-0.25)), 
+                              int(bp[1]+ 10 *np.sin(self.angle-0.25))],
+                            [int(bp[0]+ 10 *np.cos(self.angle+0.25)), 
+                              int(bp[1]+ 10 *np.sin(self.angle+0.25))],
                             [int(bp[0]+ 10 *np.cos(self.angle + 2.64)), 
                              int(bp[1]+ 10 *np.sin(self.angle + 2.64))],
                             [int(bp[0]+ 10 *np.cos(self.angle + 3.64)), 

@@ -173,7 +173,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
         ## Update any moving parts to the maze
         mymaze.updateMap()
         # Find current leading ships
-        if(displayOnScreen or followLead): leadships = getLeadShips(ships)
+        if((displayOnScreen or followLead) and (frame < 2 or frame %30 == 0)): leadships = getLeadShips(ships)
         if(followLead):
             camerapos = updateCameraPos(camerapos,leadships[0].pos)
         

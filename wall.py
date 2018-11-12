@@ -66,34 +66,34 @@ def rotate(pos,angle):
 def drawBackground(screen):
     """ Draws a black rectangle over the whole screen as a backdrop """
     screen.fill((0,0,0))
-    
-def obstacles(i):
-    """ Here is the "savefile" of the walls for mazes.  """
-    if(i == 0):
-        return [wall((80,100),(70,350)),wall((150,100),(300,50)),wall((150,400),(200,50)),wall((300,250),(300,50))]
-    elif(i == 1):
-        return [wall((200,650),(1000,50)),wall((200,200),(50,450)),wall((400,0),(50,400)),wall((450,350),(300,50)),
-                wall((850,100),(50,550)),wall((600,100),(250,50)),wall((1000,0),(50,500)),wall((1200,200),(50,500)),
-                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50))]
-    elif(i == 2):
-        return [ball((100,300),50,0),ball((400,250),50,0),ball((700,200),50,0),ball((1000,150),50,0),ball((1300,100),50,0),
-                ball((200,600),50,0),ball((500,550),50,0),ball((800,500),50,0),ball((1100,450),50,0),ball((1400,400),50,0),
-                ball((300,900),50,0),ball((600,850),50,0),ball((900,800),50,0),ball((1200,750),50,0),ball((1500,700),50,0),]
-    elif(i == 3):
-        return [movingBall((300,300),50,0),movingBall((600,300),50,0),movingBall((900,300),50,0),movingBall((1200,300),50,0),
-                movingBall((300,600),50,0),movingBall((600,600),50,0),movingBall((900,600),50,0),movingBall((1200,600),50,0),
-                movingBall((300,900),50,0),movingBall((600,900),50,0),movingBall((900,900),50,0),movingBall((1200,900),50,0),]
-def checkpoints(i):
-    """ Here is the "savefile" of my checkpoints corresponding to the above maps.  """
-    if(i == 0):
-        return [wall((0,450),(150,150)),wall((50,0),(150,150)),wall((450,50),(150,150)),wall((150,200),(150,150)),wall((250,450),(150,150))]
-    elif(i == 1):
-        return [wall((200,0),(200,200)),wall((400,400),(250,250)),wall((750,300),(100,100)),wall((450,0),(200,100)),wall((900,0),(100,150)),wall((1050,400),(150,150)),
-        wall((1450,100),(150,150)),wall((1250,400),(150,150)),wall((1400,650),(200,200)),wall((0,500),(200,200))]
-    elif(i == 2):
-        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
-    elif(i == 3):
-        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
+ # Hopefully obsolete   
+#def obstacles(i):
+#    """ Here is the "savefile" of the walls for mazes.  """
+#    if(i == 0):
+#        return [wall((80,100),(70,350)),wall((150,100),(300,50)),wall((150,400),(200,50)),wall((300,250),(300,50))]
+#    elif(i == 1):
+#        return [wall((200,650),(1000,50)),wall((200,200),(50,450)),wall((400,0),(50,400)),wall((450,350),(300,50)),
+#                wall((850,100),(50,550)),wall((600,100),(250,50)),wall((1000,0),(50,500)),wall((1200,200),(50,500)),
+#                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50))]
+#    elif(i == 2):
+#        return [ball((100,300),50,0),ball((400,250),50,0),ball((700,200),50,0),ball((1000,150),50,0),ball((1300,100),50,0),
+#                ball((200,600),50,0),ball((500,550),50,0),ball((800,500),50,0),ball((1100,450),50,0),ball((1400,400),50,0),
+#                ball((300,900),50,0),ball((600,850),50,0),ball((900,800),50,0),ball((1200,750),50,0),ball((1500,700),50,0),]
+#    elif(i == 3):
+#        return [movingBall((300,300),50,0),movingBall((600,300),50,0),movingBall((900,300),50,0),movingBall((1200,300),50,0),
+#                movingBall((300,600),50,0),movingBall((600,600),50,0),movingBall((900,600),50,0),movingBall((1200,600),50,0),
+#                movingBall((300,900),50,0),movingBall((600,900),50,0),movingBall((900,900),50,0),movingBall((1200,900),50,0),]
+#def checkpoints(i):
+#    """ Here is the "savefile" of my checkpoints corresponding to the above maps.  """
+#    if(i == 0):
+#        return [wall((0,450),(150,150)),wall((50,0),(150,150)),wall((450,50),(150,150)),wall((150,200),(150,150)),wall((250,450),(150,150))]
+#    elif(i == 1):
+#        return [wall((200,0),(200,200)),wall((400,400),(250,250)),wall((750,300),(100,100)),wall((450,0),(200,100)),wall((900,0),(100,150)),wall((1050,400),(150,150)),
+#        wall((1450,100),(150,150)),wall((1250,400),(150,150)),wall((1400,650),(200,200)),wall((0,500),(200,200))]
+#    elif(i == 2):
+#        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
+#    elif(i == 3):
+#        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
 
 def fuelParams(i):
     fp = {0 : [200,0.7],
@@ -111,7 +111,7 @@ def fuelParams(i):
 class maze:
     """ Master class for all the objects on the map that get in your way or 
     help """
-    def __init__(self,mapName = "Map1",height = 900,width = 1600,i = 2):
+    def __init__(self,mapName = "Map1",height = 900,width = 1600,i = 1):
         # Load the wall and checkpoint information
         self.layout, self.obstacles, self.checkpoints = generateObstacles(mapName)
         self.checkpointsPerLap = len(self.checkpoints)
