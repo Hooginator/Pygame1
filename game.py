@@ -97,7 +97,10 @@ def saveBestships(bestships,basename,gen):
     f.close()
     print("All crashed for generation " + str(gen) +"  Top Ship score: " 
           + str(bestships[0].score) + "  at  " + str(bestships[0].weights[0][0][0]))
-
+def saveAllScores(basename, ships,gen):
+    f = open("./data/"+basename+"/Gen"+str(gen)+"scores","w")
+    for shp in ships:
+        f.write(str(shp.score) +"\n")
 def saveShipInfo(basename, inputDistance, inputAngle, intermediates):
     """ Saves basic ship information to be able to recreate the ship later.  
      Also sets up the folder for all other data to go into before starting the 'game ' """
@@ -184,6 +187,8 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
     
         # Once everyone has crashed / run out of fuel we restart at the next generation
         if(allcrashed):
+            # Save all ship scores
+            saveAllScores(basename, ships,generation)
             # Reinitialize the environment
             mymaze.newGeneration()
             # Determine best ships

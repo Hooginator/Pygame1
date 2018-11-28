@@ -54,25 +54,25 @@ def getFilename(base, inangles, indistances,intermediates):
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-inputangles = [[0.8,0.4,0,-0.4,-0.8]]
-inputdistances = [[50,100,150]]
-intermediates = [(6,6,),(8,6,),(10,6,),(12,6,),(14,6,)]
+inputangles = [[0],[0.2,-0.2],[0.4,0,-0.4],[0.6,0.2,-0.2,-0.6],[0.8,0.4,0,-0.4,-0.8],[1.0,0.6,0.2,-0.2,-0.6,-1.0],[1.2,0.8,0.4,0,-0.4,-0.8,-1.2]]
+inputdistances = [[50],[50,100],[50,100,150],[50,100,150,200]]
+intermediates = [()]
 
 winningShip = None
 i = 1
 for ina in inputangles:
     for ind in inputdistances:
         for inter in intermediates:
-            filename = getFilename("teeeestinggg",ina,ind,inter)
+            filename = getFilename("INPUTANG04DIS50",ina,ind,inter)
             screen = pygame.display.set_mode((1600,900))
             playCountdown(screen,winningShip = winningShip)
-            #winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
-            #                       intermediates = inter,inputdistance = ind, 
-            #                       inputangle = ina, nships = 100, nseeds = 20)
-            victoryLap(screen,basename = filename,nships = 3)
+            winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
+                                   intermediates = inter,inputdistance = ind, 
+                                   inputangle = ina, nships = 100, nseeds = 20)
+            #victoryLap(screen,basename = filename,nships = 3)
             i += 1
 quitGame()
-#os.system("shutdown now -h")
+os.system("shutdown now -h")
 
 
 
