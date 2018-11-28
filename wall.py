@@ -97,7 +97,7 @@ def drawBackground(screen):
 
 def fuelParams(i):
     fp = {0 : [200,0.7],
-          1 : [400,0.7],
+          1 : [300,0.6],
           2 : [500,0.9],
           3 : [500,0.9],
           }

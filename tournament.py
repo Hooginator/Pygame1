@@ -39,38 +39,37 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         time.tick(1)
         
         
-def victoryLap(screen, basename, nships = 10, 
-               inputdistance = [40,80,120,160], 
-               inputangle = [1.2,0.8,0.4,0,-0.4,-0.8,-1.2],
-               intermediates =  (2,16,8)):
+def victoryLap(screen, basename, nships = 10):
     """ Loads previous winners instead of random ships """
-    playGame(screen = screen, maxGen = 1, basename = basename,intermediates = intermediates,
-             victoryLap = True,nships = nships, inputdistance = inputdistance,
-             inputangle = inputangle, displayHUD = False, shipLoadOffset = 45)
+    playGame(screen = screen, maxGen = 1, basename = basename,
+             victoryLap = True,nships = nships, displayHUD = False, shipLoadOffset = 0)
 
-
-
+def getFilename(base, inangles, indistances,intermediates):
+    temp =  base + "_" + str(len(inangles)) + "x"+str(len(indistances))
+    for inter in intermediates:
+        temp = temp +"_"+str(inter)
+    return temp
 
 ############################################################
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-inputangles = [[0.4,0,-0.4]]
-inputdistances = [[50,100]]
-intermediates = (8,)
+inputangles = [[0.8,0.4,0,-0.4,-0.8]]
+inputdistances = [[50,100,150]]
+intermediates = [(6,6,),(8,6,),(10,6,),(12,6,),(14,6,)]
 
 winningShip = None
 i = 1
 for ina in inputangles:
     for ind in inputdistances:
-        for a in range(1):
+        for inter in intermediates:
+            filename = getFilename("teeeestinggg",ina,ind,inter)
             screen = pygame.display.set_mode((1600,900))
             playCountdown(screen,winningShip = winningShip)
-            winningShip = playGame(screen = screen, maxGen = 500, basename = "NEW_3x2_" 
-                                   + str(i),intermediates = intermediates,inputdistance = ind, 
-                                   inputangle = ina, nships = 100, nseeds = 20)
-            #victoryLap(screen,basename = "PRO"+ str(1),nships = 1,inputdistance = ind, 
-            #           inputangle = ina,intermediates = intermediates)
+            #winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
+            #                       intermediates = inter,inputdistance = ind, 
+            #                       inputangle = ina, nships = 100, nseeds = 20)
+            victoryLap(screen,basename = filename,nships = 3)
             i += 1
 quitGame()
 #os.system("shutdown now -h")

@@ -37,7 +37,7 @@ class ship:
         self.dimensions.extend(intermediates)
         self.dimensions.append(4)
         self.inputdistance, self.inputangle,  = inputdistance, inputangle
-        self.drag = 0.96
+        self.drag = 0.98
         self.initWeights()
         if name is not None: 
             self.name = name
@@ -100,8 +100,6 @@ class ship:
         
     def saveWeights(self, basename, generation):
         """ Saves the np array of weights for easy loading later"""
-        if not os.path.exists("./data/"+basename):
-            os.makedirs("./data/"+basename)
         for i,wt in enumerate(self.weights):
             np.save("./data/"+basename+"/"+basename + "_W"+str(i)+"_G" + str(generation),wt)
         for i,bs in enumerate(self.bias):
@@ -109,7 +107,7 @@ class ship:
             
     def loadWeights(self,basename,generation,colour = None):
         temp = "./data/"+basename+"/"+basename
-        
+        print("byeeeeeeeeeeeee" + str(generation))
         self.weights = []
         done = False
         i = 0
@@ -205,8 +203,8 @@ class ship:
         if(self.vx < -1*self.maxSpeed): self.vx = -1*self.maxSpeed
         if(self.vy < -1*self.maxSpeed): self.vy = -1*self.maxSpeed
         # apply drag and braking to slow down
-        self.vx = self.vx * self.drag*(1-brake/6)
-        self.vy = self.vy * self.drag*(1-brake/6)
+        self.vx = self.vx * self.drag*(1-brake/4)
+        self.vy = self.vy * self.drag*(1-brake/4)
         
     def updatePos(self):
         """ Update where the ship is each timestep based on calculated velocity."""
@@ -296,18 +294,18 @@ class ship:
 #                              int(bp[1]+ 10 *np.sin(self.angle-1))]])
         # draw thrusters
         if(drawThrusters):
-            pygame.draw.polygon(screen, (240,220,220),
-                            [[int(bp[0]+ self.accel*30 *np.cos(self.angle+3.14)), 
-                              int(bp[1]+ self.accel*30 *np.sin(self.angle+3.14))],
-                            [int(bp[0]+ 5 *np.cos(self.angle + 2.64)), 
-                             int(bp[1]+ 5 *np.sin(self.angle + 2.64))],
-                            [int(bp[0]+ 5 *np.cos(self.angle + 3.64)), 
-                             int(bp[1]+ 5 *np.sin(self.angle + 3.64))]])
+            pygame.draw.polygon(screen, (140,140,40),
+                            [[int(bp[0]+ self.accel*22 *np.cos(self.angle+3.14)), 
+                              int(bp[1]+ self.accel*22 *np.sin(self.angle+3.14))],
+                            [int(bp[0]+ 7 *np.cos(self.angle + 2.64)), 
+                             int(bp[1]+ 7 *np.sin(self.angle + 2.64))],
+                            [int(bp[0]+ 7 *np.cos(self.angle + 3.64)), 
+                             int(bp[1]+ 7 *np.sin(self.angle + 3.64))]])
     
     
-            pygame.draw.polygon(screen, (240,220,220),
-                            [[int(bp[0]+ self.dangle*80 *np.cos(self.angle-1.57) + 7*np.cos(self.angle)), 
-                              int(bp[1]+ self.dangle*80 *np.sin(self.angle-1.57) + 7*np.sin(self.angle))],
+            pygame.draw.polygon(screen, (140,140,40),
+                            [[int(bp[0]+ self.dangle*60 *np.cos(self.angle-1.57) + 7*np.cos(self.angle)), 
+                              int(bp[1]+ self.dangle*60 *np.sin(self.angle-1.57) + 7*np.sin(self.angle))],
                             [int(bp[0]+ 5 *np.cos(self.angle)), 
                              int(bp[1]+ 5 *np.sin(self.angle))],
                             [int(bp[0]+ 9 *np.cos(self.angle)), 
@@ -315,10 +313,10 @@ class ship:
     
         # draw ship
         pygame.draw.polygon(screen, self.colour, 
-                            [[int(bp[0]+ 10 *np.cos(self.angle-0.25)), 
-                              int(bp[1]+ 10 *np.sin(self.angle-0.25))],
-                            [int(bp[0]+ 10 *np.cos(self.angle+0.25)), 
-                              int(bp[1]+ 10 *np.sin(self.angle+0.25))],
+                            [[int(bp[0]+ 10 *np.cos(self.angle-0.15)), 
+                              int(bp[1]+ 10 *np.sin(self.angle-0.15))],
+                            [int(bp[0]+ 10 *np.cos(self.angle+0.15)), 
+                              int(bp[1]+ 10 *np.sin(self.angle+0.15))],
                             [int(bp[0]+ 10 *np.cos(self.angle + 2.64)), 
                              int(bp[1]+ 10 *np.sin(self.angle + 2.64))],
                             [int(bp[0]+ 10 *np.cos(self.angle + 3.64)), 

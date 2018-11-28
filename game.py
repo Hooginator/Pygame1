@@ -97,6 +97,21 @@ def saveBestships(bestships,basename,gen):
     f.close()
     print("All crashed for generation " + str(gen) +"  Top Ship score: " 
           + str(bestships[0].score) + "  at  " + str(bestships[0].weights[0][0][0]))
+
+def saveShipInfo(basename, inputDistance, inputAngle, intermediates):
+    """ Saves basic ship information to be able to recreate the ship later.  
+     Also sets up the folder for all other data to go into before starting the 'game ' """
+    if not os.path.exists("./data/"+basename):
+            os.makedirs("./data/"+basename)
+    with open("./data/"+basename+"/shipinfo", 'wb') as fp:
+        pickle.dump([inputDistance, inputAngle, intermediates], fp)
+
+def loadShipInfo(basename):
+    """ Loads basic ship information that was pickled from saveShipInfo """
+    print("hellooooooo")
+    with open ("./data/"+basename+"/shipinfo", 'rb') as fp:
+        itemlist = pickle.load(fp)
+    return itemlist
             
 def saveFrame(screen,basename,frame,gen):
     """ Saves the currently displayed image on screen """
@@ -126,15 +141,28 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
     bestship = None
     clock = pygame.time.Clock()
     mymaze = maze(height = height, width = width)
-    ships = [ship(maze = mymaze, intermediates = intermediates, 
-                  inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
+    
     leadships = None
-    if(victoryLap):
-        for i, shp in enumerate(ships):
-            shp.loadWeights(basename,i+shipLoadOffset,colour 
+    if(not victoryLap):
+        # Generate all ships
+        ships = [ship(maze = mymaze, intermediates = intermediates, 
+                  inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
+        # Save basic ship info with other data
+        saveShipInfo(basename, inputdistance, inputangle, intermediates)
+    else: # If VictoryLap I'm looking to update this to let me change more properties of each loaded ship
+        ships = []
+        for i in range(nships):
+            # Load specifics for this ship type
+            [inputdistance, inputangle, intermediates] = loadShipInfo(basename)
+            ships.append(ship(maze = mymaze, intermediates = intermediates, 
+                  inputdistance = inputdistance, inputangle = inputangle))
+            print(str(i))
+            ships[i].loadWeights(basename,i+shipLoadOffset,colour 
                             = (int(240*(nships-i)/nships),int(240*i/nships),20))
-            shp.name = "Gen: "+str(i)
+            ships[i].name = "Gen: "+str(i+shipLoadOffset)
     if (displayHUD): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
+    
+    
     
     camerapos = resetCameraPos(followLead)
     
