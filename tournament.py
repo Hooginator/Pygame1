@@ -39,10 +39,12 @@ def playCountdown(screen, seconds = 1,pos = (500,400),winningShip = None):
         time.tick(1)
         
         
-def victoryLap(screen, basename, nships = 10):
-    """ Loads previous winners instead of random ships """
-    playGame(screen = screen, maxGen = 1, basename = basename,
-             victoryLap = True,nships = nships, displayHUD = False, shipLoadOffset = 0)
+def victoryLap(basenames, nships = 5, gen = 70):
+    """ Loads previous winners for show instead of random ships  """
+    screen = pygame.display.set_mode((1600,900))
+    playGame(screen = screen, maxGen = 100, basename = basenames[0],
+             victoryLap = True,victoryLapShipsPerGen = nships, displayHUD = False, victoryLapGen = gen,
+             victoryLapNames = basenames)
 
 def getFilename(base, inangles, indistances,intermediates):
     temp =  base + "_" + str(len(inangles)) + "x"+str(len(indistances))
@@ -54,25 +56,24 @@ def getFilename(base, inangles, indistances,intermediates):
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-inputangles = [[0],[0.2,-0.2],[0.4,0,-0.4],[0.6,0.2,-0.2,-0.6],[0.8,0.4,0,-0.4,-0.8],[1.0,0.6,0.2,-0.2,-0.6,-1.0],[1.2,0.8,0.4,0,-0.4,-0.8,-1.2]]
-inputdistances = [[50],[50,100],[50,100,150],[50,100,150,200]]
-intermediates = [()]
-
-winningShip = None
-i = 1
-for ina in inputangles:
-    for ind in inputdistances:
-        for inter in intermediates:
-            filename = getFilename("INPUTANG04DIS50",ina,ind,inter)
-            screen = pygame.display.set_mode((1600,900))
-            playCountdown(screen,winningShip = winningShip)
-            winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
+def doTournament(inputangles = [[0.4,0,-0.4]], inputdistances = [[50,100,150]], 
+                 intermediates = [(),], shutdown = False):
+    """ Command to actually run the simulation to get more new racers """
+    winningShip = None
+    i = 1
+    for ina in inputangles:
+        for ind in inputdistances:
+            for inter in intermediates:
+                filename = getFilename("teeest",ina,ind,inter)
+                
+                screen = pygame.display.set_mode((1600,900))
+                playCountdown(screen,winningShip = winningShip)
+                winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
                                    intermediates = inter,inputdistance = ind, 
                                    inputangle = ina, nships = 100, nseeds = 20)
-            #victoryLap(screen,basename = filename,nships = 3)
-            i += 1
-quitGame()
-os.system("shutdown now -h")
+                i += 1
+    if(shutdown): os.system("shutdown now -h")
+    quitGame()
 
 
-
+victoryLap(["INPUTANG04DIS50_3x3","INPUTANG04DIS50_5x3"])

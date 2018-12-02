@@ -33,8 +33,8 @@ def copyShips(ships,bestship,nseeds,generation,nships):
             shp.copyWeights(bestship[n%nseeds],stray = 1*gencoef, colour = (100,240,100))
         elif(n/nships < 0.8): 
             shp.copyWeights(bestship[n%nseeds],stray = 10*gencoef, colour = (100,240,240))
-        elif(n/nships < 0.9): 
-            shp.newSpawn(colour = (100,100,240))
+        #elif(n/nships < 0.9): 
+        #    shp.newSpawn(colour = (100,100,240))
         else: 
             shp.copyWeightsExper(bestship[n%nseeds],stray = 1*gencoef, colour = (240,100,240))
         n+=1
@@ -111,7 +111,6 @@ def saveShipInfo(basename, inputDistance, inputAngle, intermediates):
 
 def loadShipInfo(basename):
     """ Loads basic ship information that was pickled from saveShipInfo """
-    print("hellooooooo")
     with open ("./data/"+basename+"/shipinfo", 'rb') as fp:
         itemlist = pickle.load(fp)
     return itemlist
@@ -131,12 +130,11 @@ def saveFrame(screen,basename,frame,gen):
 ############################################################
 
 def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "BestShips",
-             nships = 100, nseeds = 10, maxGen = 1000, intermediates = (8,),
+             nships = 100, nseeds = 1, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
-             displayOnScreen = True, shipLoadOffset = 0):
+             displayOnScreen = True, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10):
     print("#### STARTING GAME ####")
-    print(basename)
     # Initialization    
     generation = 0
     frame = 0
@@ -154,15 +152,18 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
         saveShipInfo(basename, inputdistance, inputangle, intermediates)
     else: # If VictoryLap I'm looking to update this to let me change more properties of each loaded ship
         ships = []
-        for i in range(nships):
+        shipcount = 0
+        for vname in victoryLapNames:
             # Load specifics for this ship type
-            [inputdistance, inputangle, intermediates] = loadShipInfo(basename)
-            ships.append(ship(maze = mymaze, intermediates = intermediates, 
+            [inputdistance, inputangle, intermediates] = loadShipInfo(vname)
+            for i in range(victoryLapShipsPerGen):
+                ships.append(ship(maze = mymaze, intermediates = intermediates, 
                   inputdistance = inputdistance, inputangle = inputangle))
-            print(str(i))
-            ships[i].loadWeights(basename,i+shipLoadOffset,colour 
-                            = (int(240*(nships-i)/nships),int(240*i/nships),20))
-            ships[i].name = "Gen: "+str(i+shipLoadOffset)
+                ships[shipcount].loadWeights(vname,i+victoryLapGen,colour 
+                            = (int(240*(victoryLapShipsPerGen-i)/victoryLapShipsPerGen),int(240*i/victoryLapShipsPerGen),20))
+                ships[shipcount].name = "Gen: "+str(i+victoryLapGen)
+                shipcount +=1
+        nships = shipcount
     if (displayHUD): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
     
     
@@ -188,7 +189,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
         # Once everyone has crashed / run out of fuel we restart at the next generation
         if(allcrashed):
             # Save all ship scores
-            saveAllScores(basename, ships,generation)
+            if(not victoryLap): saveAllScores(basename, ships,generation)
             # Reinitialize the environment
             mymaze.newGeneration()
             # Determine best ships

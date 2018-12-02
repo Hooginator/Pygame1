@@ -33,10 +33,7 @@ class ship:
         self.width, self.height = width, height
         self.parentname, self.parentcolour = parentname, parentcolour
         # Create dimensions array based on input, intermediate dimensions and output (4)
-        self.dimensions = [len(inputdistance)*len(inputangle)]
-        self.dimensions.extend(intermediates)
-        self.dimensions.append(4)
-        self.inputdistance, self.inputangle,  = inputdistance, inputangle
+        self.setDimension(inputdistance,inputangle,intermediates)
         self.drag = 0.98
         self.initWeights()
         if name is not None: 
@@ -46,7 +43,12 @@ class ship:
                 
         self.reset()
         
-        
+    def setDimension(self,inputdistance,inputangle,intermediates):
+        """ Sets parameters needed for decision making """
+        self.dimensions = [len(inputdistance)*len(inputangle)]
+        self.dimensions.extend(intermediates)
+        self.dimensions.append(4)
+        self.inputdistance, self.inputangle, self.intermediates  = inputdistance, inputangle, intermediates
       
     def reset(self):
         """ Returns the ship to its starting location and reinitializes """
@@ -75,7 +77,7 @@ class ship:
     def initWeights(self):
         """ Initializes weights to randomly selected ones."""
         self.weights = []
-        self.bias = []
+        self.bias = [[]]
         for i, dim in enumerate(self.dimensions[1:]):
             self.weights.append(np.random.uniform(-1,1,(self.dimensions[i],dim)))
             self.bias.append(np.random.uniform(-1,1,dim))
@@ -83,20 +85,23 @@ class ship:
     def copyWeights(self, shp, stray = 0, colour = (240,100,100)):
         """ Changes weights to be around the ones provided by shp.  
         This is used to generate offspring from the shp provided."""
+        self.weights = []
+        self.bias = []
         if(stray == 0): # straight copy
-            for i, wt in enumerate(self.weights):
-                wt[:] = shp.weights[i]
-            for i,bs in enumerate(self.bias):
-                bs[:] = shp.bias[i]
+            for i, wt in enumerate(shp.weights):
+                self.weights.append(wt.copy())
+            for i,bs in enumerate(shp.bias):
+                self.bias.append(bs.copy())
         else: # Copy with some random added in
-            for i,wt in enumerate(self.weights):
-                wt[:] = shp.weights[i] + np.random.normal(0,stray,(self.dimensions[i],self.dimensions[i+1]))
-            for i,bs in enumerate(self.bias):
-                bs[:] = shp.bias[i] + np.random.normal(0,stray,(1,self.dimensions[i+1]))
+            for i, wt in enumerate(shp.weights):
+                self.weights.append(np.add(wt.copy(), np.random.normal(0,stray,(shp.dimensions[i],shp.dimensions[i+1]))))
+            for i,bs in enumerate(shp.bias):
+                self.bias.append(np.add(bs.copy(), np.random.normal(0,stray,shp.dimensions[i+1])))
             self.normalizeWeights()
         self.colour = colour
         self.parentname = shp.name
         self.parentcolour = shp.colour
+        self.setDimension(shp.inputdistance,shp.inputangle,shp.intermediates)
         
     def saveWeights(self, basename, generation):
         """ Saves the np array of weights for easy loading later"""
@@ -107,7 +112,6 @@ class ship:
             
     def loadWeights(self,basename,generation,colour = None):
         temp = "./data/"+basename+"/"+basename
-        print("byeeeeeeeeeeeee" + str(generation))
         self.weights = []
         done = False
         i = 0
@@ -115,7 +119,6 @@ class ship:
             wn = temp + "_W"+str(i)+"_G" + str(generation)+".npy"
             if(os.path.isfile(wn)):
                  self.weights.append(np.load(wn))
-                 print(wn)
             else: done = True
             i += 1
             
@@ -242,6 +245,7 @@ class ship:
         temp.append( np.array(self.scan) )
         for i,wt in enumerate(self.weights):
             temp.append(np.add(temp[i].dot(wt),self.bias[i]))
+            #print(str(self.bias) + "   " + str(wt))
         return temp[len(self.weights)].tolist() # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T
     
     def getScore(self):
@@ -321,16 +325,17 @@ class ship:
                              int(bp[1]+ 10 *np.sin(self.angle + 2.64))],
                             [int(bp[0]+ 10 *np.cos(self.angle + 3.64)), 
                              int(bp[1]+ 10 *np.sin(self.angle + 3.64))]])
+        # Draw the cockpit
+        pygame.draw.circle(screen, (140,160,240), bp, 5,2)
         
         i = 0
         # Draw where the inputs are for decision making.
-        if(self.crashed == False):
+        if(self.crashed == False or True):
+            self.drawTargetCheckpoint(screen,maze,bp,midpos = midpos)
             for pos in self.inputPos:
                 pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 2,0)
                 i += 1
-        pygame.draw.circle(screen, (140,160,240), bp, 5,2)
         
-        self.drawTargetCheckpoint(screen,maze,bp,midpos = midpos)
     
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on 
