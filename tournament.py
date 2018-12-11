@@ -76,4 +76,4 @@ def doTournament(inputangles = [[0.4,0,-0.4]], inputdistances = [[50,100,150]],
     quitGame()
 
 
-victoryLap(["INPUTANG04DIS50_3x3","INPUTANG04DIS50_5x3"])
+victoryLap(["INPUTANG04DIS50_3x3","INPUTANG04DIS50_5x3","INPUTANG04DIS50_7x3"])
