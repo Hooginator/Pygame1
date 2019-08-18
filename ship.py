@@ -77,7 +77,7 @@ class ship:
     def initWeights(self):
         """ Initializes weights to randomly selected ones."""
         self.weights = []
-        self.bias = [[]]
+        self.bias = []
         for i, dim in enumerate(self.dimensions[1:]):
             self.weights.append(np.random.uniform(-1,1,(self.dimensions[i],dim)))
             self.bias.append(np.random.uniform(-1,1,dim))
@@ -244,6 +244,7 @@ class ship:
         temp = []
         temp.append( np.array(self.scan) )
         for i,wt in enumerate(self.weights):
+            #print(self.bias[i],temp[i].dot(wt))
             temp.append(np.add(temp[i].dot(wt),self.bias[i]))
             #print(str(self.bias) + "   " + str(wt))
         return temp[len(self.weights)].tolist() # np.add(np.add(np.add(self.scan.dot(self.weights[0]), self.bias[0]).dot(self.weights[1]),self.bias[1]).dot(self.weights[2]),self.bias[2]).T

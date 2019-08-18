@@ -56,8 +56,8 @@ def getFilename(base, inangles, indistances,intermediates):
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-def doTournament(inputangles = [[0.4,0,-0.4]], inputdistances = [[50,100,150]], 
-                 intermediates = [(),], shutdown = False):
+def doTournament(inputangles = [[0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8]], inputdistances = [[25,50,75,100,125,150]], 
+                 intermediates = [[3,2]], shutdown = False):
     """ Command to actually run the simulation to get more new racers """
     winningShip = None
     i = 1
@@ -75,5 +75,5 @@ def doTournament(inputangles = [[0.4,0,-0.4]], inputdistances = [[50,100,150]],
     if(shutdown): os.system("shutdown now -h")
     quitGame()
 
-
-victoryLap(["INPUTANG04DIS50_3x3","INPUTANG04DIS50_5x3","INPUTANG04DIS50_7x3"])
+doTournament()
+#victoryLap(["INPUTANG04DIS50_3x3","INPUTANG04DIS50_5x3","INPUTANG04DIS50_7x3"])

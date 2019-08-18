@@ -19,8 +19,8 @@ def mapArrayFromStr(wallPos):
     i = 0 # 'i' counts the current line of the file we are on
     for line in wallPos.split('\n'):
         if(len(line) !=0):
-            wallArray.append([int(line[0])])
-        j = 1 # 'j' counts the current character we are on in line 'i'
+            wallArray.append([])
+        j = 0 # 'j' counts the current character we are on in line 'i'
         while j < len(line):
             wallArray[i].append(line[j])
             j+=1
@@ -31,19 +31,21 @@ def mapStrFromFile(filename):
     """ Reads the file given as a string for further processing """
     with open(filename, 'r') as myfile:
         data = myfile.read()
+    print(data)
     return data
 
 def generateObstacles(filename):
-    mapArray = mapArrayFromStr(mapStrFromFile(filename+"_wall.txt"))
+    mapArray = mapArrayFromStr(mapStrFromFile(filename+"_Wall.txt"))
+    print(mapArray)
     obstacles = []
-    checkpoints = [None]*9
+    checkpoints = [None]*36
     i = 0
     for mapRow in mapArray:
         for j, w in enumerate(mapRow):
-            if(int(w) == 1):
+            if(w == '1'):
                 obstacles.append(wall(layoutToPos((j,i)),(MIN_WALL_SIZE,MIN_WALL_SIZE)))
-            if(int(w) > 1):
-                checkpoints[int(w)-2] = (wall(layoutToPos((j-1,i-1)),
+            if(str(w).isalpha()):# Alpha character,, we have acheckpoint!
+                checkpoints[int(ord(w)-65)] = (wall(layoutToPos((j-1,i-1)),
                             (3*MIN_WALL_SIZE,3*MIN_WALL_SIZE)))
                 
         i+=1
@@ -66,34 +68,6 @@ def rotate(pos,angle):
 def drawBackground(screen):
     """ Draws a black rectangle over the whole screen as a backdrop """
     screen.fill((0,0,0))
- # Hopefully obsolete   
-#def obstacles(i):
-#    """ Here is the "savefile" of the walls for mazes.  """
-#    if(i == 0):
-#        return [wall((80,100),(70,350)),wall((150,100),(300,50)),wall((150,400),(200,50)),wall((300,250),(300,50))]
-#    elif(i == 1):
-#        return [wall((200,650),(1000,50)),wall((200,200),(50,450)),wall((400,0),(50,400)),wall((450,350),(300,50)),
-#                wall((850,100),(50,550)),wall((600,100),(250,50)),wall((1000,0),(50,500)),wall((1200,200),(50,500)),
-#                wall((1250,200),(200,50)),wall((1400,400),(200,50)),wall((1250,650),(200,50))]
-#    elif(i == 2):
-#        return [ball((100,300),50,0),ball((400,250),50,0),ball((700,200),50,0),ball((1000,150),50,0),ball((1300,100),50,0),
-#                ball((200,600),50,0),ball((500,550),50,0),ball((800,500),50,0),ball((1100,450),50,0),ball((1400,400),50,0),
-#                ball((300,900),50,0),ball((600,850),50,0),ball((900,800),50,0),ball((1200,750),50,0),ball((1500,700),50,0),]
-#    elif(i == 3):
-#        return [movingBall((300,300),50,0),movingBall((600,300),50,0),movingBall((900,300),50,0),movingBall((1200,300),50,0),
-#                movingBall((300,600),50,0),movingBall((600,600),50,0),movingBall((900,600),50,0),movingBall((1200,600),50,0),
-#                movingBall((300,900),50,0),movingBall((600,900),50,0),movingBall((900,900),50,0),movingBall((1200,900),50,0),]
-#def checkpoints(i):
-#    """ Here is the "savefile" of my checkpoints corresponding to the above maps.  """
-#    if(i == 0):
-#        return [wall((0,450),(150,150)),wall((50,0),(150,150)),wall((450,50),(150,150)),wall((150,200),(150,150)),wall((250,450),(150,150))]
-#    elif(i == 1):
-#        return [wall((200,0),(200,200)),wall((400,400),(250,250)),wall((750,300),(100,100)),wall((450,0),(200,100)),wall((900,0),(100,150)),wall((1050,400),(150,150)),
-#        wall((1450,100),(150,150)),wall((1250,400),(150,150)),wall((1400,650),(200,200)),wall((0,500),(200,200))]
-#    elif(i == 2):
-#        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
-#    elif(i == 3):
-#        return [ball((500,800),60,0),ball((300,100),60,0),ball((1300,600),60,0),ball((200,800),60,0)]    
 
 def fuelParams(i):
     fp = {0 : [200,0.7],
@@ -117,7 +91,6 @@ class maze:
         self.checkpointsPerLap = len(self.checkpoints)
         self.screenWidth, self.screenHeight = width, height
         self.layoutHeight, self.layoutWidth = len(self.layout[:]),len(self.layout[0][:])
-        #self.addBoundaryWall()
         self.getFuelCosts(i)
         if(i > 2):
             self.mazeType = "linear"
@@ -143,11 +116,6 @@ class maze:
     def drawWalls(self,screen,midpos = (450,800),zoom = 1):
         """ Create blocking visual for the list of walls given"""
         for obs in self.obstacles: obs.draw(screen,midpos = midpos)
-    def addBoundaryWall(self):
-        self.obstacles.append(wall((-50,-50),(self.screenWidth + 100,50)))
-        self.obstacles.append(wall((-50,self.screenHeight),(self.screenWidth + 100,50)))
-        self.obstacles.append(wall((-50,0),(50,self.screenHeight + 50)))
-        self.obstacles.append(wall((self.screenWidth,0),(50,self.screenHeight + 50)))
         
     def drawCheckpoints(self,screen,frame,midpos):
         """ Create small checkpointvisual for the list of walls given"""
@@ -179,9 +147,9 @@ class maze:
         else: return False
     
     def checkLayoutCollisions(self,pos,size=0):
-        if(self.isInBoundaries(pos)):
+        if self.isInBoundaries(pos):
             temppos = posToLayout(pos)
-            if(int(self.layout[temppos[1]][temppos[0]]) == 1): 
+            if self.layout[temppos[1]][temppos[0]] == '1': 
                 return 1
             else: return 0
         else: return 1
