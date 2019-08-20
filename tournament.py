@@ -57,7 +57,7 @@ def getFilename(base, inangles, indistances,intermediates):
 ############################################################
 
 def doTournament(inputangles = [[0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8]], inputdistances = [[25,50,75,100,125,150]], 
-                 intermediates = [[3,2]], shutdown = False):
+                 intermediates = [[16,8]], shutdown = False):
     """ Command to actually run the simulation to get more new racers """
     winningShip = None
     i = 1
@@ -70,7 +70,7 @@ def doTournament(inputangles = [[0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8]], inputd
                 playCountdown(screen,winningShip = winningShip)
                 winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
                                    intermediates = inter,inputdistance = ind, 
-                                   inputangle = ina, nships = 100, nseeds = 20)
+                                   inputangle = ina, nships = 20, nseeds = 20)
                 i += 1
     if(shutdown): os.system("shutdown now -h")
     quitGame()

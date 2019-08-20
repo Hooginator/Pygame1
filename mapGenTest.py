@@ -12,7 +12,9 @@ import pdb # DEBUG
 DEBUG = True
 
 directions = {"N": [-1,0],"S": [1,0],"E": [0,1],"W": [0,-1]}
-
+FILE_PREFIX = "Map"
+LEVEL = 1
+FILE_SUFFIX = "_Wall.txt" 
 
     
 # OLD STUFF
@@ -59,6 +61,17 @@ def goBack(list,grid,pos,num):
         #print("GOING BACK STATS:::::",pos,grid[pos[0]][pos[1]],list)
         #print2DGrid(grid)
 
+
+def write2DGrid(grid):
+    myfile = open(FILE_PREFIX+str(LEVEL)+FILE_SUFFIX,"w")
+    for g in grid:
+        for j in g:
+            if j is None:
+                myfile.write(".")
+            else:
+                myfile.write(str(j))
+        myfile.write("\n")
+    
 def print2DGrid(grid):
     print()
     for g in grid:
@@ -212,7 +225,7 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
     print2DGrid(final_grid)
     
     #SAVE GRID
-    
+    write2DGrid(final_grid)
     
     
     return True
@@ -229,5 +242,7 @@ if __name__ == "__main__":
         if(count > 1000):
             print("BIG LOOP ABORT")
             break
+        if(count %10 == 0):
+            print(count," failed so far")
     print("Done  all the things")
     print(chr(65))

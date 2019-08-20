@@ -51,7 +51,7 @@ def generateObstacles(filename):
         i+=1
     while(checkpoints[-1] == None): del(checkpoints[-1])
     return mapArray, obstacles, checkpoints
-        
+   	   
 
 def layoutToPos(lpos):
     """ Returns the center position associated with the grid spot x, y """
