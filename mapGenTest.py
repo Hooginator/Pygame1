@@ -13,7 +13,6 @@ DEBUG = True
 
 directions = {"N": [-1,0],"S": [1,0],"E": [0,1],"W": [0,-1]}
 FILE_PREFIX = "Map"
-LEVEL = 1
 FILE_SUFFIX = "_Wall.txt" 
 
     
@@ -43,27 +42,22 @@ def mapStrFromFile(filename):
 # Functions for making generateMapStr easier
 
 def goBack(list,grid,pos,num):
-    """Pass by reference and change everything in here"""
+    """Our path is going back [num] steps.  For each step back we
+    change the current position [pos] appropriately, change that spot
+    in our reduced [grid] back to None and pop the last direction off of [list]
+    """
     global directions
-    #if DEBUG: print("GOING BACK START OF FUNCTION")
-    #if DEBUG: pdb.set_trace()
     for i in range(num):
-        #print("Going back ",i+1," of ",num," times.  current pos: ",pos)
-        #print("GOING BACK STATS:::::",pos,grid[pos[0]][pos[1]],list)
-        #print2DGrid(grid)
         deltapos = directions[list[-1]]
-        #print("DELTAPOS::::",deltapos)
         pos[0] =  pos[0]-deltapos[0]
         pos[1] =  pos[1]-deltapos[1]
         grid[pos[0]][pos[1]] = None
         list.pop()
-        #print("Went back ",i+1," of ",num," times.  current pos: ",pos)
-        #print("GOING BACK STATS:::::",pos,grid[pos[0]][pos[1]],list)
-        #print2DGrid(grid)
 
 
-def write2DGrid(grid):
-    myfile = open(FILE_PREFIX+str(LEVEL)+FILE_SUFFIX,"w")
+def write2DGrid(grid,filename):
+    """ Writes given 2D [grid] to the [filename] specified """
+    myfile = open(filename,"w")
     for g in grid:
         for j in g:
             if j is None:
@@ -73,6 +67,7 @@ def write2DGrid(grid):
         myfile.write("\n")
     
 def print2DGrid(grid):
+    """Prints out our beautiful 2D [grid] of characters provided """
     print()
     for g in grid:
         for j in g:
@@ -83,45 +78,57 @@ def print2DGrid(grid):
         print()
     print()
 
-def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location = [0,0],TOTAL_CHECKPOINTS=10,START_DIRECTION = "E"):
+def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location = [0,0],TOTAL_CHECKPOINTS=10,START_DIRECTION = "E",LEVEL = 1):
     """ Will build a map of size [XMAX,YMAX] with a path throughout a minimum 
-    of minWidth wide. I don't really know how to do this yet. manual for now"""
-    # Normalize inputs
+    of minWidth wide.  Builds a path by traversing the XMAX by YMAX space 
+    if the path hits a dead end it is sent back a few tiles, if the path connects
+    back to the start it will end the loop successfuly and save teh map
+    """
+    # Normalize inputs.  I take the required full grid size and make it a proper 
+    # multiple of the width of the passage and walls.  
     final_XMAX = (final_XMAX-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
     final_YMAX = (final_YMAX-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
 
-    # final_grid is what we will return at the end of the day, 1 for wall 0 for empty and 2-9 a-z A-Z or something for checkpoints
+    # final_grid is what we will return at the end of the day, 1 for wall 
+    # 0 for empty and 2-9 a-z A-Z or something for checkpoints
     final_grid = [[0 for _ in range(final_YMAX)] for _ in range(final_XMAX)]
     
     # Reduced effective grid by a factor of (minWidth+wallWidth)for throwing a sort of path finding algorithm in 
     # and then generatiung the larger grid from that 
     XMAX,YMAX = final_XMAX//(minWidth+wallWidth),final_YMAX//(minWidth+wallWidth)
     AREA = XMAX*YMAX
-    effective_grid = [[None for _ in range(YMAX)] for _ in range(XMAX)] # This guy we will start at some spot and fill as we go along
-        # With directions [N]orth [S]outh [E]ast [W]est or None if the position has not been assigned yet.  
+    
+    # Will fill with directions [N]orth [S]outh [E]ast [W]est or None if the position has not been assigned yet.  
+    effective_grid = [[None for _ in range(YMAX)] for _ in range(XMAX)]  
+    
+    # List version of the paths in effective_grid
+    relative_path = []
     
     # Decide acceptable threshold
-    MAX_UNUSED = 5#min(XMAX,YMAX)
-    MAX_ITERATION = 5000#AREA**1.5//5
+    MAX_UNUSED = 5#Maximum numbver of "dead" spots in the effective grid
+    MAX_ITERATION = 50000# Maximum number of times we will try to make a maze
     
     # some constants and initializations
     current_pos = [s for s in start_location]
-    relative_path = []
     
-    done = False # we will be "done" if our start and end meet up
+    # Loop variables
+    done = False # Signifies when the loop is closed, it might have done = True but not be long enough and return to building
     count = 0
+    
     # MAIN LOOP
     while AREA-len(relative_path) > MAX_UNUSED or done == False:
         
-        #print("lol2")  
-        if done:# Here we are next to the start location but we got here too early.  goback a bunch
+        if done:
+            # Here we are next to the start location but we got here too early
             # Go back a random number of times
-            togoback = random.randint(2,int(len(relative_path)//8+2))
-            goBack(relative_path,effective_grid,current_pos,togoback)
+            togoback = random.randint(2,int(len(relative_path)//8+2)) # probably needs tuning
+            goBack(relative_path,effective_grid,current_pos,togoback) # Go back specified number of steps
             done = False
             continue
         
-        # Normal exit if we are right beside the start location (or at least try to exit)
+        # Normal attempt to exit if we are right beside the start location 
+        # Add in last path step to complete the circuit, then continue loop 
+        # to check if we have used enough spaces
         rel_pos = [p-d for p,d in zip(current_pos,start_location)]
         if abs(rel_pos[0]) + abs(rel_pos[1]) == 1 and count > 1:
             done = True
@@ -134,8 +141,8 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
             current_pos = [s for s in start_location]
             continue
         
-        #print("lol3")  
-        # Generate dictionary of options that are available this time by copying all options and removing any that are blocked
+        # Generate dictionary of direction options that are available this time by copying 
+        # all options and removing any that are blocked by our previous path or boundaries
         temp_directions = copy.copy(directions)
         if(current_pos[0] == 0 or effective_grid[current_pos[0]+directions["N"][0]][current_pos[1]+directions["N"][1]] is not None): del temp_directions["N"]
         if(current_pos[0] == XMAX-1 or effective_grid[current_pos[0]+directions["S"][0]][current_pos[1]+directions["S"][1]] is not None): del temp_directions["S"]
@@ -143,16 +150,14 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
         if(current_pos[1] == 0 or effective_grid[current_pos[0]+directions["W"][0]][current_pos[1]+directions["W"][1]] is not None): del temp_directions["W"]
         
         
-        # No options, we have to go back
+        # If no options remain, we have hit a dead end and must go back some steps and restart loop
         if len(temp_directions) == 0: 
-        
             # Go back a random number of times
             togoback = random.randint(2,int(len(relative_path))//8+2)
             goBack(relative_path,effective_grid,current_pos,togoback)
-            
             continue # for i in range(1000)
          
-        # Choose an option and apply it
+        # Choose a direction option and apply it
         if len(relative_path) == 0:
             temp_dir = START_DIRECTION
         else:
@@ -160,14 +165,8 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
         relative_path.append(temp_dir)
         effective_grid[current_pos[0]][current_pos[1]] = temp_dir
         current_pos = [p+d for p,d in zip(current_pos,temp_directions[temp_dir])]
-        # if(count %1000 == 0):
-            # print("Count: ",count)
-            # print2DGrid(effective_grid)
-        
-        
-        #print("lol1")    
-            
-        # Emergency exit
+
+        # Emergency exit, for if we are trying too long on one attempt
         count +=1
         if count > MAX_ITERATION:
             #print("Iteration number too high, ABORT")
@@ -187,62 +186,55 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
     
     
     
+    
+    # SMASH WALLS
     # Walk through the grid using the path we generated and knock down all the walls to create a closed track
     current_pos = [s*(minWidth+wallWidth)+wallWidth for s in start_location] # top left
     total_path_length = len(relative_path)
     for n,p in enumerate(relative_path):
-        # SMASH WALLS
-        
         deltapos = [s*(minWidth+wallWidth) for s in directions[p]]
         deltazero = [minWidth if s==0 else s*(minWidth+wallWidth) for s in directions[p]]
         for i in range(current_pos[0],current_pos[0]+deltazero[0],deltazero[0]//abs(deltazero[0])):
             for j in range(current_pos[1],current_pos[1]+deltazero[1],deltazero[1]//abs(deltazero[1])):
                 final_grid[i][j] = 0
-        
-        current_pos = [c+d for c,d in zip(current_pos,deltapos)]
-        
+        current_pos = [c+d for c,d in zip(current_pos,deltapos)]  
         
         
+    # CHECKPOINTS 
+    # Steps through the grid and every so often drops a checkpoint equally spaced   
     current_pos = [s*(minWidth+wallWidth)+wallWidth for s in start_location] # top left    
     temp_last_time = 1E99
     for n,p in enumerate(relative_path):
-        # Separate loop for checkpoints
-        
         deltapos = [s*(minWidth+wallWidth) for s in directions[p]]
         deltazero = [minWidth if s==0 else s*(minWidth+wallWidth) for s in directions[p]]
-        
-        
         if (n*TOTAL_CHECKPOINTS)%total_path_length < temp_last_time:
             # We place a checkpoint
-            #pdb.set_trace()
             print(current_pos,deltazero,len(final_grid),len(final_grid[0]))
             final_grid[current_pos[0]+deltazero[0]//2][current_pos[1]+deltazero[1]//2] = chr(65+(n*TOTAL_CHECKPOINTS)//total_path_length)
             pass
         current_pos = [c+d for c,d in zip(current_pos,deltapos)]
-        
-        temp_last_time = (n*TOTAL_CHECKPOINTS)%total_path_length
-        
+        temp_last_time = (n*TOTAL_CHECKPOINTS)%total_path_length   
     print2DGrid(final_grid)
     
     #SAVE GRID
-    write2DGrid(final_grid)
+    write2DGrid(FILE_PREFIX+str(LEVEL)+FILE_SUFFIX)
     
     
     return True
 
 if __name__ == "__main__":
     count = 0
-    # loop through until we get one (returns True)
-    while True:
-        count +=1 
-        #print("lol")
-        if(generateMapStr(40,40)):
-            break
+    totalmapstomake = 10
+    for i in range(totalmapstomake):
+        while True:
+            count +=1 
+            if(generateMapStr(60,60,LEVEL=i)):
+                break
             #Emergency Exit
-        if(count > 1000):
-            print("BIG LOOP ABORT")
-            break
-        if(count %10 == 0):
-            print(count," failed so far")
+            if(count > 10000):
+                print("BIG LOOP ABORT")
+                break
+            if(count %10 == 0):
+                print(count," failed so far")
     print("Done  all the things")
     print(chr(65))
