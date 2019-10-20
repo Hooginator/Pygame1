@@ -7,18 +7,15 @@ Created on Wed Mar 21 10:37:25 2018
 
 from functions import *
 import os
+
 # Ship constants
-colours = [(100,100,240),(240,100,100)]
+sensor_colours = [(100,100,240),(240,100,100)] # NO WALL, WALL
 
-
-############################################################
-############## SHIP CLASS ##################################
-############################################################
 
 class ship:
     """Class for holding an indivudual racer and all the variables it needs. """
     ############### INITIALIZATION #########################
-    # Stuff that is run once at the start of each generation
+    # Functions that are run once at the start of each generation
     ########################################################
 
     def __init__(self,  startpos = (75,75), angle = 0, colour = (240,100,100),
@@ -58,9 +55,11 @@ class ship:
         self.crashed = False
         self.timeDriving, self.score, self.checkpoint, self.laps = 0, 0, 0, 0
         self.targetCheckpointPos = self.maze.checkpoints[0].getMidInt()
-        self.inputColour = [colours[0] for i in range(self.dimensions[0])]
+        self.inputColour = [sensor_colours[0] for i in range(self.dimensions[0])]
         self.scan = np.array([0 for i in range(self.dimensions[0])])
         self.cost = [0 for i in range(6)]
+        #Extrapos for CTS LOS
+        self.extrapos = []
         
     def resetPos(self):
         """ Go back to start location """
@@ -84,7 +83,8 @@ class ship:
             
     def copyWeights(self, shp, stray = 0, colour = (240,100,100)):
         """ Changes weights to be around the ones provided by shp.  
-        This is used to generate offspring from the shp provided."""
+        This is used to generate offspring from the shp provided.
+        """
         self.weights = []
         self.bias = []
         if(stray == 0): # straight copy
@@ -145,7 +145,8 @@ class ship:
     
     def copyWeightsExper(self, shp, stray = 0, colour = (240,100,100)):
         """ version of copyWeights() that only take 1 element of each weight matrix 
-        and changes it absolutely to a new value, regardless of the input value. """
+        and changes it absolutely to a new value, regardless of the input value. 
+        """
         self.copyWeights(shp, stray = stray, colour = colour)
         for wt in self.weights:
             i = np.random.randint(wt.shape[0])
@@ -156,11 +157,12 @@ class ship:
             bs[i] = np.random.uniform(-1,1,1)
         
     ############### UPDATE #################################
-    # Stuff that may be used at each timestep of the race
+    # Functions that may be used at each timestep of the race
     ########################################################    
     def moveShip(self,screen,maze):
         """ Based on the ship's brain and inputs, get a decision for this
-        timestep and apply it to the acceleration, braking and turning"""
+        timestep and apply it to the acceleration, braking and turning
+        """
         self.checkCheckpoint()
         angle = 0
         accel = 0   
@@ -190,7 +192,8 @@ class ship:
                     
     def checkFuel(self):
         """ Returns the score received based on checkpoint progress minus the time driving.  
-         If this is below 0 the sihp is said to be out of fuel and crashes"""
+         If this is below 0 the sihp is said to be out of fuel and crashes
+         """
         return  self.maze.checkFuelCost(self.checkpoint,currentLap = self.laps)  -  self.timeDriving
     
     def updateSpeed(self,accel,dangle,brake):
@@ -217,30 +220,49 @@ class ship:
         
     def getInputs(self,maze):
         """ Determine which of the input locations are in walls / out of bounds
-        for the input vector"""
+        for the input vector
+        """
         self.inputPos = []
         i = 0
         
+        
+        #Extrapos for CTS LOS
+        self.extrapos = []
+        
+        
         # array of front views
         for ang in self.inputangle:
+            
+            
+            #eXPERIMENTAL STUFF FOR continuous LOS
+            sightlength = 300
+            #print ("WAY BEFORE")
+            # Current status is this super breaks everything BUT IT RUNS!!! GL HF
+            self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
+            
+            #print ("WAY AFTER")
+            
+            
+            
             blocked = False
             for dis in self.inputdistance:
                 self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), 
                                       int(self.pos[1]  + dis*np.sin(self.angle+ang))])
                 if(maze.checkCollisions(self.inputPos[i]) or blocked):
                     blocked = True
-                    self.inputColour[i] = colours[1] 
+                    self.inputColour[i] = sensor_colours[1] 
                     self.scan[i] = 0
                 else: 
-                    self.inputColour[i] = colours[0]
+                    self.inputColour[i] = sensor_colours[0]
                     self.scan[i] = 1
                 i += 1
         # Rear view
         #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))]) 
-                
+ 
     def getDecision(self):
         """ Use the input vector and all the weights to decide how to control 
-        the ship this timestep."""
+        the ship this timestep.
+        """
         temp = []
         temp.append( np.array(self.scan) )
         for i,wt in enumerate(self.weights):
@@ -260,7 +282,8 @@ class ship:
     def crash(self):
         """ Once the ship's run has expired it crashes.  Here its score is 
         tallied and it is stopped until it is reset The cost increases as 
-        weights tend away from 0, resulting in fewer extreme weights"""
+        weights tend away from 0, resulting in fewer extreme weights
+        """
         self.cost = 0
         for wt in self.weights:
             self.cost += np.abs(wt).sum()
@@ -277,15 +300,17 @@ class ship:
         self.dangle = 0
         #print(self.getName() + "  has crashed at: " + str(self.pos[0])+ "  " + str(self.pos[1]))
     def getIntPos(self):
+        """Returns the current ship position as a tuple of integers """
         return (int(self.pos[0]),int(self.pos[1]))
     
     ############### VISUAL #################################
-    # Stuff related to creating various visual effects on screen
+    # Functions related to creating various visual effects on screen
     ########################################################
             
     def drawShip(self,screen,maze,midpos = (450,800),zoom = 1,fancyShip = False, drawThrusters = True):
         """ Draw triangular ship, get the input values and draw a red or blue 
-        circle at their location"""
+        circle at their location
+        """
         bp = self.getIntPos()
         bp = getOffsetPos(bp,midpos)
 #        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
@@ -337,10 +362,13 @@ class ship:
                 pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 2,0)
                 i += 1
         
+        
+        self.printExperimentalLOS(screen,midpos=midpos)
     
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on 
-        different points in the decision process """
+        different points in the decision process 
+        """
         bp = pos # base position bp
         namesurface = myfont.render(self.parentname, False, self.parentcolour)
         screen.blit(namesurface,(bp[0]-50,bp[1] -60),) 
@@ -382,6 +410,20 @@ class ship:
         temp = (int(pos[0]+(tarpos[0]-pos[0])/10),
                 int(pos[1]+(tarpos[1]-pos[1])/10))
         pygame.draw.circle(screen,(130,240,130),temp,2,2)
+    
+    
+    def printExperimentalLOS(self,screen,midpos = (450,800)):
+        bp = self.getIntPos()
+        bp = getOffsetPos(bp,midpos)
+        for g in self.extrapos:
+            #print("extrapos:   ",g)
+            if g is not None:
+                pygame.draw.circle(screen,(230,40,30),getOffsetPos(g,midpos),8,1)
+                pygame.draw.circle(screen,(250,0,0),getOffsetPos(g,midpos),4,1)
+                #pygame.draw.circle(screen,(30,140,130),[int(bp[0]),int(bp[1])],5,5)
+            
+   
+    
     
     def getName(self):
         """ Get 6 letter "name" based on weight and bias totals """

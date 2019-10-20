@@ -140,23 +140,27 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
              displayOnScreen = True, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10):
+    """Main function called that will handle generating ships, racing them and moving through generations.
+    Returns the best ship found for the selected maze in the final generation. 
+    """         
     print("#### STARTING GAME ####")
-    # Initialization    
+    # Initialize a bunch of Variables
     generation = 0
     frame = 0
     allcrashed = False
     bestship = None
     clock = pygame.time.Clock()
     mymaze = maze(height = height, width = width)
-    
     leadship = None
+    
     if(not victoryLap):
-        # Generate all ships
+        # Generate all ships randomly
         ships = [ship(maze = mymaze, intermediates = intermediates, 
                   inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
-        # Save basic ship info with other data
+        # Dump ship info so we can reload this specific ship from file later
         saveShipInfo(basename, inputdistance, inputangle, intermediates)
-    else: # If VictoryLap I'm looking to update this to let me change more properties of each loaded ship
+    else: 
+        # If VictoryLap is True we are loading in a list of ships
         ships = []
         shipcount = 0
         for vname in victoryLapNames:

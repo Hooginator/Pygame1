@@ -31,12 +31,12 @@ def mapStrFromFile(filename):
     """ Reads the file given as a string for further processing """
     with open(filename, 'r') as myfile:
         data = myfile.read()
-    print(data)
+    #print(data)
     return data
 
 def generateObstacles(filename):
     mapArray = mapArrayFromStr(mapStrFromFile(filename+"_Wall.txt"))
-    print(mapArray)
+    #print(mapArray)
     obstacles = []
     checkpoints = [None]*36
     i = 0
@@ -53,12 +53,17 @@ def generateObstacles(filename):
     return mapArray, obstacles, checkpoints
    	   
 
+##################################################################
+################## general functions #############################
+##################################################################
+
+
 def layoutToPos(lpos):
     """ Returns the center position associated with the grid spot x, y """
     return (lpos[0]*MIN_WALL_SIZE,lpos[1]*MIN_WALL_SIZE)
 def posToLayout(pos):
     """ Returns the spot in self.layout that pos would fall in.  For collision check"""
-    return (int(pos[0]/50),int(pos[1]/50))
+    return (int(pos[0]/MIN_WALL_SIZE),int(pos[1]/MIN_WALL_SIZE))
     
 
 def rotate(pos,angle):
@@ -76,6 +81,125 @@ def fuelParams(i):
           3 : [500,0.9],
           }
     return fp[i]
+
+
+
+def myround(x, dir=1,base=MIN_WALL_SIZE):
+    """ Rounds up or down to nearest integer.  YES change to move up a bit when on boundary? """
+    if dir==1:
+        if np.ceil(x/base) == x/base:
+            return base * (np.ceil(x/base) +1)
+        return base * np.ceil(x/base)
+    
+    if np.floor(x/base) == x/base:
+        return base * (np.floor(x/base)-1)
+    return base * np.floor(x/base)
+
+
+
+def getLineOfCells(pos, angle, length_in):
+    """Returns a list of tuples with the coordinates of cells that would intersect the line built from pos with angle and length also specified
+    NEW PLAN: Will also return where our LOS crosses each of these boundaries
+    """
+    ## Too late, rethink
+    # New plan, find line equation
+    # EX: at (2,3) 30 degrees 
+    # y = mx +b 
+    # m= tan30?
+    # b=
+    temp_length = 0
+    grid_pos = list(posToLayout(pos))
+    #print("STARTING GRIDPOS:::: ",grid_pos, " from ",pos)
+    c_pos = [pos[0],pos[1]]
+    s_pos = c_pos
+    dxy = [np.cos(angle),np.sin(angle)]
+    dixy = [int(np.sign(dxy[0])),int(np.sign(dxy[1]))]
+    to_return = [((grid_pos[0],grid_pos[1]),pos)]
+    
+    #print ("Done setup, onto easy cases ",dxy)
+    
+    if dxy[0] == 0:
+        # Easy mode engaged
+        n_pos = [0,0]
+        i=0
+        di = int(np.sign(dxy[i]))
+        while temp_length < length_in:
+            n_pos[1] = myround(c_pos[1]) 
+            temp_length += np.abs(n_pos[1]-c_pos[1])
+            c_pos[1] = n_pos[1]
+            to_return.append([(grid_pos[0],grid_pos[1]+i*di),(pos[0],c_pos[1])])
+            i +=1
+        return to_return
+    
+    if dxy[1] == 0:
+        # Easy mode 2 engaged
+        i=0
+        n_pos = [0,0]
+        di = int(np.sign(dxy[i]))
+        while temp_length < length_in:
+            n_pos[0] = myround(c_pos[0])
+            temp_length += np.abs(n_pos[0]-c_pos[0])
+            c_pos[0] = n_pos[0]
+            to_return.append([(grid_pos[0]+i*di,grid_pos[1]),(c_pos[0],pos[1])])
+            i +=1
+        return to_return
+    
+    # Not straight up or down
+        
+    # idea [x,y] = [t*dx+s_pos[0],t*dy+s_pos[1]]
+    
+    #print("DOne with simple cases, onto loop")
+    
+    counter_here=0
+    while temp_length < length_in:
+        step_lengths = [0,0]
+        t_pos = [0,0]
+        # Get target position for x and y's closest  grid coming up (ie where walls may start)
+        for i in (0,1):
+            #print("CPOS BEFORE: ",c_pos,dixy)
+            t_pos[i] = myround(c_pos[i],dir=dixy[i])
+            #print("TPOS BEFORE: ",t_pos)
+            # Find how far the target x and y pos are from current pos
+            step_lengths[i] = (t_pos[i]-c_pos[i])/dxy[i]
+        
+        length_to_travel = min(step_lengths)
+        
+        temp_length += length_to_travel 
+        
+        #print("New Length: ",temp_length)
+        
+        if temp_length > length_in:
+            return to_return
+            
+        counter_here +=1
+        if counter_here > 50:
+            print ("TOK A WHILE  MID",i,c_pos,dxy,dixy,t_pos)
+            
+        min_index = step_lengths.index(length_to_travel)
+        
+        # get next pos
+        n_pos = [0,0]
+        
+        for i in (0,1):
+            if i== min_index:
+                n_pos[i] = t_pos[i]
+                grid_pos[i] += int(np.sign(dxy[i]))
+            else:
+                n_pos[i] = c_pos[i] + dxy[i]*step_lengths[1-i]
+        
+        to_return.append([(grid_pos[0],grid_pos[1]),(n_pos[0],n_pos[1])])
+        # Set current position up to neares t boundary
+        c_pos = [n_pos[0],n_pos[1]]
+        
+        
+        if counter_here > 50:
+            print ("TOOK A WHILE  END",i,c_pos,dxy,dixy,t_pos,n_pos,dxy[i],step_lengths[1-i])
+    
+    return to_return
+    # Next up: Bezier curves
+    
+
+
 
     
 ############################################################
@@ -149,11 +273,24 @@ class maze:
     def checkLayoutCollisions(self,pos,size=0):
         if self.isInBoundaries(pos):
             temppos = posToLayout(pos)
-            if self.layout[temppos[1]][temppos[0]] == '1': 
-                return 1
-            else: return 0
+            return self.isWall(temppos)
         else: return 1
     
+    def isWall(self,pos):
+        """ Simply returns whether pos contains a wall or not.  If out of bounds returns as though wall"""
+        #print(pos)
+        try:
+            toreturn = self.layout[pos[1]][pos[0]]
+        except IndexError:
+            return 1 # Out of bounds
+        
+        try:
+            int(toreturn)
+        except:
+            return 0  # CHECKPOINT
+        return int(toreturn) # INT WORKED, WALL or no wall
+
+        
     def checkCollisions(self,pos,size = 0):
         """ Checks pos (x,y) against all walls for collision"""
         tempint = self.checkLayoutCollisions(pos)
@@ -166,6 +303,29 @@ class maze:
         #if((pos[0] < 0) or (pos[0] > self.screenWidth) or (pos[1] < 0) 
         #    or (pos[1] > self.screenHeight)): return True
         #return False
+        
+        
+        
+        
+    def getMaximumSightDistance(self,pos, angle, length_in):
+        """ Makses use of getLineofCells to determine where the first walls blocking LoS is (if there is one, None otherwise) 
+        and returning the position where Line of Sight was broken.  This will be fed into the Matrix decisions
+        and display on screen.
+        
+        New plan, just add this to the getLineOfCells function since it has everything we need already broken down
+        """
+        #print("Pre getLineOfCells")
+        my_info = getLineOfCells([pos[0],pos[1]], angle, length_in)
+        
+        #print("Post getLineOfCells")
+        for c in my_info:
+            #print(c[0],c[1])
+            #b=input()
+            if self.isWall(c[0]) ==1:
+                # WALLL HERE DO MATH TO FIND POS
+                # need the intersection point
+                return c[1]
+        return None
 ############################################################
 ########### WALL CLASS #####################################
 ############################################################
