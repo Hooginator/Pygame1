@@ -19,7 +19,7 @@ class ship:
     ########################################################
 
     def __init__(self,  startpos = (75,75), angle = 0, colour = (240,100,100),
-                 maxSpeed = 20, maxAccel = 1, maxAngle = 0.2,
+                 maxSpeed = 20, maxAccel = 1, maxAngle = 0.1,
                  width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
                  parentname = "", parentcolour = (240,100,100), name = None):
@@ -198,8 +198,8 @@ class ship:
     
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
-        self.angle += dangle
-        self.dangle = dangle
+        self.dangle += dangle
+        self.angle += self.dangle
         self.accel = accel
         self.vx += accel * np.cos(self.angle)
         self.vy += accel * np.sin(self.angle)
@@ -209,8 +209,9 @@ class ship:
         if(self.vx < -1*self.maxSpeed): self.vx = -1*self.maxSpeed
         if(self.vy < -1*self.maxSpeed): self.vy = -1*self.maxSpeed
         # apply drag and braking to slow down
-        self.vx = self.vx * self.drag*(1-brake/4)
-        self.vy = self.vy * self.drag*(1-brake/4)
+        self.vx = self.vx * self.drag*(1-brake/3)
+        self.vy = self.vy * self.drag*(1-brake/3)
+        self.dangle = self.dangle * self.drag*(1-brake/3)*0.6
         
     def updatePos(self):
         """ Update where the ship is each timestep based on calculated velocity."""
