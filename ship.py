@@ -22,7 +22,7 @@ class ship:
                  maxSpeed = 20, maxAccel = 1, maxAngle = 0.1,
                  width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-                 parentname = "", parentcolour = (240,100,100), name = None,orders = [1,2,3]):
+                 parentname = "", parentcolour = (240,100,100), name = None,orders = [1,2,3,4,5,6,7,8]):
         """ Creates the ship with randomly assigned weights """
         self.startpos, self.startangle, self.colour = startpos, angle, colour
         self.maxSpeed, self.maxAccel, self.maxAngle = maxSpeed, maxAccel, maxAngle
@@ -261,7 +261,7 @@ class ship:
                     temp_length = self.extrapos[i][1]
                 
                 for ord in self.orders:
-                    self.scan[j] = temp_length**ord
+                    self.scan[j] = (temp_length/sightlength)**ord
                     j +=1
                 i+=1
                   
