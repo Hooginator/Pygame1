@@ -30,9 +30,12 @@ class ship:
         self.width, self.height = width, height
         self.parentname, self.parentcolour = parentname, parentcolour
         # Create dimensions array based on input, intermediate dimensions and output (4)
+        self.inputType = 1 # 0: point, 1: linear
         self.setDimension(inputdistance,inputangle,intermediates)
         self.drag = 0.98
         self.initWeights()
+        self.inputType = 1 # 0: point, 1: linear
+        
         if name is not None: 
             self.name = name
         else:
@@ -42,7 +45,12 @@ class ship:
         
     def setDimension(self,inputdistance,inputangle,intermediates):
         """ Sets parameters needed for decision making """
-        self.dimensions = [len(inputdistance)*len(inputangle)]
+        if self.inputType == 0: # Matrix of angles and distances
+            self.dimensions = [len(inputdistance)*len(inputangle)]
+        elif self.inputType == 1: # Only angles, each one getting one input
+            self.dimensions = [len(inputangle)]
+            inputdistance = 1
+            
         self.dimensions.extend(intermediates)
         self.dimensions.append(4)
         self.inputdistance, self.inputangle, self.intermediates  = inputdistance, inputangle, intermediates
@@ -224,42 +232,35 @@ class ship:
         for the input vector
         """
         self.inputPos = []
-        i = 0
-        
-        
+       
         #Extrapos for CTS LOS
         self.extrapos = []
-        
-        
+        i=0
         # array of front views
         for ang in self.inputangle:
-            
-            
-            #eXPERIMENTAL STUFF FOR continuous LOS
-            sightlength = 300
-            #print ("WAY BEFORE")
-            # Current status is this super breaks everything BUT IT RUNS!!! GL HF
-            self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
-            
-            #print ("WAY AFTER")
-            
-            
-            
             blocked = False
-            for dis in self.inputdistance:
-                self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), 
-                                      int(self.pos[1]  + dis*np.sin(self.angle+ang))])
-                if(maze.checkCollisions(self.inputPos[i]) or blocked):
-                    blocked = True
-                    self.inputColour[i] = sensor_colours[1] 
-                    self.scan[i] = 0
-                else: 
-                    self.inputColour[i] = sensor_colours[0]
-                    self.scan[i] = 1
-                i += 1
-        # Rear view
-        #self.inputPos.append([int(self.x + 50*np.cos(self.angle-3.1415)), int(self.y  + 50*np.sin(self.angle-3.1415))]) 
- 
+            if self.inputType == 0:
+                for dis in self.inputdistance:
+                    self.inputPos.append([int(self.pos[0] + dis*np.cos(self.angle+ang)), 
+                                          int(self.pos[1]  + dis*np.sin(self.angle+ang))])
+                    if(maze.checkCollisions(self.inputPos[i]) or blocked):
+                        blocked = True
+                        self.inputColour[i] = sensor_colours[1] 
+                        self.scan[i] = 0
+                    else: 
+                        self.inputColour[i] = sensor_colours[0]
+                        self.scan[i] = 1
+                    i +=1
+            elif self.inputType == 1:
+                #eXPERIMENTAL STUFF FOR continuous LOS
+                sightlength = 300
+                self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
+                if self.extrapos[i] is None:
+                    self.scan[i] = sightlength
+                else:
+                    self.scan[i] = self.extrapos[i][1]
+                i +=1
+                  
     def getDecision(self):
         """ Use the input vector and all the weights to decide how to control 
         the ship this timestep.
@@ -314,6 +315,13 @@ class ship:
         """
         bp = self.getIntPos()
         bp = getOffsetPos(bp,midpos)
+        
+        # Draw Inputs
+        if self.inputType == 0:
+            self.drawPointInputs()
+        elif self.inputType == 1:
+            self.printExperimentalLOS(screen,midpos=midpos)
+        
 #        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
 #                                [[int(bp[0]+ 10 *np.cos(self.angle+3.14)), 
 #                              int(bp[1]+ 10 *np.sin(self.angle+3.14))], 
@@ -355,16 +363,6 @@ class ship:
         # Draw the cockpit
         pygame.draw.circle(screen, (140,160,240), bp, 5,2)
         
-        i = 0
-        # Draw where the inputs are for decision making.
-        if(self.crashed == False or True):
-            self.drawTargetCheckpoint(screen,maze,bp,midpos = midpos)
-            for pos in self.inputPos:
-                pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 2,0)
-                i += 1
-        
-        
-        self.printExperimentalLOS(screen,midpos=midpos)
     
     def drawMatrix(self,screen,pos):
         """ Draw a bunch of squares that light up red of green based on 
@@ -395,6 +393,13 @@ class ship:
                 temp_colour = (int(max(min((1-temp_vector[i])*240,240),0)),int(max(min(temp_vector[i]*240,240),0)),0)
                 pygame.draw.rect(screen,temp_colour ,(bp[0] + (j+1)*separationy,bp[1] + separationx*i,size,size))
 
+    def drawPointInputs(self):
+        # Draw where the inputs are for decision making.
+        if(self.crashed == False or True):
+            self.drawTargetCheckpoint(screen,maze,bp,midpos = midpos)
+            for i,pos in enumerate(self.inputPos):
+                pygame.draw.circle(screen, self.inputColour[i], getOffsetPos(pos,midpos), 2,0)
+
     def highlight(self,screen,midpos = (800,450)):
         """ Draw some expanding circles around the ship """
         posInt = self.getIntPos()
@@ -419,8 +424,9 @@ class ship:
         for g in self.extrapos:
             #print("extrapos:   ",g)
             if g is not None:
-                pygame.draw.circle(screen,(230,40,30),getOffsetPos(g,midpos),8,1)
-                pygame.draw.circle(screen,(250,0,0),getOffsetPos(g,midpos),4,1)
+                pygame.draw.circle(screen,(230,40,30),getOffsetPos(g[0],midpos),8,1)
+                pygame.draw.circle(screen,(250,0,0),getOffsetPos(g[0],midpos),4,1)
+                pygame.draw.line(screen,(150,150,150),bp,getOffsetPos(g[0],midpos),1)
                 #pygame.draw.circle(screen,(30,140,130),[int(bp[0]),int(bp[1])],5,5)
             
    

@@ -100,6 +100,7 @@ def myround(x, dir=1,base=MIN_WALL_SIZE):
 def getLineOfCells(pos, angle, length_in):
     """Returns a list of tuples with the coordinates of cells that would intersect the line built from pos with angle and length also specified
     NEW PLAN: Will also return where our LOS crosses each of these boundaries
+    AND the distance to each
     """
     ## Too late, rethink
     # New plan, find line equation
@@ -114,7 +115,7 @@ def getLineOfCells(pos, angle, length_in):
     s_pos = c_pos
     dxy = [np.cos(angle),np.sin(angle)]
     dixy = [int(np.sign(dxy[0])),int(np.sign(dxy[1]))]
-    to_return = [((grid_pos[0],grid_pos[1]),pos)]
+    to_return = [((grid_pos[0],grid_pos[1]),pos,temp_length)]
     
     #print ("Done setup, onto easy cases ",dxy)
     
@@ -127,7 +128,7 @@ def getLineOfCells(pos, angle, length_in):
             n_pos[1] = myround(c_pos[1]) 
             temp_length += np.abs(n_pos[1]-c_pos[1])
             c_pos[1] = n_pos[1]
-            to_return.append([(grid_pos[0],grid_pos[1]+i*di),(pos[0],c_pos[1])])
+            to_return.append([(grid_pos[0],grid_pos[1]+i*di),(pos[0],c_pos[1]),temp_length])
             i +=1
         return to_return
     
@@ -140,7 +141,7 @@ def getLineOfCells(pos, angle, length_in):
             n_pos[0] = myround(c_pos[0])
             temp_length += np.abs(n_pos[0]-c_pos[0])
             c_pos[0] = n_pos[0]
-            to_return.append([(grid_pos[0]+i*di,grid_pos[1]),(c_pos[0],pos[1])])
+            to_return.append([(grid_pos[0]+i*di,grid_pos[1]),(c_pos[0],pos[1]),temp_length])
             i +=1
         return to_return
     
@@ -187,7 +188,7 @@ def getLineOfCells(pos, angle, length_in):
             else:
                 n_pos[i] = c_pos[i] + dxy[i]*step_lengths[1-i]
         
-        to_return.append([(grid_pos[0],grid_pos[1]),(n_pos[0],n_pos[1])])
+        to_return.append([(grid_pos[0],grid_pos[1]),(n_pos[0],n_pos[1]),temp_length])
         # Set current position up to neares t boundary
         c_pos = [n_pos[0],n_pos[1]]
         
@@ -324,7 +325,7 @@ class maze:
             if self.isWall(c[0]) ==1:
                 # WALLL HERE DO MATH TO FIND POS
                 # need the intersection point
-                return c[1]
+                return (c[1],c[2])
         return None
 ############################################################
 ########### WALL CLASS #####################################
