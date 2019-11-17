@@ -22,7 +22,7 @@ class ship:
                  maxSpeed = 20, maxAccel = 1, maxAngle = 0.1,
                  width = 1600, height = 900, maze = None,
                  intermediates = (8,), inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
-                 parentname = "", parentcolour = (240,100,100), name = None):
+                 parentname = "", parentcolour = (240,100,100), name = None,orders = [1,2,3]):
         """ Creates the ship with randomly assigned weights """
         self.startpos, self.startangle, self.colour = startpos, angle, colour
         self.maxSpeed, self.maxAccel, self.maxAngle = maxSpeed, maxAccel, maxAngle
@@ -31,7 +31,7 @@ class ship:
         self.parentname, self.parentcolour = parentname, parentcolour
         # Create dimensions array based on input, intermediate dimensions and output (4)
         self.inputType = 1 # 0: point, 1: linear
-        self.setDimension(inputdistance,inputangle,intermediates)
+        self.setDimension(inputdistance,inputangle,intermediates,orders)
         self.drag = 0.98
         self.initWeights()
         
@@ -42,17 +42,17 @@ class ship:
                 
         self.reset()
         
-    def setDimension(self,inputdistance,inputangle,intermediates):
+    def setDimension(self,inputdistance,inputangle,intermediates, orders):
         """ Sets parameters needed for decision making """
         if self.inputType == 0: # Matrix of angles and distances
             self.dimensions = [len(inputdistance)*len(inputangle)]
         elif self.inputType == 1: # Only angles, each one getting one input
-            self.dimensions = [len(inputangle)]
+            self.dimensions = [len(inputangle)*len(orders)]
             inputdistance = 1
             
         self.dimensions.extend(intermediates)
         self.dimensions.append(4)
-        self.inputdistance, self.inputangle, self.intermediates  = inputdistance, inputangle, intermediates
+        self.inputdistance, self.inputangle, self.intermediates, self.orders  = inputdistance, inputangle, intermediates, orders
       
     def reset(self):
         """ Returns the ship to its starting location and reinitializes """
@@ -108,7 +108,7 @@ class ship:
         self.colour = colour
         self.parentname = shp.name
         self.parentcolour = shp.colour
-        self.setDimension(shp.inputdistance,shp.inputangle,shp.intermediates)
+        self.setDimension(shp.inputdistance,shp.inputangle,shp.intermediates,shp.orders)
         
     def saveWeights(self, basename, generation):
         """ Saves the np array of weights for easy loading later"""
@@ -234,7 +234,7 @@ class ship:
        
         #Extrapos for CTS LOS
         self.extrapos = []
-        i=0
+        i,j=0,0
         # array of front views
         for ang in self.inputangle:
             blocked = False
@@ -254,11 +254,16 @@ class ship:
                 #eXPERIMENTAL STUFF FOR continuous LOS
                 sightlength = 200
                 self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
+                
                 if self.extrapos[i] is None:
-                    self.scan[i] = sightlength
+                    temp_length = sightlength
                 else:
-                    self.scan[i] = self.extrapos[i][1]
-                i +=1
+                    temp_length = self.extrapos[i][1]
+                
+                for ord in self.orders:
+                    self.scan[j] = temp_length**ord
+                    j +=1
+                i+=1
                   
     def getDecision(self):
         """ Use the input vector and all the weights to decide how to control 
