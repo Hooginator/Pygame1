@@ -34,7 +34,6 @@ class ship:
         self.setDimension(inputdistance,inputangle,intermediates)
         self.drag = 0.98
         self.initWeights()
-        self.inputType = 1 # 0: point, 1: linear
         
         if name is not None: 
             self.name = name
@@ -253,7 +252,7 @@ class ship:
                     i +=1
             elif self.inputType == 1:
                 #eXPERIMENTAL STUFF FOR continuous LOS
-                sightlength = 300
+                sightlength = 200
                 self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
                 if self.extrapos[i] is None:
                     self.scan[i] = sightlength
@@ -317,10 +316,11 @@ class ship:
         bp = getOffsetPos(bp,midpos)
         
         # Draw Inputs
-        if self.inputType == 0:
-            self.drawPointInputs()
-        elif self.inputType == 1:
-            self.printExperimentalLOS(screen,midpos=midpos)
+        if not self.crashed:
+            if self.inputType == 0:
+                self.drawPointInputs(screen,maze,midpos=midpos)
+            elif self.inputType == 1:
+                self.printExperimentalLOS(screen,midpos=midpos)
         
 #        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
 #                                [[int(bp[0]+ 10 *np.cos(self.angle+3.14)), 
@@ -332,23 +332,25 @@ class ship:
 #                            [int(bp[0]+ 10 *np.cos(self.angle-1)), 
 #                              int(bp[1]+ 10 *np.sin(self.angle-1))]])
         # draw thrusters
-        if(drawThrusters):
-            pygame.draw.polygon(screen, (140,140,40),
-                            [[int(bp[0]+ self.accel*22 *np.cos(self.angle+3.14)), 
-                              int(bp[1]+ self.accel*22 *np.sin(self.angle+3.14))],
-                            [int(bp[0]+ 7 *np.cos(self.angle + 2.64)), 
-                             int(bp[1]+ 7 *np.sin(self.angle + 2.64))],
-                            [int(bp[0]+ 7 *np.cos(self.angle + 3.64)), 
-                             int(bp[1]+ 7 *np.sin(self.angle + 3.64))]])
-    
-    
-            pygame.draw.polygon(screen, (140,140,40),
-                            [[int(bp[0]+ self.dangle*60 *np.cos(self.angle-1.57) + 7*np.cos(self.angle)), 
-                              int(bp[1]+ self.dangle*60 *np.sin(self.angle-1.57) + 7*np.sin(self.angle))],
-                            [int(bp[0]+ 5 *np.cos(self.angle)), 
-                             int(bp[1]+ 5 *np.sin(self.angle))],
-                            [int(bp[0]+ 9 *np.cos(self.angle)), 
-                             int(bp[1]+ 9 *np.sin(self.angle))]])
+        
+        if not self.crashed:
+            if(drawThrusters):
+                pygame.draw.polygon(screen, (140,140,40),
+                                [[int(bp[0]+ self.accel*22 *np.cos(self.angle+3.14)), 
+                                  int(bp[1]+ self.accel*22 *np.sin(self.angle+3.14))],
+                                [int(bp[0]+ 7 *np.cos(self.angle + 2.64)), 
+                                 int(bp[1]+ 7 *np.sin(self.angle + 2.64))],
+                                [int(bp[0]+ 7 *np.cos(self.angle + 3.64)), 
+                                 int(bp[1]+ 7 *np.sin(self.angle + 3.64))]])
+        
+        
+                pygame.draw.polygon(screen, (140,140,40),
+                                [[int(bp[0]+ self.dangle*60 *np.cos(self.angle-1.57) + 7*np.cos(self.angle)), 
+                                  int(bp[1]+ self.dangle*60 *np.sin(self.angle-1.57) + 7*np.sin(self.angle))],
+                                [int(bp[0]+ 5 *np.cos(self.angle)), 
+                                 int(bp[1]+ 5 *np.sin(self.angle))],
+                                [int(bp[0]+ 9 *np.cos(self.angle)), 
+                                 int(bp[1]+ 9 *np.sin(self.angle))]])
     
         # draw ship
         pygame.draw.polygon(screen, self.colour, 
@@ -393,7 +395,9 @@ class ship:
                 temp_colour = (int(max(min((1-temp_vector[i])*240,240),0)),int(max(min(temp_vector[i]*240,240),0)),0)
                 pygame.draw.rect(screen,temp_colour ,(bp[0] + (j+1)*separationy,bp[1] + separationx*i,size,size))
 
-    def drawPointInputs(self):
+    def drawPointInputs(self,screen,maze,midpos = (450,800)):
+        bp = self.getIntPos()
+        bp = getOffsetPos(bp,midpos)
         # Draw where the inputs are for decision making.
         if(self.crashed == False or True):
             self.drawTargetCheckpoint(screen,maze,bp,midpos = midpos)
