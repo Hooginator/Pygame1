@@ -74,13 +74,17 @@ def drawBackground(screen):
     """ Draws a black rectangle over the whole screen as a backdrop """
     screen.fill((0,0,0))
 
-def fuelParams(i):
+def getFuelParams(choice=0):
+    """ Parameters used to determine how long each ship has for each checkpoint 
+    and how quickly that time will scale down. Default is 0
+    """
+
     fp = {0 : [200,0.7],
           1 : [300,0.6],
           2 : [500,0.9],
           3 : [500,0.9],
           }
-    return fp[i]
+    return fp[choice]
 
 
 
@@ -210,20 +214,17 @@ def getLineOfCells(pos, angle, length_in):
 class maze:
     """ Master class for all the objects on the map that get in your way or 
     help """
-    def __init__(self,mapName = "Map1",height = 900,width = 1600,i = 1):
+    def __init__(self,mapName = "Map1",height = 900,width = 1600, mazeType = "circular"):
         # Load the wall and checkpoint information
         self.layout, self.obstacles, self.checkpoints = generateObstacles(mapName)
         self.checkpointsPerLap = len(self.checkpoints)
         self.screenWidth, self.screenHeight = width, height
         self.layoutHeight, self.layoutWidth = len(self.layout[:]),len(self.layout[0][:])
-        self.getFuelCosts(i)
-        if(i > 2):
-            self.mazeType = "linear"
-        else:
-            self.mazeType = "circular"
+        self.getFuelCosts()
+        self.mazeType = mazeType
             
-    def getFuelCosts(self,mazeNumber):
-        self.fuelParams = fuelParams(mazeNumber)
+    def getFuelCosts(self,choice = 0):
+        self.fuelParams = getFuelParams(choice = choice)
         
     def getCheckpointPos(self,n):
         return self.checkpoints[n].getMidInt()

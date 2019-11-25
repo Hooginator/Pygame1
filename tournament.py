@@ -56,25 +56,46 @@ def getFilename(base, inangles, indistances,intermediates):
 ########## TOURNAMENT ## ###################################
 ############################################################
 
-def doTournament(inputangles = [[0.8,0.4,0.2,0.1,0,-0.1,-0.2,-0.4,-0.8]], inputdistances = [[50,100,150,200]], 
-                 intermediates = [[]], shutdown = False):
-    """ Command to actually run the simulation to get more new racers """
+def doTournament(filePrefix = "Test",inputangles = [[0.8,0.4,0.2,0.1,0,-0.1,-0.2,-0.4,-0.8]], inputdistances = [[50,100,150,200]], 
+                 intermediates = [[]], shutdown = False, orders = [1,2,3,4,5]):
+    """ Command to actually run the simulation to get more new racers after 
+    the specified number of generations have passed.
+    """
     winningShip = None
     i = 1
     for ina in inputangles:
         for ind in inputdistances:
             for inter in intermediates:
-                filename = getFilename("teeest",ina,ind,inter)
+                filename = getFilename(filePrefix,ina,ind,inter)
                 
                 screen = pygame.display.set_mode((1600,900))
                 playCountdown(screen,winningShip = winningShip)
-                winningShip = playGame(screen = screen, maxGen = 100, basename = filename, 
+                winningShip = playGame(screen = screen, maxGen = 20, basename = filename, 
                                    intermediates = inter,inputdistance = ind, 
-                                   inputangle = ina, nships = 40, nseeds = 8)
+                                   inputangle = ina, nships = 40, nseeds = 8,orders = orders)
                 i += 1
     if(shutdown): os.system("shutdown now -h")
-    quitGame()
+    #quitGame()
+
+
+def doSet():
+    """ Do series of tournaments to generate a bunch of data.
+    This should be little more than a simple loop
+    """
+    ords = []
+    for j in range(5):
+        ords.append(j+1)
+        for i in range(10):
+            if i==0:
+                tempinter = [[]]
+            else:
+                tempinter = [[i]] 
+            doTournament(filePrefix = "Nov24_Overnight_Comparison_Intermediates_"+str(i) + "_Orders_"+str(j+1),intermediates = tempinter,orders = ords)
+        
+        
+        
+        
 if __name__ == "__main__":
     
-    doTournament()
+    doSet()
 #victoryLap(["INPUTANG04DIS50_3x3","INPUTANG04DIS50_5x3","INPUTANG04DIS50_7x3"])

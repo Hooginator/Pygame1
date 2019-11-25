@@ -71,9 +71,9 @@ def quitGame():
 
 def updateCameraPos(oldPos,target):
     """ Moves the camera mid position closer to <target> """
-    MAXSPEED = 7
     temp = (target[0]-oldPos[0],target[1]-oldPos[1])
     tempsize = getDist(temp,(0,0))
+    MAXSPEED = 5 + tempsize/30
     if(np.abs(tempsize) < MAXSPEED): 
         pos = target
     else: 
@@ -139,11 +139,12 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
              nships = 100, nseeds = 1, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
-             displayOnScreen = True, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10):
+             displayOnScreen = False, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10,
+             orders = [1,2,3,4,5]):
     """Main function called that will handle generating ships, racing them and moving through generations.
     Returns the best ship found for the selected maze in the final generation. 
     """         
-    print("#### STARTING GAME ####")
+    print("#### STARTING GAME "+basename+" ####")
     # Initialize a bunch of Variables
     generation = 0
     frame = 0
@@ -156,7 +157,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
     if(not victoryLap):
         # Generate all ships randomly
         ships = [ship(maze = mymaze, intermediates = intermediates, 
-                  inputdistance = inputdistance, inputangle = inputangle) for i in range(nships)]
+                  inputdistance = inputdistance, inputangle = inputangle,orders = orders) for i in range(nships)]
         # Dump ship info so we can reload this specific ship from file later
         saveShipInfo(basename, inputdistance, inputangle, intermediates)
     else: 
@@ -168,7 +169,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
             [inputdistance, inputangle, intermediates] = loadShipInfo(vname)
             for i in range(victoryLapShipsPerGen):
                 ships.append(ship(maze = mymaze, intermediates = intermediates, 
-                  inputdistance = inputdistance, inputangle = inputangle))
+                  inputdistance = inputdistance, inputangle = inputangle, orders = orders))
                 ships[shipcount].loadWeights(vname,i+victoryLapGen,colour 
                             = (int(240*(victoryLapShipsPerGen-i)/victoryLapShipsPerGen),int(240*i/victoryLapShipsPerGen),20))
                 ships[shipcount].name = "Gen: "+str(i+victoryLapGen)
