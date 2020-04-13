@@ -82,11 +82,11 @@ def drawPulsatingCirlce(screen,
     size = 10, 
     cycle_length = 60):
     
+    # Build a temporary screen, for the alpha to work we CANNOT BUILD BLACK (0,0,0) CIRCLES FOR NOW
     temp_screen = pygame.Surface((size*2,size*2))
     temp_screen.set_colorkey((0,0,0))
-    
-    colour_per_frame = max(colour)//(cycle_length/2)
-    
+
+    # Separate the animation into the growing and shrinking parts
     if frame% cycle_length >= cycle_length/2:
         # growing phase
         temp_alpha = (cycle_length/2 - frame%(cycle_length/2))*255/(cycle_length/2)
@@ -95,9 +95,9 @@ def drawPulsatingCirlce(screen,
         # Shrinking Phase
         temp_alpha = (frame%(cycle_length/2))*255/(cycle_length/2)
         temp_size = int(1 + (cycle_length/2 - frame %(cycle_length/2))/(cycle_length/2)*size)
-        
+    
+    # Draw the circle onto the temp screen and blit that screen onto the main screen for alpha to work
     pygame.draw.circle(temp_screen,colour,(size,size),temp_size,1)
-    #print(temp_alpha)
     temp_screen.set_alpha(temp_alpha)
     
     screen.blit(temp_screen,(middle[0] - size,middle[1] - size))

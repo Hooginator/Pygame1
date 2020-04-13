@@ -254,12 +254,8 @@ class ship:
                 #eXPERIMENTAL STUFF FOR continuous LOS
                 sightlength = 200
                 self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
-                
-                if self.extrapos[i] is None:
-                    temp_length = sightlength
-                else:
-                    temp_length = self.extrapos[i][1]
-                
+
+                temp_length = self.extrapos[i][2]
                 for ord in self.orders:
                     self.scan[j] = (temp_length/sightlength)**ord
                     j +=1
@@ -432,12 +428,17 @@ class ship:
         bp = getOffsetPos(bp,midpos)
         for g in self.extrapos:
             #print("extrapos:   ",g)
-            if g is not None:
-                drawPulsatingCirlce(screen, getOffsetPos(g[0],midpos),frame,size = 12,cycle_length = 60, colour = (255,0,0))
+            if g[0]:
+                drawPulsatingCirlce(screen, getOffsetPos(g[1],midpos),frame,size = 12,cycle_length = 60, colour = (255,0,0))
                 #pygame.draw.circle(screen,(230,40,30),getOffsetPos(g[0],midpos),8,1)
                 #pygame.draw.circle(screen,(250,0,0),getOffsetPos(g[0],midpos),4,1)
-                pygame.draw.line(screen,(150,150,150),bp,getOffsetPos(g[0],midpos),1)
+                pygame.draw.line(screen,(150,150,150),bp,getOffsetPos(g[1],midpos),1)
                 #pygame.draw.circle(screen,(30,140,130),[int(bp[0]),int(bp[1])],5,5)
+            else:
+                # Get the max length and draw a lighter line to show where the sensors are
+                endpoint = []
+                pygame.draw.line(screen,(50,50,50),bp,getOffsetPos(g[1],midpos),1)
+                
             
    
     

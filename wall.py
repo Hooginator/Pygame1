@@ -169,11 +169,15 @@ def getLineOfCells(pos, angle, length_in):
         
         length_to_travel = min(step_lengths)
         
+        old_temp_length = temp_length
         temp_length += length_to_travel 
         
         #print("New Length: ",temp_length)
         
         if temp_length > length_in:
+            to_return.append([(grid_pos[0],grid_pos[1]),(c_pos[0] + (length_in - old_temp_length)*dxy[0] ,c_pos[1]+ (length_in - old_temp_length)*dxy[1]),temp_length])
+            for i in (0,1):
+                c_pos[i] 
             return to_return
             
         counter_here +=1
@@ -326,8 +330,8 @@ class maze:
             if self.isWall(c[0]) ==1:
                 # WALLL HERE DO MATH TO FIND POS
                 # need the intersection point
-                return (c[1],c[2])
-        return None
+                return (True, c[1],c[2])
+        return (False, my_info[-1][1], my_info[-1][2])
 ############################################################
 ########### WALL CLASS #####################################
 ############################################################
