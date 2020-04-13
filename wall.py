@@ -79,7 +79,7 @@ def getFuelParams(choice=0):
     and how quickly that time will scale down. Default is 0
     """
 
-    fp = {0 : [200,0.7],
+    fp = {0 : [200,0.8],
           1 : [300,0.6],
           2 : [500,0.9],
           3 : [500,0.9],
@@ -346,11 +346,13 @@ class obstacle():
         Usually for showing where time is about to expire"""       
         
         temppos = getOffsetPos(self.getMidInt(),midpos)
-        pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
-                                   temppos, 1 + frame %20, 1)
-        pygame.draw.circle(screen,(240,240,240),temppos, 21 + frame %20, 1)
-        pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
-                                   temppos, 41 + frame %20, 1)
+        
+        drawRadiatingCircle(screen,temppos, frame,frame_speed=1)
+        # pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
+                                   # temppos, 1 + frame %20, 1)
+        # pygame.draw.circle(screen,(240,240,240),temppos, 21 + frame %20, 1)
+        # pygame.draw.circle(screen,[max(0,tmp - (frame%20)*10) for tmp in (240,240,240)],
+                                   # temppos, 41 + frame %20, 1)
     def checkCollision(self):
         """ Returns true on collision """
         raise NotImplementedError

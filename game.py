@@ -16,8 +16,10 @@ import random
 ########## FUNCTIONS #######################################
 ############################################################
 
-def getBestShip(ships,nseeds):
+def getBestShip(ships,nseeds = None):
     """ Return a list of copies of the <nseeds> ships with the highest scores """
+    if nseeds == None:
+        nseeds = len(ships)
     ships.sort(key = lambda x: x.score, reverse = True)
     return  copy.deepcopy(ships[0:nseeds])
     
@@ -28,13 +30,17 @@ def copyShips(ships,bestship,nseeds,generation,nships):
     coefficients = [[1,0.5],[0,0.5],[0.5,0],[1,0],[10,0]] # [0] is the linear coefficient with inverse_gen, [1] is the quadratic term 
     colours = [(240,100,240),(240,100,100),(240,240,100),(100,240,100),(100,240,240)]
     
+
     # Reset each ship based on a random draw 
     for n, shp in enumerate(ships):
-        x = random.choices(population=range(5),weights=weights)[0]
-        if x==0: # Different way to change weights
-            shp.copyWeightsExper(bestship[n%nseeds],stray = coefficients[x][1]*inverse_gen*inverse_gen + coefficients[x][0]*inverse_gen, colour = colours[x])
-        else:    
-            shp.copyWeights(bestship[n%nseeds],stray = coefficients[x][1]*inverse_gen*inverse_gen + coefficients[x][0]*inverse_gen, colour = colours[x])
+        if nseeds == 0:
+            shp.initWeights()
+        else:
+            x = random.choices(population=range(5),weights=weights)[0]
+            if x==0: # Different way to change weights
+                shp.copyWeightsExper(bestship[n%nseeds],stray = coefficients[x][1]*inverse_gen*inverse_gen + coefficients[x][0]*inverse_gen, colour = colours[x])
+            else:    
+                shp.copyWeights(bestship[n%nseeds],stray = coefficients[x][1]*inverse_gen*inverse_gen + coefficients[x][0]*inverse_gen, colour = colours[x])
         shp.reset()
 
 def moveShips(screen, ships,maze):
@@ -57,12 +63,12 @@ def getLeadShip(ships):
     return max(ships, key = lambda x : x.getScore()*(1-int(x.crashed)))
      
 
-def drawShips(screen,ships,maze,midpos = None,followLead = False):
+def drawShips(screen,ships,maze,frame,midpos = None,followLead = False):
     """ Draws each ship in the list <ships> """
     if midpos is None or followLead is False: 
         midpos = (800,450)
     for shp in ships:
-       shp.drawShip(screen,maze,midpos = midpos) 
+       shp.drawShip(screen,maze,frame,midpos = midpos) 
 
 def quitGame():
     """ Uninitialize everything and close pygame screen """
@@ -98,8 +104,8 @@ def saveBestships(bestships,basename,gen):
         f.write(str(bs.getScore()) + " ")
     f.write("\n")
     f.close()
-    print("All crashed for generation " + str(gen) +"  Top Ship score: " 
-          + str(bestships[0].score) + "  at  " + str(bestships[0].weights[0][0][0]))
+    print("Successfully saved generation " + str(gen) + " of " + basename +"  Top score: " 
+          + str(bestships[0].score) )
           
 def saveAllScores(basename, ships,gen):
     """ Write each ship's score to file """
@@ -139,7 +145,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
              nships = 100, nseeds = 1, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
-             displayOnScreen = False, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10,
+             displayOnScreen = True, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10,
              orders = [1,2,3,4,5]):
     """Main function called that will handle generating ships, racing them and moving through generations.
     Returns the best ship found for the selected maze in the final generation. 
@@ -175,17 +181,17 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
                 ships[shipcount].name = "Gen: "+str(i+victoryLapGen)
                 shipcount +=1
         nships = shipcount
-    if (displayHUD): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
+    if (displayHUD and displayOnScreen): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
     
     
     
     camerapos = resetCameraPos(followLead)
     
     # Create pygame screen if we need to
-    if(screen == None):
+    if(screen == None and displayOnScreen):
         size = width, height
         screen = pygame.display.set_mode(size)
-    else:
+    elif displayOnScreen:
         width = screen.get_width()
         height = screen.get_height()
     
@@ -204,7 +210,7 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
             # Reinitialize the environment
             mymaze.newGeneration()
             # Determine best ships
-            bestship = getBestShip(ships,nseeds)
+            bestship = getBestShip(ships)
             # Save the best ships
             if(not victoryLap): saveBestships(bestship,basename,generation)
             # Create next generation
@@ -225,9 +231,9 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
         # Draw and update the map
         if(displayOnScreen): mymaze.drawMap(screen,midpos = camerapos,followLead = followLead)
         # Draw the ships
-        if(displayOnScreen): drawShips(screen,ships,mymaze,midpos = camerapos,followLead = followLead)
+        if(displayOnScreen): drawShips(screen,ships,mymaze,frame,midpos = camerapos,followLead = followLead)
         # Draw all the overlay stuff
-        if displayHUD: headsUp.update(screen,generation,frame, bestships = bestship,ships = ships,
+        if displayHUD and displayOnScreen: headsUp.update(screen,generation,frame, bestships = bestship,ships = ships,
                        leadship = leadship,followLead = followLead,camerapos = camerapos)
         #t3 = time.time()
         # Save the image on screen if that's what we're doing

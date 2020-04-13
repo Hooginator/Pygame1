@@ -313,7 +313,7 @@ class ship:
     # Functions related to creating various visual effects on screen
     ########################################################
             
-    def drawShip(self,screen,maze,midpos = (450,800),zoom = 1,fancyShip = False, drawThrusters = True):
+    def drawShip(self,screen,maze,frame,midpos = (450,800),zoom = 1,fancyShip = False, drawThrusters = True):
         """ Draw triangular ship, get the input values and draw a red or blue 
         circle at their location
         """
@@ -325,7 +325,7 @@ class ship:
             if self.inputType == 0:
                 self.drawPointInputs(screen,maze,midpos=midpos)
             elif self.inputType == 1:
-                self.printExperimentalLOS(screen,midpos=midpos)
+                self.drawVariableLOS(screen,frame,midpos=midpos)
         
 #        if(fancyShip): pygame.draw.polygon(screen, self.parentcolour, 
 #                                [[int(bp[0]+ 10 *np.cos(self.angle+3.14)), 
@@ -427,14 +427,15 @@ class ship:
         pygame.draw.circle(screen,(130,240,130),temp,2,2)
     
     
-    def printExperimentalLOS(self,screen,midpos = (450,800)):
+    def drawVariableLOS(self,screen,frame,midpos = (450,800)):
         bp = self.getIntPos()
         bp = getOffsetPos(bp,midpos)
         for g in self.extrapos:
             #print("extrapos:   ",g)
             if g is not None:
-                pygame.draw.circle(screen,(230,40,30),getOffsetPos(g[0],midpos),8,1)
-                pygame.draw.circle(screen,(250,0,0),getOffsetPos(g[0],midpos),4,1)
+                drawPulsatingCirlce(screen, getOffsetPos(g[0],midpos),frame,size = 12,cycle_length = 60, colour = (255,0,0))
+                #pygame.draw.circle(screen,(230,40,30),getOffsetPos(g[0],midpos),8,1)
+                #pygame.draw.circle(screen,(250,0,0),getOffsetPos(g[0],midpos),4,1)
                 pygame.draw.line(screen,(150,150,150),bp,getOffsetPos(g[0],midpos),1)
                 #pygame.draw.circle(screen,(30,140,130),[int(bp[0]),int(bp[1])],5,5)
             
