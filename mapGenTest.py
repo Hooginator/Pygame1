@@ -8,47 +8,203 @@ Created on Sun Sep 30 21:04:43 2018
 import random
 import copy
 import pdb # DEBUG
+import time
 
 DEBUG = True
 
-directions = {"N": [-1,0],"S": [1,0],"E": [0,1],"W": [0,-1]}
+DIRECTIONS = {"N": (-1,0),"S": (1,0),"E": (0,1),"W": (0,-1)}
+REVERSE_DIRECTIONS = {(-1,0):"N",(1,0):"S",(0,1):"E",(0,-1):"W"}
 FILE_PREFIX = "Map"
 FILE_SUFFIX = "_Wall.txt" 
 
     
-# OLD STUFF
-def mapArrayFromStr(wallPos):
-    """ Takes a string of 1 or 0 corresponding to where walls are with new
-    lines separated by \n"""
-    wallArray = []
-    i = 0 # 'i' counts the current line of the file we are on
-    for line in wallPos.split('\n'):
-        if(len(line) !=0):
-            wallArray.append([line[0]])
-        j = 1 # 'j' counts the current character we are on in line 'i'
-        while j < len(line):
-            wallArray[i].append(line[j])
-            j+=1
-        i+=1
-    return wallArray    
+# # OLD STUFF
+# def mapArrayFromStr(wallPos):
+    # """ Takes a string of 1 or 0 corresponding to where walls are with new
+    # lines separated by \n"""
+    # wallArray = []
+    # i = 0 # 'i' counts the current line of the file we are on
+    # for line in wallPos.split('\n'):
+        # if(len(line) !=0):
+            # wallArray.append([line[0]])
+        # j = 1 # 'j' counts the current character we are on in line 'i'
+        # while j < len(line):
+            # wallArray[i].append(line[j])
+            # j+=1
+        # i+=1
+    # return wallArray    
         
-def mapStrFromFile(filename):
-    """ Reads the file given as a string for further processing """
-    with open(filename, 'r') as myfile:
-        data = myfile.read()
-    return data
+# def mapStrFromFile(filename):
+    # """ Reads the file given as a string for further processing """
+    # with open(filename, 'r') as myfile:
+        # data = myfile.read()
+    # return data
     
 
 # Functions for making generateMapStr easier
+
+class MapGenerator(object):
+    def __init__(self, X_in, Y_in, minWidth=3, wallWidth=1,start_location = (0,0),start_direction = "E",total_checkpoints=10):
+    
+        # Final sizes trimmed a bit to fit the path and wall widths  
+        self.final_XMAX = (X_in-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
+        self.final_YMAX = (Y_in-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
+        
+        # Reduced sizes for path finding algorithm
+        self.XMAX,self.YMAX = self.final_XMAX//(minWidth+wallWidth),self.final_YMAX//(minWidth+wallWidth)
+        self.area = self.XMAX*self.YMAX
+        
+        # Generic variables to save
+        self.minWidth = minWidth
+        self.wallWidth = wallWidth
+        self.start_location = start_location
+        self.start_direction = start_direction
+        self.total_checkpoints = total_checkpoints
+        
+        
+        self.reset()
+        
+    def reset(self):
+        # Initialize final grid of zeros to be printed
+        self.final_grid = [[0 for _ in range(self.final_YMAX)] for _ in range(self.final_XMAX)]
+        
+        # Reduced effective grid by a factor of (minWidth+wallWidth) to normalize for path finding.  Final results will be higher resolution versions of this
+        self.effective_grid = [[None for _ in range(self.YMAX)] for _ in range(self.XMAX)]  
+        
+        # List version of the paths in effective_grid
+        self.relative_path = []
+        self.from_end_path = []
+        
+    
+    def getDirectionOptions(self,pos,grid):
+        temp_directions = copy.copy(DIRECTIONS)
+        # Remove any directions that lead off map
+        if(pos[0] == 0): del temp_directions["N"]
+        if(pos[0] == self.XMAX-1): del temp_directions["S"]
+        if(pos[1] == self.YMAX-1): del temp_directions["E"]
+        if(pos[1] == 0):  del temp_directions["W"]
+        
+        # Remove options that lead onto used spot
+        for d in DIRECTIONS:
+            if d in temp_directions and grid[pos[0] + DIRECTIONS[d][0]][pos[1] + DIRECTIONS[d][1]] is not None: del temp_directions[d]
+            
+        return temp_directions
+        
+    
+    def getFastestPath(self,start,end,max_length = 100): # need too thionk this one through a bit, I am just thinking around in circles now
+            # Create temporary grid that I will fill in with previously explored tilesfor path finding
+            temp_grid = list(map(list, self.effective_grid)) 
+            # frontline will be a dict of positions that I have to check as keys with values of the path they took so far
+            frontline = {tuple(start):[]}
+            for l in range(max_length):
+                next_frontline = {}
+                #print2DGrid(temp_grid)
+                for f in frontline:
+                    # If we arer 1 away we are done
+                    if abs(f[0] - end[0]) + abs(f[1] - end[1]) == 1:
+                        return frontline[f] + [f] 
+                
+                    temp_grid[f[0]][f[1]] = "o"
+                    for d in self.getDirectionOptions(f,temp_grid):
+                        if temp_grid[f[0]+DIRECTIONS[d][0]][f[1]+DIRECTIONS[d][1]] is None:
+                            next_frontline[(f[0]+DIRECTIONS[d][0],f[1]+DIRECTIONS[d][1])] = frontline[f] + [f]
+                        
+                frontline = next_frontline  
+            print("NO PATH")
+            return None
+                    
+                    
+    def generatePath(self,max_unused = None,max_iterations = 10000):
+        
+        def canEndCheck():
+            """ Checks if we are close enough to end with few enough unused spaces """
+            rel_pos = tuple([p-d for p,d in zip(current_pos,end_pos)])
+            #print(abs(rel_pos[0]) + abs(rel_pos[1]))
+            return abs(rel_pos[0]) + abs(rel_pos[1]) == 1 and count > 1 and self.area-len(self.relative_path) - len(self.from_end_path) < max_unused
+        
+        
+        
+        if max_unused ==  None:
+            max_unused = self.area / 8
+        
+        # some constants and initializations
+        current_pos = [s for s in self.start_location]
+        end_pos = [s for s in self.start_location]
+        
+        # Loop variables
+        done = False # Signifies when the loop is closed, it might have done = True but not be long enough and return to building
+        count = 0
+        count_since_last_reset = 0
+        
+        # do first step
+        self.effective_grid[self.start_location[0]][self.start_location[1]] = self.start_direction
+        current_pos = [c+d for c,d in zip(current_pos,DIRECTIONS[self.start_direction])]
+        self.relative_path.append(self.start_direction)
+        
+        # MAIN LOOP
+        while done == False:
+            count +=1
+            count_since_last_reset +=1
+            # Check if we are able to close the loop
+            if canEndCheck():
+                # Option to close the loop here
+                
+                temp_dir = REVERSE_DIRECTIONS[(end_pos[0]-current_pos[0],end_pos[1]-current_pos[1])]
+                
+                self.relative_path.append(temp_dir)
+                self.effective_grid[current_pos[0]][current_pos[1]] = temp_dir
+                
+                done = True
+                continue
+            
+            temp_directions = self.getDirectionOptions(current_pos,self.effective_grid)
+
+                
+                
+            # If no options remain, we have hit a dead end and must go back some steps and restart loop
+            if len(temp_directions) == 0: 
+                # Go back a random number of times
+                togoback = random.randint(2,int(len(self.relative_path))//(2*count_since_last_reset)+2)
+                goBack(self.relative_path,self.effective_grid,current_pos,togoback)
+                count_since_last_reset /= 10
+                continue 
+         
+            # Choose a direction option and apply it
+
+            temp_dir = random.choice(list(temp_directions.keys()))
+            self.relative_path.append(temp_dir)
+            self.effective_grid[current_pos[0]][current_pos[1]] = temp_dir
+            current_pos = [p+d for p,d in zip(current_pos,temp_directions[temp_dir])]
+            
+            if count %10 == 0:
+                print2DGrid(self.effective_grid)
+                # Impossible to end, gotta cut some
+                while self.getFastestPath(current_pos,end_pos) == None:
+                    count_since_last_reset +=1
+                    print2DGrid(self.effective_grid)
+                    togoback = random.randint(2,int(len(self.relative_path))//(2*count_since_last_reset)+2)
+                    goBack(self.relative_path,self.effective_grid,current_pos,togoback)
+                    count_since_last_reset /= 10
+                time.sleep(0.3)
+
+       
+        print2DGrid(self.effective_grid)
+    
+    
+    
+    
+        
+        
+        
+        
 
 def goBack(list,grid,pos,num):
     """Our path is going back [num] steps.  For each step back we
     change the current position [pos] appropriately, change that spot
     in our reduced [grid] back to None and pop the last direction off of [list]
     """
-    global directions
     for i in range(num):
-        deltapos = directions[list[-1]]
+        deltapos = DIRECTIONS[list[-1]]
         pos[0] =  pos[0]-deltapos[0]
         pos[1] =  pos[1]-deltapos[1]
         grid[pos[0]][pos[1]] = None
@@ -78,16 +234,17 @@ def print2DGrid(grid):
         print()
     print()
 
-def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location = [0,0],TOTAL_CHECKPOINTS=10,START_DIRECTION = "E",LEVEL = 1):
+def generateMapStr(XMAX_in,YMAX_in,minWidth=3,wallWidth=1,start_location = [0,0],TOTAL_CHECKPOINTS=10,START_DIRECTION = "E",LEVEL = 1):
     """ Will build a map of size [XMAX,YMAX] with a path throughout a minimum 
     of minWidth wide.  Builds a path by traversing the XMAX by YMAX space 
     if the path hits a dead end it is sent back a few tiles, if the path connects
     back to the start it will end the loop successfuly and save teh map
     """
+        
     # Normalize inputs.  I take the required full grid size and make it a proper 
     # multiple of the width of the passage and walls.  
-    final_XMAX = (final_XMAX-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
-    final_YMAX = (final_YMAX-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
+    final_XMAX = (XMAX_in-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
+    final_YMAX = (YMAX_in-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
 
     # final_grid is what we will return at the end of the day, 1 for wall 
     # 0 for empty and 2-9 a-z A-Z or something for checkpoints
@@ -103,20 +260,22 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
     
     # List version of the paths in effective_grid
     relative_path = []
+    from_end_path = []
     
     # Decide acceptable threshold
-    MAX_UNUSED = 5#Maximum numbver of "dead" spots in the effective grid
+    MAX_UNUSED = XMAX#Maximum numbver of "dead" spots in the effective grid
     MAX_ITERATION = 50000# Maximum number of times we will try to make a maze
     
     # some constants and initializations
     current_pos = [s for s in start_location]
+    end_pos = [s for s in start_location]
     
     # Loop variables
     done = False # Signifies when the loop is closed, it might have done = True but not be long enough and return to building
     count = 0
     
     # MAIN LOOP
-    while AREA-len(relative_path) > MAX_UNUSED or done == False:
+    while done == False:
         
         if done:
             # Here we are next to the start location but we got here too early
@@ -129,16 +288,13 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
         # Normal attempt to exit if we are right beside the start location 
         # Add in last path step to complete the circuit, then continue loop 
         # to check if we have used enough spaces
-        rel_pos = [p-d for p,d in zip(current_pos,start_location)]
-        if abs(rel_pos[0]) + abs(rel_pos[1]) == 1 and count > 1:
+        rel_pos = tuple([p-d for p,d in zip(current_pos,end_pos)])
+        if abs(rel_pos[0]) + abs(rel_pos[1]) == 1 and count > 1 and AREA-len(relative_path) < MAX_UNUSED:
             done = True
-            if rel_pos[0] == 1: temp_letter = "N"
-            if rel_pos[0] == -1: temp_letter = "S"
-            if rel_pos[1] == -1: temp_letter = "E"
-            if rel_pos[1] == 1: temp_letter = "W"
+            temp_letter = REVERSE_DIRECTIONS[rel_pos]
             relative_path.append(temp_letter)
             effective_grid[start_location[0]+rel_pos[0]][start_location[1]+rel_pos[1]] = temp_letter
-            current_pos = [s for s in start_location]
+            current_pos = [s for s in end_pos]
             continue
         
         # Generate dictionary of direction options that are available this time by copying 
@@ -223,18 +379,20 @@ def generateMapStr(final_XMAX,final_YMAX,minWidth=3,wallWidth=1,start_location =
     return True
 
 if __name__ == "__main__":
-    count = 0
-    totalmapstomake = 10
-    for i in range(totalmapstomake):
-        while True:
-            count +=1 
-            if(generateMapStr(60,60,LEVEL=i)):
-                break
-            #Emergency Exit
-            if(count > 10000):
-                print("BIG LOOP ABORT")
-                break
-            if(count %10 == 0):
-                print(count," failed so far")
-    print("Done  all the things")
-    print(chr(65))
+    temp = MapGenerator(100,100,)
+    temp.generatePath()
+    # count = 0
+    # totalmapstomake = 10
+    # for i in range(totalmapstomake):
+        # while True:
+            # count +=1 
+            # if(generateMapStr(200,200,LEVEL=i)):
+                # break
+            # #Emergency Exit
+            # if(count > 10000):
+                # print("BIG LOOP ABORT")
+                # break
+            # if(count %10 == 0):
+                # print(count," failed so far")
+    # print("Done  all the things")
+    # print(chr(65))

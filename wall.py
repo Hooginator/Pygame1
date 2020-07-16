@@ -351,7 +351,7 @@ class obstacle():
         
         temppos = getOffsetPos(self.getMidInt(),midpos)
         
-        drawRadiatingCircle(screen,temppos, frame,frame_speed=1)
+        drawRadiatingCircle(screen,temppos, frame,cycle_length=30)
         # pygame.draw.circle(screen,[max(0,tmp - (20 - frame%20)*10) for tmp in (240,240,240)],
                                    # temppos, 1 + frame %20, 1)
         # pygame.draw.circle(screen,(240,240,240),temppos, 21 + frame %20, 1)

@@ -47,40 +47,56 @@ def drawRadiatingCircle(screen,
     colour = (240,240,240), 
     number = 3, 
     size = 60, # This is the maximum size, if it's easier in the math to make this a bit smaller I will
-    frame_speed = 1):
+    cycle_length = 30 # number of frames for pattern to repeat
+    ):
     """ Draws circles that grow and dissapear for indicating a position """
     
     size_per_circle = size//number
-    frames_per_circle = size_per_circle * frame_speed
-    colour_per_frame = max(colour)//frames_per_circle
+    colour_per_frame = max(colour)//cycle_length
+    
+    
+    # Build a temporary screen, for the alpha to work we CANNOT BUILD BLACK (0,0,0) CIRCLES FOR NOW
+    
     
     if number > 1:
         for n in range(number):
-            temp_colour = colour
-            
+            temp_alpha = 255
+            temp_screen = pygame.Surface((size*2,size*2))
+            temp_screen.set_colorkey((0,0,0))
             if n == 0:
-                temp_colour = tuple(max(0,tmp - (frames_per_circle - frame%frames_per_circle)*colour_per_frame) for tmp in colour)
+                # brightening phase
+                temp_alpha = (frame%(cycle_length))*255/(cycle_length)
+                #temp_colour = tuple(max(0,tmp - (cycle_length - frame%cycle_length)*colour_per_frame) for tmp in colour)
             elif n ==  number -1:
-                temp_colour = tuple(max(0,tmp - (frame%frames_per_circle)*colour_per_frame) for tmp in colour)   
-            #print(screen,temp_colour, middle, size_per_circle*n + 1 + frame %frames_per_circle, 1)
-            pygame.draw.circle(screen,temp_colour, middle, size_per_circle*n + 1 + frame %frames_per_circle, 1)
+                # fading Phase
+                temp_alpha = (cycle_length - frame%(cycle_length))*255/(cycle_length)
+                #temp_colour = tuple(max(0,tmp - (frame%cycle_length)*colour_per_frame) for tmp in colour)   
+            temp_size = int(1 + (frame %(cycle_length))/(cycle_length)*size_per_circle + n*size_per_circle)
+            
+            # Draw the circle onto the temp screen and blit that screen onto the main screen for alpha to work
+            pygame.draw.circle(temp_screen,colour,(size,size),temp_size,1)
+            temp_screen.set_alpha(temp_alpha)
+    
+            screen.blit(temp_screen,(middle[0] - size,middle[1] - size))
             
             
-            
-    elif number == 1:
-        if frame % frames_per_circle < frames_per_circle/2:
-            temp_colour = tuple(max(0,tmp - (frames_per_circle - frame%frames_per_circle)*colour_per_frame) for tmp in colour)
-        else:
-            temp_colour = tuple(max(0,tmp - (frame%frames_per_circle)*colour_per_frame) for tmp in colour) 
-        pygame.draw.circle(screen,temp_colour, middle,  1 + frame %frames_per_circle, 1)
+    # elif number == 1: # dont
+        # if frame % cycle_length < cycle_length/2:
+            # temp_colour = tuple(max(0,tmp - (cycle_length - frame%cycle_length)*colour_per_frame) for tmp in colour)
+        # else:
+            # temp_colour = tuple(max(0,tmp - (frame%cycle_length)*colour_per_frame) for tmp in colour) 
+        # pygame.draw.circle(screen,temp_colour, middle,  1 + frame %cycle_length, 1)
         
         
 def drawPulsatingCirlce(screen, 
     middle, # Position for the middle of the circle to be drawn
     frame, # frame number is how we track the growing of the circle
+    magnitude = 1, # How bright base don input of length
     colour = (240,240,240), 
     size = 10, 
-    cycle_length = 60):
+    cycle_length = 60,
+    pulsating_strength = 0.8,
+    reverse_alpha = False):
     
     # Build a temporary screen, for the alpha to work we CANNOT BUILD BLACK (0,0,0) CIRCLES FOR NOW
     temp_screen = pygame.Surface((size*2,size*2))
@@ -89,13 +105,15 @@ def drawPulsatingCirlce(screen,
     # Separate the animation into the growing and shrinking parts
     if frame% cycle_length >= cycle_length/2:
         # growing phase
-        temp_alpha = (cycle_length/2 - frame%(cycle_length/2))*255/(cycle_length/2)
+        temp_alpha = ((cycle_length/2 - frame%(cycle_length/2)*pulsating_strength+1-pulsating_strength)*255/(cycle_length/2))
         temp_size = int(1 + (frame %(cycle_length/2))/(cycle_length/2)*size)
     else:
         # Shrinking Phase
-        temp_alpha = (frame%(cycle_length/2))*255/(cycle_length/2)
+        temp_alpha = ((frame%(cycle_length/2)*pulsating_strength+1-pulsating_strength)*255/(cycle_length/2))
         temp_size = int(1 + (cycle_length/2 - frame %(cycle_length/2))/(cycle_length/2)*size)
-    
+    if reverse_alpha:
+        temp_alpha = 255 - temp_alpha
+    temp_alpha = temp_alpha*magnitude
     # Draw the circle onto the temp screen and blit that screen onto the main screen for alpha to work
     pygame.draw.circle(temp_screen,colour,(size,size),temp_size,1)
     temp_screen.set_alpha(temp_alpha)

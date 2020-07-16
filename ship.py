@@ -32,8 +32,9 @@ class ship:
         # Create dimensions array based on input, intermediate dimensions and output (4)
         self.inputType = 1 # 0: point, 1: linear
         self.setDimension(inputdistance,inputangle,intermediates,orders)
-        self.drag = 0.98
+        self.drag = 0.99
         self.initWeights()
+        self.sightLength = 200
         
         if name is not None: 
             self.name = name
@@ -47,7 +48,7 @@ class ship:
         if self.inputType == 0: # Matrix of angles and distances
             self.dimensions = [len(inputdistance)*len(inputangle)]
         elif self.inputType == 1: # Only angles, each one getting one input
-            self.dimensions = [len(inputangle)*len(orders)]
+            self.dimensions = [len(inputangle)*len(orders)*2] # times 2 for having the orders work in reverse test
             inputdistance = 1
             
         self.dimensions.extend(intermediates)
@@ -206,6 +207,7 @@ class ship:
     def updateSpeed(self,accel,dangle,brake):
         """ Get new vx and vy to update position"""
         self.dangle += dangle
+        self.dangle = self.dangle * self.drag*(1-brake/3)*0.6
         self.angle += self.dangle
         self.accel = accel
         self.vx += accel * np.cos(self.angle)
@@ -218,7 +220,6 @@ class ship:
         # apply drag and braking to slow down
         self.vx = self.vx * self.drag*(1-brake/3)
         self.vy = self.vy * self.drag*(1-brake/3)
-        self.dangle = self.dangle * self.drag*(1-brake/3)*0.6
         
     def updatePos(self):
         """ Update where the ship is each timestep based on calculated velocity."""
@@ -252,14 +253,16 @@ class ship:
                     i +=1
             elif self.inputType == 1:
                 #eXPERIMENTAL STUFF FOR continuous LOS
-                sightlength = 200
-                self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, sightlength))
+                self.extrapos.append(maze.getMaximumSightDistance(self.pos, self.angle+ang, self.sightLength))
 
                 temp_length = self.extrapos[i][2]
                 for ord in self.orders:
-                    self.scan[j] = (temp_length/sightlength)**ord
-                    j +=1
+                    self.scan[j] = (temp_length/self.sightLength)**ord
+                    self.scan[j+1] = ((self.sightLength-temp_length)/self.sightLength)**ord # add opposite way, gets stronger closer instead of stronger further.  might make a difference.
+                    j +=2
                 i+=1
+                
+    
                   
     def getDecision(self):
         """ Use the input vector and all the weights to decide how to control 
@@ -429,15 +432,15 @@ class ship:
         for g in self.extrapos:
             #print("extrapos:   ",g)
             if g[0]:
-                drawPulsatingCirlce(screen, getOffsetPos(g[1],midpos),frame,size = 12,cycle_length = 60, colour = (255,0,0))
+                drawPulsatingCirlce(screen, getOffsetPos(g[1],midpos),frame,size = 12,cycle_length = 60, colour = (255,0,0),magnitude = (self.sightLength - g[2]) / self.sightLength*0.3+0.7 )
                 #pygame.draw.circle(screen,(230,40,30),getOffsetPos(g[0],midpos),8,1)
                 #pygame.draw.circle(screen,(250,0,0),getOffsetPos(g[0],midpos),4,1)
-                pygame.draw.line(screen,(150,150,150),bp,getOffsetPos(g[1],midpos),1)
+                pygame.draw.line(screen,(100,100,100),bp,getOffsetPos(g[1],midpos),1)
                 #pygame.draw.circle(screen,(30,140,130),[int(bp[0]),int(bp[1])],5,5)
             else:
                 # Get the max length and draw a lighter line to show where the sensors are
                 endpoint = []
-                pygame.draw.line(screen,(50,50,50),bp,getOffsetPos(g[1],midpos),1)
+                pygame.draw.line(screen,(30,30,30),bp,getOffsetPos(g[1],midpos),1)
                 
             
    

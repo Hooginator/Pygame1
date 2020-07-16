@@ -141,16 +141,19 @@ def saveFrame(screen,basename,frame,gen):
 ########## MAIN PROGRAM ####################################
 ############################################################
 
-def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "BestShips",
+def playGame(screen = None, width = 1920, height = 1080, FPS = 30, basename = "BestShips",
              nships = 100, nseeds = 1, maxGen = 1000, intermediates = (8,),
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
              displayOnScreen = True, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10,
-             orders = [1,2,3,4,5]):
+             orders = [1,2,3,4,5],play_countdown = False):
     """Main function called that will handle generating ships, racing them and moving through generations.
     Returns the best ship found for the selected maze in the final generation. 
     """         
     print("#### STARTING GAME "+basename+" ####")
+    
+    
+    
     # Initialize a bunch of Variables
     generation = 0
     frame = 0
@@ -194,6 +197,12 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
     elif displayOnScreen:
         width = screen.get_width()
         height = screen.get_height()
+    
+    
+    # Countdown to start race
+    if play_countdown: playCountdown(screen)
+    
+    
     
     # Main Loop
     while generation < maxGen:
@@ -249,3 +258,33 @@ def playGame(screen = None, width = 1600, height = 900, FPS = 30, basename = "Be
     # END OF GAME
     return bestship
 
+
+
+
+############################################################
+########## EXTRA SCREENS ###################################
+############################################################
+
+def playCountdown(screen, seconds = 5,pos = (500,400),winningShip = None):
+    winsurface = []
+    if winningShip is not None:
+        winsurface.append(myfont.render("Top Scorer:  ", False,(240,240,240)))
+        winsurface.append(myfont.render(winningShip[0].getName() + " " 
+                  + str(int(winningShip[0].score)), False, winningShip[0].colour))
+    
+    time = pygame.time.Clock()
+    for t in range(seconds):
+        drawBackground(screen)
+        if winningShip is not None:
+            dist = 0
+            for wn in winsurface:
+                screen.blit(wn,(pos[0]-40+dist,pos[1]-100)) 
+                dist += wn.get_width()
+        timersurface = myfont.render("Next race starting in ... " 
+                                     + str(seconds - t), False, (240,240,240))
+        screen.blit(timersurface,pos) 
+        # Updates screen
+        pygame.display.flip()
+        # Wait for next frame time          
+        time.tick(1)
+        
