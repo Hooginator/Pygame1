@@ -146,11 +146,12 @@ def playGame(screen = None, width = 1920, height = 1080, FPS = 30, basename = "B
              inputdistance = [50,100,150], inputangle = [1.2,0.6,0,-0.6,-1.2],
              saveFrames = False,victoryLap = False,followLead = True,displayHUD = True,
              displayOnScreen = True, victoryLapGen = 0, victoryLapNames = [], victoryLapShipsPerGen = 10,
-             orders = [1,2,3,4,5],play_countdown = False):
+             orders = [1,2,3,4,5],play_countdown = False,description = None):
     """Main function called that will handle generating ships, racing them and moving through generations.
     Returns the best ship found for the selected maze in the final generation. 
     """         
     print("#### STARTING GAME "+basename+" ####")
+    print(description)
     
     
     

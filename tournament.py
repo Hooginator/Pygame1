@@ -16,6 +16,9 @@ Created on Sat Apr 14 13:30:41 2018
 # pretty up countdown
 
 from game import *
+from datetime import date as dt
+import itertools
+import random
 
 def drawWinners():
     pass
@@ -55,22 +58,24 @@ def victoryLap(basenames, nships = 5, gen = 70):
              victoryLap = True,victoryLapShipsPerGen = nships, displayHUD = False, victoryLapGen = gen,
              victoryLapNames = basenames)
 
-def getFilename(base, inangles, intermediates,orders):
+def getFilename(base, inangles, intermediates,orders,date = False):
+    """ Puts together a filename based on various parameters"""
     temp =  base + "_ANG_" + str(len(inangles))
     temp=temp+"_INT"
     for inter in intermediates:
         temp = temp +"_"+str(inter)
     temp=temp+"_ORD"
     for ord in orders:
-        temp = temp +"_"+str(ord)
-    return temp + ".txt"
+        temp = temp +"_"+str(ord) +"_"
+    temp = temp + str(dt.today())
+    return temp 
 
 ############################################################
 ########## TOURNAMENT ## ###################################
 ############################################################
 
 def doTournament(filePrefix = "Test",inputangles = [0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8], inputdistances = [50,100,150,200], 
-                 intermediates = [10], shutdown = True, orders = [1,2,3,4,5],nships=10,nseeds=1):
+                 intermediates = [10],  orders = [1,2,3,4,5],nships=10,nseeds=1,description = "MatrixRacer"):
     """ Command to actually run the simulation to get more new racers after 
     the specified number of generations have passed.
     """
@@ -79,11 +84,10 @@ def doTournament(filePrefix = "Test",inputangles = [0.8,0.6,0.4,0.2,0,-0.2,-0.4,
     
     #screen = pygame.display.set_mode((1600,900))
     #playCountdown(screen,winningShip = winningShip)
-    winningShip = playGame(maxGen = 200, basename = filename, play_countdown=True,
+    winningShip = playGame(maxGen = 10, basename = filename, play_countdown=False,
                        intermediates = intermediates,inputdistance = inputdistances, 
-                       inputangle = inputangles, nships = nships, nseeds = nseeds,orders = orders)
-    i += 1
-    if(shutdown): os.system("shutdown now -h") # Not working on windoows
+                       inputangle = inputangles, nships = nships, nseeds = nseeds,orders = orders,
+                       description = description)
     #quitGame()
 
 
@@ -91,21 +95,50 @@ def doSet():
     """ Do series of tournaments to generate a bunch of data.
     This should be little more than a simple loop
     """
+    # List of parameters to loop over, these will be lists of the parameters to use, which are also lists
+    angle_set = [[1,0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8,-1],
+    [0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8],
+    [0.6,0.4,0.2,0,-0.2,-0.4,-0.6],
+    [0.4,0.2,0,-0.2,-0.4],
+    [0.2,0,-0.2],
+    [0.1,-0.1],
+    [0.3,0.1,-0.1,-0.3],
+    [0.5,0.3,0.1,-0.1,-0.3,-0.5],
+    [0.7,0.5,0.3,0.1,-0.1,-0.3,-0.5,-0.7],
+    [0.9,0.7,0.5,0.3,0.1,-0.1,-0.3,-0.5,-0.7,-0.9]]
     
-    # i = 1
-    # for ina in inputangles:
-        # for ind in inputdistances:
-            # for inter in intermediates:
+    intermediates_set = [[4],[8],[12],[16],[20],
+    [8,4],[12,4],[12,8],[16,4],[16,8],[16,12],[20,4],[20,8],[20,12],[20,16],
+    [12,8,4],[16,8,4],[16,12,8],[20,8,4],[20,12,8],[20,12,4],[20,16,4],[20,16,8],[20,16,12],
+    [16,12,8,4],[20,16,12,4],[20,16,8,4],[20,12,8,4],
+    [20,16,12,8,4]
+    ]
+    orders_set = [[1],[1,2],[1,2,3],[1,2,3,4],[1,2,3,4,5],[1,2,3,4,5,6]]
     
-    ords = [1]
-    for j in range(200):
-        #ords.append(j+1)
-        # for i in range(10):
-            # if i==0:
-                # tempinter = [[]]
-            # else:
-                # tempinter = [[i]] 
-        doTournament(filePrefix = "DEC12_10ships_1evolution_"+str(j+1),orders = ords)
+    # Create options and shuffle
+    temp_list = [angle_set,intermediates_set,orders_set]
+    options_set = list(itertools.product(*temp_list))
+    print("Going to do "+str(len(options_set))+" tournaments")
+    random.shuffle(options_set)
+    
+    # Loop through shuffled options in order
+    j = 1
+    for o in options_set:
+        doTournament(filePrefix = "LOLOLOLOLTEEEST"+str(j+1)+"_",orders = o[2],inputangles = o[0],intermediates = o[1],
+                description = "Sensors Number: "+str(len(o[0])) + " Quality: "+str(len(o[2])) +" Brain Size: "+str(max(o[1])) + " Depth: "  + str(len(o[1])))
+        j +=1
+    
+    # Old way that is not randomized
+    # j = 1
+    # for inang in angle_set:
+        # for inter in intermediates_set:
+            # for order in orders_set:
+                # #print(inang,inter,order)
+                # doTournament(filePrefix = "LOLOLOLOLTEEEST"+str(j+1)+"_",orders = order,inputangles = inang,intermediates = inter,
+                # description = "Sensors Number: "+str(len(inang)) + " Quality: "+str(len(order)) +" Brain Size: "+str(max(inter)) + " Depth: "  + str(len(inter)))
+                # j +=1
+    
+
         
         
         

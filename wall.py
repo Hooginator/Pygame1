@@ -218,7 +218,7 @@ def getLineOfCells(pos, angle, length_in):
 class maze:
     """ Master class for all the objects on the map that get in your way or 
     help """
-    def __init__(self,mapName = "Map1",height = 900,width = 1600, mazeType = "circular"):
+    def __init__(self,mapName = "Map2",height = 900,width = 1600, mazeType = "circular"):
         # Load the wall and checkpoint information
         self.layout, self.obstacles, self.checkpoints = generateObstacles(mapName)
         self.checkpointsPerLap = len(self.checkpoints)
