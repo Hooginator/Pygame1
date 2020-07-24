@@ -75,7 +75,7 @@ def getFilename(base, inangles, intermediates,orders,date = False):
 ############################################################
 
 def doTournament(filePrefix = "Test",inputangles = [0.8,0.6,0.4,0.2,0,-0.2,-0.4,-0.6,-0.8], inputdistances = [50,100,150,200], 
-                 intermediates = [10],  orders = [1,2,3,4,5],nships=10,nseeds=1,description = "MatrixRacer"):
+                 intermediates = [10],  orders = [1,2,3,4,5],nships=20,nseeds=5,description = "MatrixRacer"):
     """ Command to actually run the simulation to get more new racers after 
     the specified number of generations have passed.
     """
@@ -84,7 +84,7 @@ def doTournament(filePrefix = "Test",inputangles = [0.8,0.6,0.4,0.2,0,-0.2,-0.4,
     
     #screen = pygame.display.set_mode((1600,900))
     #playCountdown(screen,winningShip = winningShip)
-    winningShip = playGame(maxGen = 10, basename = filename, play_countdown=False,
+    winningShip = playGame(maxGen = 100, basename = filename, play_countdown=True,
                        intermediates = intermediates,inputdistance = inputdistances, 
                        inputangle = inputangles, nships = nships, nseeds = nseeds,orders = orders,
                        description = description)
@@ -125,7 +125,7 @@ def doSet():
     j = 1
     for o in options_set:
         doTournament(filePrefix = "LOLOLOLOLTEEEST"+str(j+1)+"_",orders = o[2],inputangles = o[0],intermediates = o[1],
-                description = "Sensors Number: "+str(len(o[0])) + " Quality: "+str(len(o[2])) +" Brain Size: "+str(max(o[1])) + " Depth: "  + str(len(o[1])))
+                description = "SENSORS:: Number: "+str(len(o[0])) + " Quality: "+str(len(o[2])) +"   BRAIN:: Size: "+str(max(o[1])) + " Depth: "  + str(len(o[1])))
         j +=1
     
     # Old way that is not randomized

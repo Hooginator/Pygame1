@@ -11,7 +11,7 @@ from functions import *
 class hud:
     """ Heads Up Display class to manage all the addons """
     def __init__(self, generation = 0,nseeds = 10, basepos = (0,200),maze = None,
-                 victoryLap = False):
+                 victoryLap = False,description = None):
         self.gen = generation
         self.leadship = None
         self.nseeds = nseeds
@@ -27,6 +27,7 @@ class hud:
         self.winnerColour = []
         self.maze = maze
         self.victoryLap = victoryLap
+        self.description = description
         self.updateGeneration(generation)
         
     def update(self,screen,generation, frame,bestships = None,ships = None,drawLeaderboard = False,
@@ -96,6 +97,8 @@ class hud:
         """ Draws circles around where the last generations lead ships ended up"""
         for i, pos in enumerate(self.winnerPos):
             
+            if i > self.nseeds-1:
+                break
             drawPulsatingCirlce(screen,getOffsetPos(pos,midpos),frame,colour = self.winnerColour[i],size = 20,cycle_length = 60,magnitude = 0.8,reverse_alpha = True)
         
             #pygame.draw.circle(screen, self.winnerColour[i], getOffsetPos(pos,midpos), 10,2)
@@ -108,7 +111,10 @@ class hud:
         self.checkpoint = 0
         self.lastCheckpointCost = 0
         self.nextCheckpointCost = self.maze.checkFuelCost(self.checkpoint)
-        self.genSurface = myfont.render("Gen: "+str(self.gen), False, (240, 240, 240))
+        if self.description == None:
+            self.genSurface = myfont.render("Gen: "+str(self.gen), False, (240, 240, 240))
+        else:
+            self.genSurface = myfont.render(self.description+"    Gen: "+str(self.gen) , False, (240, 240, 240))
         
     def drawGeneration(self,screen):
         """ Draw surface that shows the generation number in the top left corner """

@@ -185,7 +185,7 @@ def playGame(screen = None, width = 1920, height = 1080, FPS = 30, basename = "B
                 ships[shipcount].name = "Gen: "+str(i+victoryLapGen)
                 shipcount +=1
         nships = shipcount
-    if (displayHUD and displayOnScreen): headsUp = hud(maze = mymaze,victoryLap = victoryLap)
+    if (displayHUD and displayOnScreen): headsUp = hud(maze = mymaze,victoryLap = victoryLap,description = description,nseeds=nseeds)
     
     
     
@@ -266,7 +266,7 @@ def playGame(screen = None, width = 1920, height = 1080, FPS = 30, basename = "B
 ########## EXTRA SCREENS ###################################
 ############################################################
 
-def playCountdown(screen, seconds = 5,pos = (500,400),winningShip = None):
+def playCountdown(screen, seconds = 3,pos = (500,400),winningShip = None):
     winsurface = []
     if winningShip is not None:
         winsurface.append(myfont.render("Top Scorer:  ", False,(240,240,240)))

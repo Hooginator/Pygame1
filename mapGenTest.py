@@ -46,7 +46,7 @@ LEVEL = 2
 # Functions for making generateMapStr easier
 
 class MapGenerator(object):
-    def __init__(self, X_in, Y_in, minWidth=3, wallWidth=1,start_location = (0,0),start_direction = "E",total_checkpoints=10):
+    def __init__(self, X_in, Y_in, minWidth=3, wallWidth=1,start_location = (0,0),start_direction = "E",total_checkpoints=20):
     
         # Final sizes trimmed a bit to fit the path and wall widths  
         self.final_XMAX = (X_in-1)//(minWidth+wallWidth)*(minWidth+wallWidth)+1
@@ -127,7 +127,7 @@ class MapGenerator(object):
         
         
         if max_unused ==  None:
-            max_unused = self.area / 1.2
+            max_unused = self.area / 3
         
         # some constants and initializations
         current_pos = [s for s in self.start_location]
@@ -139,7 +139,7 @@ class MapGenerator(object):
         count_since_last_reset = 0
         
         # do first step(s)
-        for _ in range(3):
+        for _ in range(4):
             self.effective_grid[current_pos[0]][current_pos[1]] = self.start_direction
             current_pos = [c+d for c,d in zip(current_pos,DIRECTIONS[self.start_direction])]
             self.relative_path.append(self.start_direction)
@@ -221,8 +221,7 @@ class MapGenerator(object):
                         self.final_grid[pos[0] ][pos[1] +i] = 1
                     if d == "S":
                         self.final_grid[pos[0] +self.minWidth + self.wallWidth][pos[1]  + i] = 1 
-            print2DGrid(self.final_grid)
-            input()
+
         
         current_pos = [s for s in self.start_location] # top left
         total_path_length = len(self.relative_path)

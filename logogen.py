@@ -10,9 +10,9 @@ from functions import *
 
 
 def getLogo():
-    ofx,ofy = 2,1
-    c2 = (140,140,80)
-    c1 = (0,0,255)
+    ofx,ofy = 4,2
+    c2 = (0,0,255)
+    c1 = (40,40,40)
     logo = pygame.Surface((400,200))
     m1 = myfont.render("MATRIX", True, c1)
     m2 = myfont.render("MATRIX", True, c2)
@@ -25,17 +25,17 @@ def getLogo():
     logo.blit(m1,(30,25))
     logo.blit(r1,(45,70))
     logo.blit(lb1,(0,0))
-    logo.blit(rb1,(200,0))
+    logo.blit(rb1,(160,0))
     logo.blit(m2,(30+ofx,25+ofy))
     logo.blit(r2,(45+ofx,70+ofy))
     logo.blit(lb2,(ofx,ofy))
-    logo.blit(rb2,(200+ofx,ofy))
+    logo.blit(rb2,(160+ofx,ofy))
     return logo
 
 
 
-myfont = pygame.font.SysFont("dejavuserif", 45, bold = True)
-myfontbig = pygame.font.SysFont("dejavuserif", 120, bold = False)
+myfont = pygame.font.SysFont("dejavuserif", 45, bold = False)
+myfontbig = pygame.font.SysFont("dejavuserif", 150, bold = False)
 clock = pygame.time.Clock()
 
 screen = pygame.display.set_mode((900,600))
